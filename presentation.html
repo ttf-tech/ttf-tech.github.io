@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Présentation — Groupe Tech FR 🇹🇼🇫🇷</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇹🇼</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; }
+
+    /* ── Sidebar ────────────────────────────────────────────── */
+    #app-sidebar {
+      position: fixed; top: 0; left: 0; height: 100%; width: 4rem;
+      background: #111827;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 1.25rem 0; z-index: 20;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+    }
+    .sidebar-logo {
+      font-size: 1.6rem; line-height: 1; margin-bottom: 2rem;
+      cursor: default; user-select: none;
+    }
+    .sidebar-nav { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+    .sidebar-link {
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      color: rgba(255,255,255,0.4);
+      text-decoration: none;
+      transition: color 0.15s;
+      padding: 0.5rem;
+      border-radius: 10px;
+      width: 3rem;
+      justify-content: center;
+      font-size: 1.15rem;
+    }
+    .sidebar-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
+    .sidebar-link.active { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .sidebar-link span {
+      font-size: 0.55rem; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      opacity: 0.75;
+    }
+    .sidebar-link.active span { opacity: 1; }
+
+    /* ── Hero ───────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(160deg, #071d2b 0%, #0a2d42 60%, #0f3d5a 100%);
+      color: #fff;
+      padding: 4rem 2rem 3rem;
+    }
+    .hero-flag { font-size: 4rem; margin-bottom: 1rem; display: block; }
+    .hero-title { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.5rem; }
+    .hero-sub { font-size: 1rem; color: rgba(255,255,255,0.6); margin-bottom: 1.5rem; }
+    .hero-desc { font-size: 0.92rem; color: rgba(255,255,255,0.82); line-height: 1.7; max-width: 600px; margin-bottom: 2rem; }
+
+    .hero-cta {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: #25d366; color: #fff;
+      font-size: 0.9rem; font-weight: 700;
+      padding: 0.75rem 1.5rem; border-radius: 10px;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .hero-cta:hover { opacity: 0.9; }
+    .hero-cta-stats {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.12); color: #fff;
+      border: 1px solid rgba(255,255,255,0.2);
+      font-size: 0.9rem; font-weight: 600;
+      padding: 0.75rem 1.5rem; border-radius: 10px;
+      text-decoration: none;
+      transition: background 0.15s;
+      margin-left: 0.75rem;
+    }
+    .hero-cta-stats:hover { background: rgba(255,255,255,0.2); }
+
+    /* ── Stats bar ──────────────────────────────────────────── */
+    .stats-bar {
+      background: rgba(255,255,255,0.06);
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: flex; gap: 0; flex-wrap: wrap;
+    }
+    .stat-item {
+      flex: 1; min-width: 120px;
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+      border-right: 1px solid rgba(255,255,255,0.08);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-value { font-size: 1.8rem; font-weight: 800; color: #fbbf24; display: block; }
+    .stat-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.45); margin-top: 0.2rem; }
+
+    /* ── Content sections ───────────────────────────────────── */
+    .section { max-width: 960px; margin: 0 auto; padding: 3rem 2rem; }
+    .section-title {
+      font-size: 1.25rem; font-weight: 800; color: #0a2d42;
+      margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .section-title i { color: #fbbf24; }
+    .section-sub { font-size: 0.85rem; color: #64748b; margin-bottom: 2rem; }
+
+    /* ── Cards grid ─────────────────────────────────────────── */
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.25rem; }
+    .card {
+      background: #fff; border-radius: 14px; border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(10,45,66,0.07);
+      padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem;
+    }
+    .card-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(135deg, #0a2d42, #1a5f7a);
+      display: flex; align-items: center; justify-content: center;
+      color: #fbbf24; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .card-title { font-size: 0.95rem; font-weight: 700; color: #1e293b; }
+    .card-desc { font-size: 0.82rem; color: #64748b; line-height: 1.6; }
+
+    /* ── Who can join ───────────────────────────────────────── */
+    .join-list { display: grid; gap: 0.75rem; }
+    .join-item {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.75rem;
+      font-size: 0.88rem; color: #1e293b; font-weight: 500;
+      box-shadow: 0 1px 3px rgba(10,45,66,0.05);
+    }
+    .join-item i { color: #059669; font-size: 1rem; flex-shrink: 0; }
+
+    /* ── WhatsApp CTA section ───────────────────────────────── */
+    .whatsapp-section {
+      background: linear-gradient(135deg, #0a2d42 0%, #1a4a6e 100%);
+      color: #fff; text-align: center;
+      padding: 3rem 2rem;
+    }
+    .whatsapp-section h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .whatsapp-section p { font-size: 0.9rem; color: rgba(255,255,255,0.7); margin-bottom: 1.5rem; }
+
+    /* ── Footer ─────────────────────────────────────────────── */
+    footer {
+      background: #1e293b; color: rgba(255,255,255,0.4);
+      text-align: center; font-size: 0.72rem; padding: 1.25rem;
+    }
+
+    @media (max-width: 600px) {
+      .hero-title { font-size: 1.4rem; }
+      .hero-cta-stats { margin-left: 0; margin-top: 0.5rem; }
+      .stat-item { min-width: 50%; }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+  <!-- ── SIDEBAR ───────────────────────────────────────────────── -->
+  <aside id="app-sidebar">
+    <div class="sidebar-logo">🇹🇼</div>
+    <nav class="sidebar-nav">
+      <a href="presentation.html" class="sidebar-link active" title="Présentation · 簡介">
+        <i class="fas fa-info-circle"></i>
+        <span>Groupe</span>
+      </a>
+      <a href="index.html" class="sidebar-link" title="Statistiques · 統計">
+        <i class="fas fa-chart-bar"></i>
+        <span>Stats</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN ─────────────────────────────────────────────────── -->
+  <main class="ml-16">
+
+    <!-- ── HERO ──────────────────────────────────────────────── -->
+    <div class="hero">
+      <div style="max-width:960px;margin:0 auto;">
+        <span class="hero-flag">🇹🇼🇫🇷</span>
+        <h1 class="hero-title">在法臺灣科技業互助團</h1>
+        <p class="hero-sub">Groupe Tech FR · Taiwan Tech Pros in France</p>
+        <p class="hero-desc">
+          專為「在法國或法商工作的臺灣工程師」建立的交流社群——認識彼此、交流資訊、互相幫助。<br>
+          <span style="opacity:0.75;font-size:0.88em;">Communauté de professionnels tech taïwanais en France pour se retrouver, partager et s'entraider.</span>
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:center;">
+          <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener" class="hero-cta">
+            <i class="fab fa-whatsapp"></i> Rejoindre le groupe · 加入群組
+          </a>
+          <a href="index.html" class="hero-cta-stats">
+            <i class="fas fa-chart-bar"></i> Voir les statistiques
+          </a>
+        </div>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="stats-bar" style="margin-top:2.5rem;">
+        <div class="stat-item">
+          <span class="stat-value">73+</span>
+          <span class="stat-label">Membres · 成員</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">🇫🇷</span>
+          <span class="stat-label">Basé en France</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">Tech</span>
+          <span class="stat-label">Domaine · 領域</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">🤝</span>
+          <span class="stat-label">Entraide · 互助</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── OBJECTIFS ──────────────────────────────────────────── -->
+    <div class="section">
+      <div class="section-title"><i class="fas fa-bullseye"></i> 群組目標 · Nos Objectifs</div>
+      <p class="section-sub">Ce que nous faisons ensemble · 我們一起做的事</p>
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-icon"><i class="fas fa-handshake"></i></div>
+          <div class="card-title">Networking 人脈建立</div>
+          <div class="card-desc">認識在法國各城市的臺灣工程師，建立長期互相支持的 network。<br>Connectez-vous avec des ingénieurs taïwanais à travers toute la France.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon"><i class="fas fa-briefcase"></i></div>
+          <div class="card-title">Opportunités d'emploi 職缺分享</div>
+          <div class="card-desc">分享工作機會與 mission 資訊（CDI / Freelance / ESN），互相推薦與引薦。<br>Partagez et découvrez des offres d'emploi et missions dans la tech.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon"><i class="fas fa-lightbulb"></i></div>
+          <div class="card-title">Partage de connaissances 知識分享</div>
+          <div class="card-desc">交流技術、職涯與法國職場經驗，組織 webinaires 和 coffee chats。<br>Échangez sur la tech, la carrière et la vie professionnelle en France.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon"><i class="fas fa-chart-line"></i></div>
+          <div class="card-title">Investissement 投資交流</div>
+          <div class="card-desc">交流在法國長期發展與投資的相關資訊，共同學習理財策略。<br>Échangez sur l'investissement et le développement financier à long terme en France.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon"><i class="fas fa-users"></i></div>
+          <div class="card-title">Communauté 社群建立</div>
+          <div class="card-desc">建立長期互相支持的臺灣工程師 network，不論你在哪個城市。<br>Construisons ensemble une communauté solidaire et durable.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon"><i class="fas fa-info-circle"></i></div>
+          <div class="card-title">Ressources pratiques 實用資訊</div>
+          <div class="card-desc">分享關於法國生活、行政、簽證等實用資訊，降低在法生活的門檻。<br>Partagez des infos pratiques sur la vie en France, l'administratif, le visa, etc.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── QUI PEUT REJOINDRE ─────────────────────────────────── -->
+    <div style="background:#fff;border-top:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9;">
+      <div class="section">
+        <div class="section-title"><i class="fas fa-door-open"></i> 誰可以加入 · Qui peut rejoindre ?</div>
+        <p class="section-sub">Le groupe est ouvert à · 歡迎加入的對象</p>
+        <div class="join-list">
+          <div class="join-item">
+            <i class="fas fa-check-circle"></i>
+            <span><strong>已在法國工作的工程師</strong>，或科技業等 · Ingénieurs taïwanais déjà en poste en France</span>
+          </div>
+          <div class="join-item">
+            <i class="fas fa-check-circle"></i>
+            <span><strong>剛到法國</strong>，正在適應新環境 · Nouveaux arrivants en France</span>
+          </div>
+          <div class="join-item">
+            <i class="fas fa-check-circle"></i>
+            <span><strong>正在找工作或 mission</strong> · En recherche active d'emploi ou de mission</span>
+          </div>
+          <div class="join-item">
+            <i class="fas fa-check-circle"></i>
+            <span><strong>或未來計畫來法國發展</strong>（法文能力非必要）· Envisagent de s'installer en France — le français n'est pas obligatoire !</span>
+          </div>
+        </div>
+        <div style="margin-top:1.5rem;padding:1rem 1.25rem;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;font-size:0.88rem;color:#065f46;font-weight:600;display:flex;align-items:center;gap:0.5rem;">
+          <i class="fas fa-smile-beam" style="font-size:1.1rem;"></i>
+          歡迎加入 · Bienvenue ! 🙌 — La communauté vous accueille chaleureusement.
+        </div>
+
+        <!-- Community spirit message -->
+        <div style="margin-top:1.25rem;padding:1.25rem 1.5rem;background:linear-gradient(135deg,#0a2d42 0%,#0f3d5c 100%);border-radius:12px;color:#fff;line-height:1.85;font-size:0.9rem;">
+          <div style="margin-bottom:0.6rem;">
+            📍 分享科技業相關職缺、面試心得<br>
+            📍 分享科技業求職經歷或心事<br>
+            📍 請教前輩職涯規劃
+          </div>
+          <div style="color:rgba(255,255,255,0.85);font-size:0.88rem;">
+            這裡不只是討論工作賣肝，更是一個<strong style="color:#6ee7b7;">相互支持與取暖</strong>的社群，期待看到各位的精彩分享！🔥
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── WHATSAPP CTA ───────────────────────────────────────── -->
+    <div class="whatsapp-section">
+      <h2>Rejoignez-nous sur WhatsApp · 加入我們的 WhatsApp 群組</h2>
+      <p>Cliquez sur le lien ci-dessous pour rejoindre la communauté · 點擊以下連結加入社群</p>
+      <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener"
+         style="display:inline-flex;align-items:center;gap:0.6rem;background:#25d366;color:#fff;font-size:1rem;font-weight:700;padding:0.9rem 2rem;border-radius:12px;text-decoration:none;transition:opacity 0.15s;"
+         onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+        <i class="fab fa-whatsapp" style="font-size:1.3rem;"></i>
+        Join the group · 加入群組
+      </a>
+      <p style="margin-top:1.5rem;font-size:0.78rem;opacity:0.5;">
+        Une fois dans le groupe, n'hésitez pas à vous présenter ! · 加入後請自我介紹！
+      </p>
+    </div>
+
+    <!-- ── FOOTER ─────────────────────────────────────────────── -->
+    <footer>
+      在法臺灣科技業互助團 🇹🇼🇫🇷 · Groupe Tech FR · Taiwan Tech Pros in France ·
+      <a href="index.html" style="color:rgba(255,255,255,0.5);text-decoration:underline;">Statistiques membres</a>
+    </footer>
+
+  </main>
+
+</body>
+</html>

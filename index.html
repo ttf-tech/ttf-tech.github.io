@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statistiques Membres — Groupe Tech FR 🇹🇼🇫🇷</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇹🇼</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/stastic_member.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Firebase SDK (compat v9 — needed for Realtime Database) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <style>
+    /* ── Sidebar styles ─────────────────────────────────────────── */
+    #app-sidebar {
+      position: fixed; top: 0; left: 0; height: 100%; width: 4rem;
+      background: #111827;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 1.25rem 0; z-index: 20;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+    }
+    .sidebar-logo {
+      font-size: 1.6rem; line-height: 1; margin-bottom: 2rem;
+      cursor: default; user-select: none;
+    }
+    .sidebar-nav { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+    .sidebar-link {
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      color: rgba(255,255,255,0.4);
+      text-decoration: none;
+      transition: color 0.15s;
+      padding: 0.5rem;
+      border-radius: 10px;
+      width: 3rem;
+      justify-content: center;
+      font-size: 1.15rem;
+    }
+    .sidebar-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
+    .sidebar-link.active { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .sidebar-link span {
+      font-size: 0.55rem; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      opacity: 0.75;
+    }
+    .sidebar-link.active span { opacity: 1; }
+  </style>
+
+</head>
+<body class="bg-gray-100 text-gray-900 flex flex-col min-h-screen">
+
+  <!-- ── SIDEBAR ───────────────────────────────────────────────── -->
+  <aside id="app-sidebar">
+    <div class="sidebar-logo">🇹🇼</div>
+    <nav class="sidebar-nav">
+      <a href="presentation.html" class="sidebar-link" title="Présentation · 簡介">
+        <i class="fas fa-info-circle"></i>
+        <span>Groupe</span>
+      </a>
+      <a href="index.html" class="sidebar-link active" title="Statistiques · 統計">
+        <i class="fas fa-chart-bar"></i>
+        <span>Stats</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN ─────────────────────────────────────────────────── -->
+  <main role="main" class="flex-1 ml-16">
+
+    <!-- ── DARK HEADER ───────────────────────────────────────── -->
+    <div class="text-white" style="background: linear-gradient(160deg,#0a2d42 0%,#0f4060 100%);">
+      <div class="max-w-screen-xl mx-auto px-5 py-5">
+
+        <!-- Top bar: back link | group name + KPIs | export/import -->
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+
+          <!-- Left: link + group name -->
+          <div class="flex flex-col gap-2">
+            <a href="presentation.html"
+               class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 transition rounded-lg px-3 py-2 text-sm font-medium w-fit">
+              <i class="fas fa-home text-xs"></i>Présentation
+            </a>
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center text-sm">
+                <i class="fab fa-whatsapp text-green-400"></i>
+              </div>
+              <div>
+                <div class="font-bold text-base leading-tight">在法臺灣科技業互助團 🇹🇼🇫🇷</div>
+                <div class="text-xs text-gray-400">Taiwan Tech Pros · France</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Center: KPI tiles -->
+          <div class="sm-kpi-grid flex-1 justify-center">
+            <div class="sm-kpi-tile">
+              <span class="sm-kpi-label">Membres</span>
+              <span class="sm-kpi-value accent" id="kpi-members">—</span>
+            </div>
+            <div class="sm-kpi-tile">
+              <span class="sm-kpi-label">Sondages ouverts</span>
+              <span class="sm-kpi-value green" id="kpi-open">—</span>
+            </div>
+            <div class="sm-kpi-tile">
+              <span class="sm-kpi-label">Total réponses</span>
+              <span class="sm-kpi-value blue" id="kpi-responses">—</span>
+            </div>
+          </div>
+
+          <!-- Right: actions -->
+          <div class="flex flex-col gap-2 items-end">
+            <button id="export-btn" class="sm-btn sm-btn-ghost">
+              <i class="fas fa-download"></i>Export JSON
+            </button>
+            <button id="import-btn" class="sm-btn sm-btn-ghost">
+              <i class="fas fa-upload"></i>Import JSON
+            </button>
+            <input id="import-file" type="file" accept="application/json" class="hidden">
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── TAB BAR ─────────────────────────────────────────── -->
+      <div class="sm-tab-bar max-w-screen-xl mx-auto">
+        <button class="sm-tab active" data-tab="dashboard">
+          <i class="fas fa-chart-pie"></i>Tableau de bord
+        </button>
+        <button class="sm-tab" data-tab="members">
+          <i class="fas fa-users"></i>Membres
+        </button>
+        <button class="sm-tab" data-tab="surveys">
+          <i class="fas fa-poll"></i>Sondages
+        </button>
+        <button class="sm-tab" data-tab="sharing">
+          <i class="fas fa-lightbulb"></i>Partage
+        </button>
+        <button class="sm-tab create-tab" data-tab="create">
+          <i class="fas fa-plus-circle"></i>+ Créer sondage
+        </button>
+      </div>
+    </div>
+    <!-- /DARK HEADER -->
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- TAB PANE: DASHBOARD                                      -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="tab-pane active" data-tab="dashboard">
+
+      <!-- ── GROUP ABOUT CARD ───────────────────────────────────── -->
+      <div class="sm-about-wrap">
+        <div class="sm-about-card">
+
+          <!-- Left column: identity -->
+          <div class="sm-about-identity">
+            <div class="sm-about-avatar">🇹🇼</div>
+            <div>
+              <div class="sm-about-name">Groupe Tech FR 🇫🇷</div>
+              <div class="sm-about-tagline">Taiwan Tech Pros · France</div>
+              <div class="sm-about-desc">
+                專為「在法國或法商工作的臺灣工程師」建立的交流社群——認識彼此、交流資訊、互相幫助。<br>
+                <span style="opacity:0.75;font-size:0.78rem;">Communauté de professionnels tech taïwanais en France pour se retrouver, partager et s'entraider.</span>
+              </div>
+              <div class="sm-about-badges">
+                <span class="sm-about-badge"><i class="fab fa-whatsapp"></i> WhatsApp</span>
+                <span class="sm-about-badge"><i class="fas fa-map-marker-alt"></i> France</span>
+                <span class="sm-about-badge"><i class="fas fa-users"></i> 臺灣工程師</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right column: goals + who can join -->
+          <div class="sm-about-right">
+
+            <div class="sm-about-section">
+              <div class="sm-about-section-title"><i class="fas fa-bullseye"></i> 群組目標 · Objectifs</div>
+              <ul class="sm-about-list">
+                <li><i class="fas fa-check-circle"></i> 認識在法國各城市的臺灣工程師</li>
+                <li><i class="fas fa-check-circle"></i> 分享工作機會與 mission 資訊（CDI / Freelance / ESN）</li>
+                <li><i class="fas fa-check-circle"></i> 互相推薦與引薦工程師或職缺</li>
+                <li><i class="fas fa-check-circle"></i> 交流技術、職涯與法國職場經驗</li>
+                <li><i class="fas fa-check-circle"></i> 建立長期互相支持的臺灣工程師 network</li>
+              </ul>
+            </div>
+
+            <div class="sm-about-section">
+              <div class="sm-about-section-title"><i class="fas fa-door-open"></i> 誰可以加入 · Qui peut rejoindre ?</div>
+              <ul class="sm-about-list">
+                <li><i class="fas fa-angle-right"></i> 已在法國工作的工程師，或科技業等</li>
+                <li><i class="fas fa-angle-right"></i> 剛到法國</li>
+                <li><i class="fas fa-angle-right"></i> 正在找工作或 mission</li>
+                <li><i class="fas fa-angle-right"></i> 或未來計畫來法國發展 <span style="opacity:0.65;">(法文能力非必要)</span></li>
+              </ul>
+              <div class="sm-about-welcome">歡迎加入 · Bienvenue ! 🙌</div>
+              <div class="sm-about-whatsapp">
+                <i class="fab fa-whatsapp"></i>
+                You can also join via WhatsApp:
+                <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener">Join the group 加入群組</a>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <!-- /GROUP ABOUT -->
+
+      <!-- ── ANNOUNCEMENTS BLOCK ─────────────────────────────── -->
+      <div class="sm-annc-wrap">
+        <div class="sm-annc-header">
+          <div class="sm-annc-header-left">
+            <span class="sm-annc-icon"><i class="fas fa-bullhorn"></i></span>
+            <div>
+              <div class="sm-annc-title">Actualités &amp; Activités · 最新消息 &amp; 活動</div>
+              <div class="sm-annc-sub">Prochains webinaires, coffee chats, événements · 即將到來的活動與分享</div>
+            </div>
+          </div>
+          <button id="add-annc-btn" class="sm-btn sm-btn-emerald" style="flex-shrink:0;">
+            <i class="fas fa-plus"></i>+ Ajouter
+          </button>
+        </div>
+        <div class="sm-annc-list" id="annc-list">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+      <!-- /ANNOUNCEMENTS -->
+
+      <!-- ── JOB SHARING BLOCK ──────────────────────────────────── -->
+      <div class="sm-job-wrap">
+        <div class="sm-job-header">
+          <div class="sm-job-header-left">
+            <span class="sm-job-icon"><i class="fas fa-briefcase"></i></span>
+            <div>
+              <div class="sm-job-title">Offres &amp; Missions · 職缺分享</div>
+              <div class="sm-job-sub">Partagez des opportunités · 分享職缺，成員可直接投遞 CV</div>
+            </div>
+          </div>
+          <button id="add-job-btn" class="sm-btn sm-btn-emerald" style="flex-shrink:0;">
+            <i class="fas fa-plus"></i>+ Ajouter
+          </button>
+        </div>
+        <div class="sm-job-list" id="job-list">
+          <!-- Injected by JS -->
+        </div>
+      </div>
+      <!-- /JOB SHARING -->
+
+      <div class="sm-dashboard-grid">
+
+        <!-- Tech domains chart -->
+        <div class="sm-chart-card">
+          <div class="sm-chart-header">
+            <i class="fas fa-code" style="margin-right:0.4rem;"></i>
+            你的主要技術領域是？ — Domaines techniques (WhatsApp)
+          </div>
+          <div class="sm-chart-body">
+            <canvas id="chart-tech" height="320"></canvas>
+          </div>
+        </div>
+
+        <!-- Investment interest chart -->
+        <div class="sm-chart-card">
+          <div class="sm-chart-header">
+            <i class="fas fa-chart-pie" style="margin-right:0.4rem;"></i>
+            是否有興趣交流投資？ — Intérêt investissement (WhatsApp)
+          </div>
+          <div class="sm-chart-body">
+            <canvas id="chart-invest" height="320"></canvas>
+          </div>
+        </div>
+
+        <!-- City chart -->
+        <div class="sm-chart-card">
+          <div class="sm-chart-header">
+            <i class="fas fa-map-marker-alt" style="margin-right:0.4rem;"></i>
+            你目前主要所在城市是？ — Localisation des membres (WhatsApp)
+          </div>
+          <div class="sm-chart-body">
+            <canvas id="chart-city" height="280"></canvas>
+          </div>
+        </div>
+
+        <!-- Job status chart -->
+        <div class="sm-chart-card">
+          <div class="sm-chart-header">
+            <i class="fas fa-briefcase" style="margin-right:0.4rem;"></i>
+            你目前的狀態是？ — Statut professionnel (WhatsApp)
+          </div>
+          <div class="sm-chart-body">
+            <canvas id="chart-status" height="280"></canvas>
+          </div>
+        </div>
+
+        <!-- Tool note (compact) -->
+        <div class="sm-chart-card" style="grid-column:1/-1;">
+          <div class="sm-chart-header">
+            <i class="fas fa-database" style="margin-right:0.4rem;"></i>
+            À propos de cet outil
+          </div>
+          <div class="sm-chart-body" style="display:flex;align-items:center;flex-wrap:wrap;gap:0.75rem;">
+            <span style="font-size:0.78rem;color:#64748b;flex:1;min-width:200px;">
+              Données communautaires partagées en temps réel via Firebase · 社群數據透過 Firebase 即時同步。
+              Exportables au format JSON.
+            </span>
+            <span class="inline-flex items-center gap-1 text-xs bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-full px-2.5 py-1 font-semibold">
+              <i class="fab fa-whatsapp"></i> Données WhatsApp importées
+            </span>
+            <span class="inline-flex items-center gap-1 text-xs bg-blue-50 border border-blue-200 text-blue-800 rounded-full px-2.5 py-1 font-semibold">
+              <i class="fas fa-bolt"></i> Firebase Realtime
+            </span>
+            <span class="inline-flex items-center gap-1 text-xs bg-green-50 border border-green-200 text-green-800 rounded-full px-2.5 py-1 font-semibold">
+              <i class="fas fa-shield-alt"></i> Accès sécurisé SHA-256
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- /DASHBOARD -->
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- TAB PANE: MEMBERS                                        -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="tab-pane" data-tab="members">
+
+      <!-- ── Members info banner ───────────────────────────────── -->
+      <div class="sm-survey-banner-wrap">
+        <div class="sm-survey-banner">
+          <div class="sm-survey-banner-header">
+            <span class="sm-survey-banner-title">
+              <i class="fas fa-users"></i>
+              在法臺灣科技業互助團 🇹🇼🇫🇷 · Annuaire des membres
+            </span>
+            <span class="sm-survey-banner-badges">
+              <span class="sm-badge sm-badge-open"><i class="fab fa-whatsapp" style="font-family:'Font Awesome 6 Brands'"></i> WhatsApp</span>
+              <span class="sm-badge sm-badge-anon"><i class="fas fa-user-plus"></i> Ouvert</span>
+            </span>
+          </div>
+          <div class="sm-survey-banner-rules">
+            <div class="sm-survey-rule">
+              <i class="fas fa-info-circle"></i>
+              <div>
+                <strong>成員來源 · Source des membres</strong>
+                <span>名單來自 WhatsApp 社群，但由於訊息轉移可能有所遺漏。 · La liste est issue du groupe WhatsApp, mais certains membres peuvent manquer en raison de la migration.</span>
+              </div>
+            </div>
+            <div class="sm-survey-rule">
+              <i class="fas fa-user-edit"></i>
+              <div>
+                <strong>找不到你的名字？歡迎自行加入 · Vous ne vous trouvez pas ?</strong>
+                <span>點擊「+ Ajouter membre」新增你的名字，並可選填備註（如你的職業、身份或加入原因等，非必填）。 · Cliquez sur « + Ajouter membre » pour vous ajouter. Vous pouvez laisser une note (ex : dev, manager, raison de rejoindre…) — facultatif.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- /Members info banner -->
+
+      <div class="sm-members-toolbar">
+        <input id="member-search" class="sm-search" type="text" placeholder="Rechercher un membre…">
+        <button id="add-member-btn" class="sm-btn sm-btn-emerald">
+          <i class="fas fa-user-plus"></i>+ Ajouter membre
+        </button>
+      </div>
+
+      <div class="sm-members-grid" id="members-grid">
+        <!-- Injected by JS -->
+      </div>
+
+    </div>
+    <!-- /MEMBERS -->
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- TAB PANE: SURVEYS                                        -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="tab-pane" data-tab="surveys">
+
+      <!-- ── Survey info banner ───────────────────────────────── -->
+      <div class="sm-survey-banner-wrap">
+      <div class="sm-survey-banner">
+        <div class="sm-survey-banner-header">
+          <span class="sm-survey-banner-title">
+            <i class="fas fa-chart-bar"></i>
+            在法臺灣科技業互助團 🇹🇼🇫🇷 · Sondages communautaires
+          </span>
+          <span class="sm-survey-banner-badges">
+            <span class="sm-badge sm-badge-anon"><i class="fas fa-eye-slash"></i> Anonyme</span>
+            <span class="sm-badge sm-badge-open"><i class="fas fa-lock-open"></i> Ouvert à tous</span>
+          </span>
+        </div>
+        <div class="sm-survey-banner-rules">
+          <div class="sm-survey-rule">
+            <i class="fas fa-shield-alt"></i>
+            <div>
+              <strong>隱私保護 · Confidentialité</strong>
+              <span>所有問卷均為匿名 · Tous les sondages sont anonymes — vos réponses ne sont jamais associées à votre nom.</span>
+            </div>
+          </div>
+          <div class="sm-survey-rule">
+            <i class="fas fa-user-check"></i>
+            <div>
+              <strong>投票條件 · Condition de vote</strong>
+              <span>需為社群成員才能投票。若遭拒絕，請先至「Membres」分頁以你的名字加入，再回來投票。 · Vous devez être membre pour voter. Si votre vote est refusé, allez dans l'onglet Membres, ajoutez-vous, puis revenez voter.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+      <!-- /Survey info banner -->
+
+      <div class="sm-surveys-wrap" id="surveys-list">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+    <!-- /SURVEYS -->
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- TAB PANE: SHARING                                        -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="tab-pane" data-tab="sharing">
+
+      <!-- ── Sharing info banner ───────────────────────────────── -->
+      <div class="sm-survey-banner-wrap">
+        <div class="sm-survey-banner">
+          <div class="sm-survey-banner-header">
+            <span class="sm-survey-banner-title">
+              <i class="fas fa-lightbulb"></i>
+              在法臺灣科技業互助團 🇹🇼🇫🇷 · Partage communautaire
+            </span>
+            <span class="sm-survey-banner-badges">
+              <span class="sm-badge sm-badge-open"><i class="fas fa-history"></i> Historique</span>
+              <span class="sm-badge sm-badge-anon"><i class="fas fa-users"></i> Membres volontaires</span>
+            </span>
+          </div>
+          <div class="sm-survey-banner-rules">
+            <div class="sm-survey-rule">
+              <i class="fas fa-archive"></i>
+              <div>
+                <strong>歷史分享紀錄 · Archives des partages</strong>
+                <span>這裡收錄在法臺灣科技業互助團成員的過往分享，包含簡報、文件與心得。 · Retrouvez ici les partages passés des membres : slides, docs et retours d'expérience.</span>
+              </div>
+            </div>
+            <div class="sm-survey-rule">
+              <i class="fas fa-hand-paper"></i>
+              <div>
+                <strong>歡迎自願分享 · Participez !</strong>
+                <span>若無法參加 Google Meet，可在此參考資料，也歡迎在 WhatsApp 群組提問與回饋。 · Si vous ne pouvez pas rejoindre le Google Meet, consultez les ressources ici et posez vos questions sur WhatsApp.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- /Sharing info banner -->
+
+      <div class="sm-sharing-toolbar">
+        <div>
+          <div class="sm-sharing-toolbar-title">
+            <i class="fas fa-lightbulb"></i>Partage de connaissances
+          </div>
+          <div class="sm-sharing-toolbar-sub">
+            Sessions Google Meet, retours d'expérience, ressources partagées…
+          </div>
+        </div>
+        <button id="add-sharing-btn" class="sm-btn sm-btn-emerald">
+          <i class="fas fa-plus"></i>+ Nouveau partage
+        </button>
+      </div>
+      <div class="sm-sharing-list" id="sharing-list">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+    <!-- /SHARING -->
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- TAB PANE: CREATE SURVEY                                  -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="tab-pane" data-tab="create">
+      <div class="sm-create-wrap">
+        <div class="sm-create-card">
+
+          <h2 class="text-base font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <i class="fas fa-plus-circle text-emerald-600"></i>
+            Créer un nouveau sondage
+          </h2>
+
+          <div class="sm-form-group">
+            <label class="sm-label" for="c-title">Titre (langue originale) *</label>
+            <input id="c-title" class="sm-input" type="text"
+                   placeholder="ex: 你目前的工作狀態是？">
+          </div>
+
+          <div class="sm-form-group">
+            <label class="sm-label" for="c-title-fr">Titre en français (optionnel)</label>
+            <input id="c-title-fr" class="sm-input" type="text"
+                   placeholder="ex: Quel est votre statut professionnel actuel ?">
+          </div>
+
+          <div class="sm-form-group">
+            <label class="sm-label" for="c-desc">Description (optionnel)</label>
+            <textarea id="c-desc" class="sm-input" rows="2"
+                      placeholder="Contexte ou instructions supplémentaires…"
+                      style="resize:vertical;"></textarea>
+          </div>
+
+          <div class="sm-input-grid">
+            <div class="sm-form-group">
+              <label class="sm-label" for="c-type">Mode de vote</label>
+              <select id="c-type" class="sm-input">
+                <option value="multi">Choix multiple (可複選)</option>
+                <option value="single">Choix unique (單選)</option>
+              </select>
+            </div>
+            <div class="sm-form-group">
+              <label class="sm-label" for="c-privacy">Visibilité des résultats</label>
+              <select id="c-privacy" class="sm-input">
+                <option value="count_only">Comptage seulement (anonyme)</option>
+                <option value="show_voters">Afficher les noms des votants</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="sm-form-group">
+            <label class="sm-label">Options de réponse *</label>
+            <div id="option-builder" class="sm-option-builder">
+              <!-- Rows injected by JS -->
+            </div>
+            <button id="add-option-btn" class="sm-btn sm-btn-ghost"
+                    style="background:#f1f5f9;border:1px dashed #cbd5e1;color:#475569;margin-top:0.25rem;"
+                    type="button">
+              <i class="fas fa-plus"></i>Ajouter une option
+            </button>
+          </div>
+
+          <div style="margin-top:1.25rem;display:flex;gap:0.75rem;justify-content:flex-end;">
+            <button type="button" id="create-survey-btn" class="sm-btn sm-btn-emerald" style="padding:0.6rem 1.5rem;font-size:0.85rem;">
+              <i class="fas fa-check"></i>Créer le sondage
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Info note -->
+        <div class="mt-3 bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800 flex gap-2">
+          <i class="fas fa-info-circle mt-0.5 flex-shrink-0"></i>
+          <span>
+            Les nouvelles données sont sauvegardées dans <strong>Firebase</strong> et synchronisées en temps réel pour tous les membres.
+          </span>
+        </div>
+      </div>
+    </div>
+    <!-- /CREATE -->
+
+  </main>
+  <!-- /MAIN -->
+
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- VOTE MODAL                                                 -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="vote-modal" class="sm-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="vote-modal-title">
+    <div class="sm-modal-box">
+      <div class="sm-modal-header">
+        <span class="sm-modal-title" id="vote-modal-title">Voter</span>
+        <button id="vote-modal-close" class="sm-modal-close" type="button" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="sm-modal-body">
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="vote-member-name">Votre nom *</label>
+          <input id="vote-member-name" class="sm-input" type="text"
+                 list="vote-member-datalist"
+                 placeholder="Entrez ou sélectionnez votre nom…"
+                 autocomplete="off">
+          <datalist id="vote-member-datalist"></datalist>
+          <div style="font-size:0.68rem;color:#94a3b8;margin-top:0.2rem;">
+            Commencez à taper pour filtrer les membres existants, ou entrez un nouveau nom.
+          </div>
+          <div id="vote-name-error" style="display:none;margin-top:0.5rem;padding:0.6rem 0.75rem;background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;font-size:0.75rem;color:#be123c;line-height:1.5;"></div>
+        </div>
+
+        <div class="sm-label" style="margin-bottom:0.4rem;">Options *</div>
+        <div id="vote-modal-options" class="sm-vote-options">
+          <!-- Injected by JS -->
+        </div>
+
+      </div>
+      <div class="sm-modal-footer">
+        <button id="vote-modal-cancel" type="button"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          Annuler
+        </button>
+        <button id="vote-modal-submit" type="button"
+                style="padding:0.5rem 1.25rem;border-radius:7px;border:none;background:#0a2d42;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+          <i class="fas fa-check"></i>Enregistrer mon vote
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- /VOTE MODAL -->
+
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- MEMBER MODAL                                               -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="member-modal" class="sm-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="member-modal-title">
+    <div class="sm-modal-box">
+      <div class="sm-modal-header">
+        <span class="sm-modal-title" id="member-modal-title">Ajouter un membre</span>
+        <button id="member-modal-close" class="sm-modal-close" type="button" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="sm-modal-body">
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="m-name">Nom *</label>
+          <input id="m-name" class="sm-input" type="text" placeholder="ex: Wei-Chen Liu">
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="m-joined">Date d'arrivée dans le groupe</label>
+          <input id="m-joined" class="sm-input" type="date">
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="m-note">Note / Description (optionnel)</label>
+          <textarea id="m-note" class="sm-input" rows="3"
+                    placeholder="ex: Ingénieure Data chez Criteo, Paris…"
+                    style="resize:vertical;"></textarea>
+        </div>
+
+      </div>
+      <div class="sm-modal-footer">
+        <button id="member-modal-delete" type="button" class="hidden"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #fecdd3;background:#fff1f2;color:#be123c;font-size:0.82rem;font-weight:600;cursor:pointer;margin-right:auto;">
+          <i class="fas fa-trash" style="margin-right:0.3rem;"></i>Supprimer
+        </button>
+        <button id="member-modal-cancel" type="button"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          Annuler
+        </button>
+        <button id="member-modal-save" type="button"
+                style="padding:0.5rem 1.25rem;border-radius:7px;border:none;background:#0a2d42;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+          <i class="fas fa-save"></i>Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- /MEMBER MODAL -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- ANNOUNCEMENT MODAL                                         -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="annc-modal" class="sm-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="annc-modal-title">
+    <div class="sm-modal-box" style="max-width:540px;">
+      <div class="sm-modal-header">
+        <span class="sm-modal-title" id="annc-modal-title">Nouvelle annonce · 新增公告</span>
+        <button id="annc-modal-close" class="sm-modal-close" type="button" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="sm-modal-body">
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="annc-author">Votre nom (membre) · 您的名字（成員）*</label>
+          <input id="annc-author" class="sm-input" type="text"
+                 list="annc-author-datalist"
+                 placeholder="Entrez votre nom de membre…"
+                 autocomplete="off">
+          <datalist id="annc-author-datalist"></datalist>
+          <div id="annc-author-error" style="display:none;margin-top:0.4rem;padding:0.55rem 0.75rem;background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;font-size:0.73rem;color:#be123c;line-height:1.55;"></div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="annc-title">Titre · 標題 *</label>
+          <input id="annc-title" class="sm-input" type="text"
+                 placeholder="ex: Webinaire — France 15 ans d'expérience">
+        </div>
+
+        <div class="sm-input-grid">
+          <div class="sm-form-group">
+            <label class="sm-label" for="annc-date">Date &amp; heure · 日期時間 *</label>
+            <input id="annc-date" class="sm-input" type="datetime-local">
+          </div>
+          <div class="sm-form-group">
+            <label class="sm-label" for="annc-host">Hôte / Présentateur · 主講人 *</label>
+            <input id="annc-host" class="sm-input" type="text"
+                   list="annc-host-datalist"
+                   placeholder="ex: Terry TAN"
+                   autocomplete="off">
+            <datalist id="annc-host-datalist"></datalist>
+          </div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="annc-type">Type d'événement · 活動類型</label>
+          <select id="annc-type" class="sm-input">
+            <option value="Webinaire">Webinaire / 網路研討會</option>
+            <option value="Coffee Chat">Coffee Chat</option>
+            <option value="Partage">Partage de connaissances / 知識分享</option>
+            <option value="Networking">Networking / 交流</option>
+            <option value="Autre">Autre / 其他</option>
+          </select>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="annc-desc">Description · 說明內容 *</label>
+          <textarea id="annc-desc" class="sm-input" rows="3"
+                    placeholder="Sujet, programme, informations pratiques… · 主題、議程、注意事項…"
+                    style="resize:vertical;"></textarea>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="annc-link">Lien Google Meet / URL · 會議連結（選填）</label>
+          <input id="annc-link" class="sm-input" type="url"
+                 placeholder="https://meet.google.com/…">
+        </div>
+
+      </div>
+      <div class="sm-modal-footer">
+        <button id="annc-modal-delete" type="button" class="hidden"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #fecdd3;background:#fff1f2;color:#be123c;font-size:0.82rem;font-weight:600;cursor:pointer;margin-right:auto;">
+          <i class="fas fa-trash" style="margin-right:0.3rem;"></i>Supprimer
+        </button>
+        <button id="annc-modal-cancel" type="button"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          Annuler
+        </button>
+        <button id="annc-modal-save" type="button"
+                style="padding:0.5rem 1.25rem;border-radius:7px;border:none;background:#0a2d42;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+          <i class="fas fa-save"></i>Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- /ANNOUNCEMENT MODAL -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SHARING MODAL                                              -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="sharing-modal" class="sm-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="sharing-modal-title">
+    <div class="sm-modal-box" style="max-width:560px;">
+      <div class="sm-modal-header">
+        <span class="sm-modal-title" id="sharing-modal-title">Nouveau partage</span>
+        <button id="sharing-modal-close" class="sm-modal-close" type="button" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="sm-modal-body">
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="sh-title">Titre du partage *</label>
+          <input id="sh-title" class="sm-input" type="text"
+                 placeholder="ex: France Taxes &amp; Costs Discussion">
+        </div>
+
+        <div class="sm-input-grid">
+          <div class="sm-form-group">
+            <label class="sm-label" for="sh-date">Date &amp; heure *</label>
+            <input id="sh-date" class="sm-input" type="datetime-local">
+          </div>
+          <div class="sm-form-group">
+            <label class="sm-label" for="sh-host">Hôte / Présentateur *</label>
+            <input id="sh-host" class="sm-input" type="text"
+                   list="sh-host-datalist"
+                   placeholder="ex: I-Chun"
+                   autocomplete="off">
+            <datalist id="sh-host-datalist"></datalist>
+          </div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="sh-tag">Catégorie</label>
+          <select id="sh-tag" class="sm-input">
+            <option value="">— Choisir une catégorie —</option>
+            <option value="Finance">Finance / Investissement</option>
+            <option value="Tech">Tech / IA</option>
+            <option value="Visa">Visa / Immigration</option>
+            <option value="Vie">Vie en France</option>
+            <option value="Carrière">Carrière / Emploi</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="sh-desc">Description (optionnel)</label>
+          <textarea id="sh-desc" class="sm-input" rows="2"
+                    placeholder="Résumé du sujet abordé…"
+                    style="resize:vertical;"></textarea>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="sh-doc">URL du document (optionnel)</label>
+          <input id="sh-doc" class="sm-input" type="url"
+                 placeholder="ex: https://docs.google.com/…">
+          <div style="font-size:0.68rem;color:#94a3b8;margin-top:0.2rem;">
+            Google Drive, Google Docs, PDF partagé, lien externe…
+          </div>
+        </div>
+
+      </div>
+      <div class="sm-modal-footer">
+        <button id="sharing-modal-delete" type="button" class="hidden"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #fecdd3;background:#fff1f2;color:#be123c;font-size:0.82rem;font-weight:600;cursor:pointer;margin-right:auto;">
+          <i class="fas fa-trash" style="margin-right:0.3rem;"></i>Supprimer
+        </button>
+        <button id="sharing-modal-cancel" type="button"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          Annuler
+        </button>
+        <button id="sharing-modal-save" type="button"
+                style="padding:0.5rem 1.25rem;border-radius:7px;border:none;background:#0a2d42;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+          <i class="fas fa-save"></i>Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- /SHARING MODAL -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- JOB MODAL                                                   -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="job-modal" class="sm-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="job-modal-title">
+    <div class="sm-modal-box" style="max-width:580px;">
+      <div class="sm-modal-header">
+        <span class="sm-modal-title" id="job-modal-title">Nouvelle offre · 新增職缺</span>
+        <button id="job-modal-close" class="sm-modal-close" type="button" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="sm-modal-body">
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="job-poster">Votre nom (membre) · 您的名字（成員）*</label>
+          <input id="job-poster" class="sm-input" type="text"
+                 list="job-poster-datalist"
+                 placeholder="Entrez votre nom de membre…"
+                 autocomplete="off">
+          <datalist id="job-poster-datalist"></datalist>
+          <div id="job-poster-error" style="display:none;margin-top:0.4rem;padding:0.55rem 0.75rem;background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;font-size:0.73rem;color:#be123c;line-height:1.55;"></div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="job-title">Titre du poste · 職位名稱 *</label>
+          <input id="job-title" class="sm-input" type="text"
+                 placeholder="ex: Software Tester (H/F)">
+        </div>
+
+        <div class="sm-input-grid">
+          <div class="sm-form-group">
+            <label class="sm-label" for="job-location">Lieu · 地點 *</label>
+            <input id="job-location" class="sm-input" type="text"
+                   placeholder="ex: Strasbourg, Paris, Remote…">
+          </div>
+          <div class="sm-form-group">
+            <label class="sm-label" for="job-contract">Contrat · 合約類型 *</label>
+            <select id="job-contract" class="sm-input">
+              <option value="CDI">CDI（長期合約）</option>
+              <option value="CDD">CDD（定期合約）</option>
+              <option value="Stage">Stage / 實習</option>
+              <option value="Alternance">Alternance / 交替實習</option>
+              <option value="Freelance">Freelance / 自由接案</option>
+              <option value="Autre">Autre / 其他</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="job-salary">Salaire · 薪資範圍（選填）</label>
+          <input id="job-salary" class="sm-input" type="text"
+                 placeholder="ex: 40 000 € – 45 000 € / an">
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="job-desc">Contenu du poste · 工作內容 *</label>
+          <textarea id="job-desc" class="sm-input" rows="4"
+                    placeholder="• 主要職責與工作內容…&#10;• 使用的技術工具…"
+                    style="resize:vertical;"></textarea>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="job-reqs">Conditions · 應徵條件（選填）</label>
+          <textarea id="job-reqs" class="sm-input" rows="3"
+                    placeholder="• 學歷、經驗要求…&#10;• 技能、語言要求…"
+                    style="resize:vertical;"></textarea>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="job-email">Email pour envoyer CV · 投遞 CV 信箱（選填）</label>
+          <input id="job-email" class="sm-input" type="email"
+                 placeholder="ex: recrutement@entreprise.fr">
+        </div>
+
+      </div>
+      <div class="sm-modal-footer">
+        <button id="job-modal-delete" type="button" class="hidden"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #fecdd3;background:#fff1f2;color:#be123c;font-size:0.82rem;font-weight:600;cursor:pointer;margin-right:auto;">
+          <i class="fas fa-trash" style="margin-right:0.3rem;"></i>Supprimer
+        </button>
+        <button id="job-modal-cancel" type="button"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          Annuler
+        </button>
+        <button id="job-modal-save" type="button"
+                style="padding:0.5rem 1.25rem;border-radius:7px;border:none;background:#0a2d42;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+          <i class="fas fa-save"></i>Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- /JOB MODAL -->
+
+  <script src="assets/js/stastic_member.js" defer></script>
+</body>
+</html>

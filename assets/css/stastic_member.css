@@ -64,8 +64,8 @@
   display: block;
 }
 .sm-kpi-value {
-  font-size: 1.4rem;
-  font-weight: 800;
+  font-size: 1.75rem;
+  font-weight: 900;
   color: #fff;
   line-height: 1.1;
   display: block;
@@ -73,6 +73,41 @@
 .sm-kpi-value.accent { color: #fbbf24; }
 .sm-kpi-value.green  { color: #6ee7b7; }
 .sm-kpi-value.blue   { color: #93c5fd; }
+
+/* ── Hero CTA buttons ────────────────────────────────────────── */
+.sm-hero-cta-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.5rem;
+  border-radius: 99px;
+  background: #25d366;
+  color: #fff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  box-shadow: 0 2px 12px rgba(37,211,102,0.4);
+}
+.sm-hero-cta-primary:hover { background: #1db954; transform: translateY(-1px); }
+
+.sm-hero-cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.28);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.sm-hero-cta-secondary:hover { background: rgba(255,255,255,0.22); transform: translateY(-1px); }
 
 /* ── Header action buttons ───────────────────────────────────── */
 .sm-btn {

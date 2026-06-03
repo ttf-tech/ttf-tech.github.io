@@ -302,32 +302,22 @@ function computeCounts(survey) {
 
 // ── Compute KPIs ───────────────────────────────────────────────
 function computeKPIs(st) {
-  const totalMembers = st.members.length;
-  const openSurveys = st.surveys.filter(s => s.status === 'open').length;
-
-  let totalResponses = 0;
-  for (const survey of st.surveys) {
-    // Count unique live voters
-    totalResponses += Object.keys(survey.votesByMember || {}).length;
-    // Add legacy totals (sum of all option counts as proxy for response count)
-    if (survey.legacyCounts) {
-      const legacyTotal = Object.values(survey.legacyCounts).reduce((a, b) => a + b, 0);
-      totalResponses += legacyTotal;
-    }
-  }
-
-  return { totalMembers, openSurveys, totalResponses };
+  return {
+    totalMembers: st.members.length,
+    jobCount:     (st.jobs          || []).length,
+    eventCount:   (st.announcements || []).length
+  };
 }
 
 // ── KPI render ─────────────────────────────────────────────────
 function renderKPIs() {
   const kpi = computeKPIs(state);
   const elM = document.getElementById('kpi-members');
-  const elO = document.getElementById('kpi-open');
-  const elR = document.getElementById('kpi-responses');
+  const elJ = document.getElementById('kpi-jobs');
+  const elE = document.getElementById('kpi-events');
   if (elM) elM.textContent = kpi.totalMembers;
-  if (elO) elO.textContent = kpi.openSurveys;
-  if (elR) elR.textContent = kpi.totalResponses;
+  if (elJ) elJ.textContent = kpi.jobCount;
+  if (elE) elE.textContent = kpi.eventCount;
 }
 
 // ── Tab switching ──────────────────────────────────────────────

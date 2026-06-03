@@ -1,5 +1,45 @@
 /* ── stastic_member.css ──────────────────────────────────────── */
 
+/* ── Site footer ──────────────────────────────────────────────── */
+.site-footer {
+  margin-left: 4rem;
+  background: #111827;
+  padding: 1.5rem 2rem 1.25rem;
+  margin-top: 2.5rem;
+}
+.site-footer-inner {
+  max-width: 1280px; margin: 0 auto;
+  display: flex; flex-wrap: wrap;
+  align-items: center; justify-content: space-between;
+  gap: 1.25rem;
+}
+.site-footer-brand {
+  display: flex; flex-direction: column; gap: 0.2rem;
+}
+.site-footer-brand strong {
+  font-size: 0.85rem; font-weight: 700; color: #fff;
+}
+.site-footer-brand span {
+  font-size: 0.68rem; color: rgba(255,255,255,0.38);
+}
+.site-footer-copy {
+  font-size: 0.68rem; color: rgba(255,255,255,0.3);
+  text-align: center; line-height: 1.6;
+}
+.site-footer-copy em {
+  display: block; font-style: normal; font-size: 0.63rem; margin-top: 0.15rem;
+  color: rgba(255,255,255,0.2);
+}
+.site-footer-links {
+  display: flex; align-items: center; gap: 1.25rem;
+}
+.site-footer-links a {
+  color: rgba(255,255,255,0.35); text-decoration: none;
+  font-size: 0.7rem; font-weight: 500;
+  transition: color 0.12s;
+}
+.site-footer-links a:hover { color: rgba(255,255,255,0.75); }
+
 /* ── Tab bar ─────────────────────────────────────────────────── */
 .sm-tab-bar {
   display: flex;

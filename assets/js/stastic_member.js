@@ -1876,9 +1876,12 @@ function handleImport(evt) {
 
 function _fbWrite(dyn) {
   if (!_fbRef) return;
-  const ts = loadDynamic().savedAt; // read the ts we just stamped in localStorage
+  const ts = loadDynamic().savedAt;
   _fbRef.set({ ts, data: JSON.stringify(dyn) })
-        .catch(e => console.warn('[Firebase] save error', e));
+        .catch(e => {
+          console.warn('[Firebase] save error', e);
+          showToast('⚠️ Firebase sync failed — data saved locally only. Check database rules.', 5000);
+        });
 }
 
 function initFirebase() {

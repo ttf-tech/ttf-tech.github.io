@@ -1000,17 +1000,23 @@ select.sm-input { cursor: pointer; }
   margin-top: 0.1rem;
 }
 .sm-job-list {
-  background: #fff;
+  background: #f1f5f9;
   border: 1px solid #e2e8f0;
   border-top: none;
   border-radius: 0 0 12px 12px;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem;
 }
 .sm-job-empty {
   text-align: center;
   padding: 2rem 1.5rem;
   color: #94a3b8;
   font-size: 0.82rem;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px dashed #e2e8f0;
 }
 .sm-job-empty i { display: block; font-size: 1.8rem; opacity: 0.25; margin-bottom: 0.5rem; }
 
@@ -1018,13 +1024,14 @@ select.sm-input { cursor: pointer; }
 .sm-job-card {
   display: flex;
   gap: 1rem;
-  padding: 1rem 1.1rem;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 1.1rem 1.25rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   align-items: flex-start;
-  transition: background 0.12s;
+  transition: box-shadow 0.15s, border-color 0.15s;
 }
-.sm-job-card:last-child { border-bottom: none; }
-.sm-job-card:hover { background: #f8fafc; }
+.sm-job-card:hover { border-color: #cbd5e1; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
 
 .sm-job-left { flex: 1; min-width: 0; }
 .sm-job-card-meta {
@@ -1084,8 +1091,8 @@ select.sm-input { cursor: pointer; }
   white-space: pre-line;
   word-break: break-word;
   border-top: 1px dashed #e2e8f0;
-  padding-top: 0.3rem;
-  margin-top: 0.3rem;
+  padding-top: 0.4rem;
+  margin-top: 0.5rem;
 }
 .sm-job-card-reqs-label {
   font-weight: 700;
@@ -1093,6 +1100,30 @@ select.sm-input { cursor: pointer; }
   font-size: 0.7rem;
   margin-bottom: 0.15rem;
 }
+.sm-job-card-reqs-body {
+  white-space: pre-line;
+  word-break: break-word;
+}
+
+/* ── Expand / collapse for long job text ─────────────────────── */
+.sm-expandable-short,
+.sm-expandable-full { white-space: pre-line; }
+.sm-job-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 99px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.sm-job-expand-btn:hover { background: #e2e8f0; color: #334155; }
 .sm-job-cv-btn {
   display: inline-flex;
   align-items: center;

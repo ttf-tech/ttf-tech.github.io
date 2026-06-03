@@ -1334,6 +1334,20 @@ const JOB_CONTRACT_COLORS = {
   'Autre':      { bg: '#f1f5f9', color: '#475569' }
 };
 
+const _JOB_EXPAND_LIMIT = 400;
+
+function _makeExpandable(text, cls) {
+  const escaped = escHtml(text);
+  if (text.length <= _JOB_EXPAND_LIMIT) return `<div class="${cls}">${escaped}</div>`;
+  const preview = escHtml(text.slice(0, _JOB_EXPAND_LIMIT));
+  return `
+    <div class="${cls} sm-expandable">
+      <span class="sm-expandable-short">${preview}…</span>
+      <span class="sm-expandable-full" style="display:none">${escaped}</span>
+    </div>
+    <button class="sm-job-expand-btn" type="button">展開 · Voir plus <i class="fas fa-chevron-down"></i></button>`;
+}
+
 function renderJobs() {
   const container = document.getElementById('job-list');
   if (!container) return;
@@ -1359,7 +1373,7 @@ function renderJobs() {
     const reqsBlock = j.requirements
       ? `<div class="sm-job-card-reqs">
            <div class="sm-job-card-reqs-label">【條件 / Conditions】</div>
-           ${escHtml(j.requirements)}
+           ${_makeExpandable(j.requirements, 'sm-job-card-reqs-body')}
          </div>`
       : '';
     const salaryBlock = j.salary
@@ -1376,7 +1390,7 @@ function renderJobs() {
           </div>
           <div class="sm-job-card-title">${escHtml(j.title)}</div>
           ${salaryBlock}
-          <div class="sm-job-card-desc">${escHtml(j.description)}</div>
+          ${_makeExpandable(j.description, 'sm-job-card-desc')}
           ${reqsBlock}
           ${cvBtn}
         </div>
@@ -2012,6 +2026,28 @@ function init() {
   if (anncOverlay) {
     anncOverlay.addEventListener('click', e => {
       if (e.target === anncOverlay) closeAnncModal();
+    });
+  }
+
+  // Job expand/collapse delegation (single listener, survives re-renders)
+  const jobListEl = document.getElementById('job-list');
+  if (jobListEl) {
+    jobListEl.addEventListener('click', e => {
+      const btn = e.target.closest('.sm-job-expand-btn');
+      if (!btn) return;
+      const prev = btn.previousElementSibling;
+      const expandable = prev && (prev.classList.contains('sm-expandable')
+        ? prev : prev.querySelector('.sm-expandable'));
+      if (!expandable) return;
+      const short = expandable.querySelector('.sm-expandable-short');
+      const full  = expandable.querySelector('.sm-expandable-full');
+      if (!short || !full) return;
+      const isExpanded = full.style.display !== 'none';
+      short.style.display = isExpanded ? '' : 'none';
+      full.style.display  = isExpanded ? 'none' : '';
+      btn.innerHTML = isExpanded
+        ? '展開 · Voir plus <i class="fas fa-chevron-down"></i>'
+        : '收起 · Réduire <i class="fas fa-chevron-up"></i>';
     });
   }
 

@@ -40,6 +40,48 @@
     .page-header h1  { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.2rem; }
     .page-header p   { font-size: 0.8rem; color: rgba(255,255,255,0.55); }
 
+    /* Coffee Chat banner */
+    .coffee-banner {
+      max-width: 960px; margin: 1.25rem auto 0; padding: 0 1.5rem;
+    }
+    .coffee-card {
+      background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+      border-radius: 14px; padding: 1.5rem 1.75rem;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem;
+      position: relative; overflow: hidden;
+    }
+    .coffee-card::before {
+      content: '☕'; position: absolute; right: 1.5rem; top: 50%;
+      transform: translateY(-50%); font-size: 5rem; opacity: 0.12; line-height: 1;
+    }
+    .coffee-left { flex: 1; min-width: 260px; color: #fff; position: relative; z-index: 1; }
+    .coffee-pill {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.9); font-size: 0.62rem; font-weight: 700;
+      padding: 0.2rem 0.6rem; border-radius: 99px; margin-bottom: 0.6rem;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .coffee-left h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .coffee-left p  { font-size: 0.78rem; color: rgba(255,255,255,0.7); line-height: 1.5; margin-bottom: 0.75rem; }
+    .coffee-topics  { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .coffee-topic   {
+      font-size: 0.65rem; font-weight: 600; padding: 0.2rem 0.6rem;
+      border-radius: 99px; background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.85);
+    }
+    .coffee-actions { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; position: relative; z-index: 1; }
+    .coffee-book-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.7rem 1.4rem; border-radius: 99px;
+      background: #fef3c7; color: #78350f;
+      font-size: 0.85rem; font-weight: 700; text-decoration: none;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .coffee-book-btn:hover { background: #fde68a; transform: translateY(-1px); }
+    .coffee-note { font-size: 0.65rem; color: rgba(255,255,255,0.5); text-align: center; }
+
     /* Topic filter bar */
     .topic-bar {
       max-width: 960px; margin: 1rem auto 0; padding: 0 1.5rem;
@@ -195,6 +237,38 @@
         <p>Webinars, coffee chats, replays &amp; community knowledge — 社群活動、錄影與資源整理</p>
       </div>
     </div>
+
+    <!-- ── COFFEE CHAT ──────────────────────────────────────────── -->
+    <div class="coffee-banner">
+      <div class="coffee-card">
+        <div class="coffee-left">
+          <div class="coffee-pill"><i class="fas fa-coffee"></i> Community · 社群咖啡聊聊</div>
+          <h2>Coffee Chat — 20 min with the community ☕</h2>
+          <p>
+            Informal one-on-one conversations with community members.<br>
+            Ask questions, share experience, get career feedback — in French or English.
+          </p>
+          <div class="coffee-topics">
+            <span class="coffee-topic">🇫🇷 New arrival in France</span>
+            <span class="coffee-topic">🔍 Tech job search</span>
+            <span class="coffee-topic">📄 CV &amp; Interview review</span>
+            <span class="coffee-topic">🏢 ESN / CDI / Freelance</span>
+            <span class="coffee-topic">🛂 Visa &amp; Titre de séjour</span>
+            <span class="coffee-topic">💰 Salary &amp; Negotiation</span>
+            <span class="coffee-topic">🚀 Startup / Founder chat</span>
+            <span class="coffee-topic">🎓 Student → first job</span>
+          </div>
+        </div>
+        <div class="coffee-actions">
+          <a href="https://calendly.com/tess-hsu/parlon-ton-project-cyber"
+             target="_blank" rel="noopener" class="coffee-book-btn">
+            <i class="fas fa-calendar-check"></i> Book a Coffee Chat
+          </a>
+          <span class="coffee-note">Free · 免費 · ~20-30 min via Google Meet</span>
+        </div>
+      </div>
+    </div>
+    <!-- /COFFEE CHAT -->
 
     <!-- Topic filter bar -->
     <div class="topic-bar" id="topic-bar">

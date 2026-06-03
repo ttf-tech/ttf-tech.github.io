@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Association — Taiwan Tech France</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇹🇼</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/stastic_member.css">
+
+  <style>
+    /* Sidebar */
+    #app-sidebar {
+      position: fixed; top: 0; left: 0; height: 100%; width: 4rem;
+      background: #111827; display: flex; flex-direction: column; align-items: center;
+      padding: 1.25rem 0; z-index: 20; box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+    }
+    .sidebar-logo { font-size: 1.6rem; line-height: 1; margin-bottom: 2rem; cursor: default; user-select: none; }
+    .sidebar-nav  { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; }
+    .sidebar-link {
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.15s;
+      padding: 0.5rem; border-radius: 10px; width: 3rem; justify-content: center; font-size: 1.1rem;
+    }
+    .sidebar-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
+    .sidebar-link.active { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .sidebar-link span { font-size: 0.5rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75; }
+    .sidebar-link.active span { opacity: 1; }
+    .sidebar-link-admin { margin-top: auto; }
+
+    /* Page layout */
+    .page-inner { max-width: 860px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* Hero header */
+    .page-hero {
+      background: linear-gradient(160deg,#0a2d42 0%,#0f4060 100%);
+      color: #fff; padding: 2rem 1.5rem 1.75rem;
+    }
+    .founding-pill {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: rgba(251,191,36,0.2); border: 1px solid rgba(251,191,36,0.4);
+      color: #fbbf24; font-size: 0.68rem; font-weight: 700;
+      padding: 0.25rem 0.75rem; border-radius: 99px; margin-bottom: 0.9rem;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .page-hero h1 { font-size: 1.75rem; font-weight: 900; line-height: 1.15; margin-bottom: 0.5rem; }
+    .page-hero p  { font-size: 0.85rem; color: rgba(255,255,255,0.6); max-width: 520px; line-height: 1.55; }
+
+    /* Section wrapper */
+    .assoc-section { margin: 2rem auto 0; max-width: 860px; padding: 0 1.5rem; }
+    .assoc-section-title {
+      font-size: 0.8rem; font-weight: 800; color: #0f172a;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #f1f5f9;
+    }
+
+    /* Official endorsement card */
+    .endorsement-card {
+      background: linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%);
+      border: 1px solid #86efac; border-radius: 14px; padding: 1.5rem 1.75rem;
+      position: relative; overflow: hidden;
+    }
+    .endorsement-card::before {
+      content: '"'; position: absolute; top: -0.5rem; left: 0.75rem;
+      font-size: 8rem; color: #bbf7d0; font-family: Georgia, serif; line-height: 1;
+    }
+    .endorsement-header {
+      display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1rem;
+    }
+    .office-flag {
+      font-size: 2rem; flex-shrink: 0;
+    }
+    .office-title   { font-size: 0.78rem; font-weight: 700; color: #166534; }
+    .office-address { font-size: 0.68rem; color: #4d7c60; margin-top: 0.15rem; line-height: 1.4; }
+    blockquote {
+      font-size: 0.85rem; color: #064e3b; line-height: 1.7; margin: 0 0 1rem;
+      position: relative; z-index: 1;
+    }
+    .endorsement-zh {
+      font-size: 0.8rem; color: #065f46; line-height: 1.7; border-left: 3px solid #6ee7b7;
+      padding-left: 1rem; margin: 0.75rem 0; font-style: normal;
+    }
+    .endorsement-note {
+      font-size: 0.72rem; color: #4d7c60; display: flex; align-items: flex-start; gap: 0.4rem;
+      background: rgba(255,255,255,0.6); border-radius: 8px; padding: 0.6rem 0.8rem;
+      margin-top: 0.75rem;
+    }
+
+    /* Benefits grid */
+    .benefits-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 0.65rem; }
+    .benefit-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 0.9rem 1rem; display: flex; align-items: flex-start; gap: 0.75rem;
+    }
+    .benefit-icon {
+      width: 34px; height: 34px; border-radius: 8px; display: flex;
+      align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;
+    }
+    .benefit-title { font-size: 0.8rem; font-weight: 700; color: #0f172a; margin-bottom: 0.15rem; }
+    .benefit-desc  { font-size: 0.71rem; color: #64748b; line-height: 1.45; }
+
+    /* Founding timeline */
+    .timeline { display: flex; flex-direction: column; gap: 0; position: relative; }
+    .timeline::before {
+      content: ''; position: absolute; left: 14px; top: 8px; bottom: 8px;
+      width: 2px; background: #e2e8f0;
+    }
+    .tl-step {
+      display: flex; gap: 1rem; align-items: flex-start; padding: 0.6rem 0;
+      position: relative;
+    }
+    .tl-dot {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 700; z-index: 1; border: 2px solid #fff;
+    }
+    .tl-dot.done    { background: #059669; color: #fff; }
+    .tl-dot.active  { background: #fbbf24; color: #0f172a; box-shadow: 0 0 0 4px rgba(251,191,36,0.2); }
+    .tl-dot.pending { background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; }
+    .tl-content { flex: 1; padding-top: 0.2rem; }
+    .tl-phase   { font-size: 0.6rem; font-weight: 700; color: #94a3b8;
+                  text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.1rem; }
+    .tl-title   { font-size: 0.82rem; font-weight: 700; color: #0f172a; }
+    .tl-desc    { font-size: 0.72rem; color: #64748b; margin-top: 0.1rem; line-height: 1.4; }
+    .tl-date    { font-size: 0.65rem; color: #94a3b8; margin-top: 0.15rem; }
+    .tl-active-pill {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      background: #fef9c3; border: 1px solid #fcd34d; color: #854d0e;
+      font-size: 0.6rem; font-weight: 700; padding: 0.1rem 0.45rem; border-radius: 99px;
+      margin-left: 0.5rem;
+    }
+
+    /* Volunteer grid */
+    .volunteer-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(250px,1fr)); gap: 0.75rem; }
+    .volunteer-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 1.1rem 1rem; transition: box-shadow 0.15s;
+    }
+    .volunteer-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.07); }
+    .volunteer-icon {
+      width: 40px; height: 40px; border-radius: 10px; display: flex;
+      align-items: center; justify-content: center; font-size: 1.1rem;
+      margin-bottom: 0.6rem;
+    }
+    .volunteer-role  { font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-bottom: 0.2rem; }
+    .volunteer-desc  { font-size: 0.72rem; color: #64748b; line-height: 1.45; margin-bottom: 0.6rem; }
+    .volunteer-tasks { font-size: 0.68rem; color: #475569; line-height: 1.5; }
+    .volunteer-tasks li { margin-bottom: 0.15rem; }
+    .volunteer-slots {
+      display: inline-flex; align-items: center; gap: 0.25rem; margin-top: 0.7rem;
+      font-size: 0.65rem; font-weight: 600; color: #7c3aed;
+      background: #ede9fe; padding: 0.15rem 0.5rem; border-radius: 99px;
+    }
+
+    /* Partnership section */
+    .partner-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 0.65rem; }
+    .partner-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 0.85rem 1rem; display: flex; align-items: flex-start; gap: 0.65rem;
+    }
+    .partner-flag { font-size: 1.4rem; flex-shrink: 0; }
+    .partner-name { font-size: 0.78rem; font-weight: 700; color: #0f172a; margin-bottom: 0.1rem; }
+    .partner-desc { font-size: 0.68rem; color: #64748b; line-height: 1.4; }
+
+    /* CTA section */
+    .cta-wrap {
+      max-width: 860px; margin: 2rem auto 3rem; padding: 0 1.5rem;
+    }
+    .cta-card {
+      background: linear-gradient(135deg,#0a2d42 0%,#1a4a6e 100%);
+      border-radius: 16px; padding: 2rem 2.5rem;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 2rem;
+    }
+    .cta-text  { flex: 1; min-width: 220px; color: #fff; }
+    .cta-text h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.3rem; }
+    .cta-text p  { font-size: 0.78rem; color: rgba(255,255,255,0.6); line-height: 1.5; }
+    .cta-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .cta-btn-primary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.65rem 1.4rem; border-radius: 99px; background: #25d366;
+      color: #fff; font-size: 0.85rem; font-weight: 700; text-decoration: none;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .cta-btn-primary:hover { background: #1db954; transform: translateY(-1px); }
+    .cta-btn-secondary {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.65rem 1.2rem; border-radius: 99px;
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.28);
+      color: #fff; font-size: 0.82rem; font-weight: 600; text-decoration: none;
+      transition: background 0.15s;
+    }
+    .cta-btn-secondary:hover { background: rgba(255,255,255,0.22); }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen">
+
+  <aside id="app-sidebar">
+    <div class="sidebar-logo">🇹🇼</div>
+    <nav class="sidebar-nav">
+      <a href="index.html"        class="sidebar-link"        title="Home · 首頁"><i class="fas fa-home"></i><span>Home</span></a>
+      <a href="events.html"       class="sidebar-link"        title="Events · 活動"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
+      <a href="jobs.html"         class="sidebar-link"        title="Jobs · 職缺"><i class="fas fa-briefcase"></i><span>Jobs</span></a>
+      <a href="resources.html"    class="sidebar-link"        title="Resources · 資源"><i class="fas fa-book-open"></i><span>Docs</span></a>
+      <a href="association.html"  class="sidebar-link active" title="Association · 協會"><i class="fas fa-landmark"></i><span>Assoc</span></a>
+      <a href="presentation.html" class="sidebar-link"        title="About · 關於"><i class="fas fa-info-circle"></i><span>About</span></a>
+      <a href="admin.html"        class="sidebar-link sidebar-link-admin" title="Admin"><i class="fas fa-lock"></i><span>Admin</span></a>
+    </nav>
+  </aside>
+
+  <main class="ml-16">
+
+    <!-- ── HERO ──────────────────────────────────────────────────── -->
+    <div class="page-hero">
+      <div class="page-inner">
+        <div class="founding-pill"><i class="fas fa-circle" style="font-size:0.4rem;"></i> Founding Phase · 籌備中</div>
+        <h1>Taiwan Tech France<br><span style="font-weight:400;font-size:1.2rem;opacity:0.75;">Association en cours de création · 協會籌備</span></h1>
+        <p style="margin-top:0.75rem;">
+          Building an official Loi 1901 association to give the Taiwanese tech community in France a legitimate, lasting, and impactful structure.
+        </p>
+        <p style="margin-top:0.4rem;font-size:0.75rem;color:rgba(255,255,255,0.45);">
+          為在法臺灣科技社群打造正式的法國協會架構，讓社群活動更具規模與影響力。
+        </p>
+      </div>
+    </div>
+
+    <!-- ── OFFICIAL ENDORSEMENT ───────────────────────────────────── -->
+    <section class="assoc-section">
+      <div class="assoc-section-title">
+        <i class="fas fa-stamp" style="color:#059669;"></i>
+        Official Recommendation · 官方建議
+      </div>
+
+      <div class="endorsement-card">
+        <div class="endorsement-header">
+          <div class="office-flag">🇹🇼</div>
+          <div>
+            <div class="office-title">Bureau de Représentation de Taïwan à Aix-en-Provence</div>
+            <div class="office-address">
+              駐普羅旺斯臺北辦事處 · 120 Av. Napoléon Bonaparte, 13100 Aix-en-Provence<br>
+              科技組 (Tech Division) &amp; 經濟組 (Economic Division)
+            </div>
+          </div>
+        </div>
+
+        <div class="endorsement-zh">
+          倘若貴團預計頻繁舉辦正式活動，建議您向法國政府申請成立 Association，以協會名義舉辦活動，未來在申請場地或與其他組織、協會、市府單位合作或受領補助時，比較不會有問題。
+        </div>
+
+        <blockquote>
+          "If your group plans to frequently hold official events, we recommend applying to the French government to establish an <strong>Association</strong>. Holding activities under an association's name will make it easier to apply for venues, collaborate with other organizations, associations, city government units, and receive subsidies."
+        </blockquote>
+
+        <div class="endorsement-note">
+          <i class="fas fa-info-circle" style="color:#059669;margin-top:0.1rem;flex-shrink:0;"></i>
+          <span>
+            The Representative Office also noted that their <strong>Tech Division (科技組)</strong> and <strong>Economic Division (經濟組)</strong> are available to support Taiwan-related tech activities in France and to advise on establishing industry associations or chambers of commerce.
+            <br><span style="color:#4d7c60;">未來有需要辦事處或代表處協助推廣，歡迎再通知我們。在南法地區的活動也非常歡迎再來信通知本處。</span>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── WHY AN ASSOCIATION ─────────────────────────────────────── -->
+    <section class="assoc-section">
+      <div class="assoc-section-title">
+        <i class="fas fa-question-circle" style="color:#0e7490;"></i>
+        Why an Association (Loi 1901)? · 為什麼要成立協會？
+      </div>
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <div class="benefit-icon" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-university"></i></div>
+          <div>
+            <div class="benefit-title">Legal Recognition · 法律認可</div>
+            <div class="benefit-desc">Formally recognized entity in France. Can sign contracts, open bank accounts, and act as a legal person independently.</div>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon" style="background:#dbeafe;color:#1d4ed8;"><i class="fas fa-building"></i></div>
+          <div>
+            <div class="benefit-title">Venue Access · 場地申請</div>
+            <div class="benefit-desc">Access to subsidized municipal spaces (salles municipales), university rooms, and institutional venues — unavailable to informal groups.</div>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon" style="background:#fef9c3;color:#854d0e;"><i class="fas fa-euro-sign"></i></div>
+          <div>
+            <div class="benefit-title">Grants & Subsidies · 補助申請</div>
+            <div class="benefit-desc">Eligible to apply for subventions from city, region, and national institutions. Opens doors to cultural and tech funding programs.</div>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fas fa-handshake"></i></div>
+          <div>
+            <div class="benefit-title">Institutional Partnerships · 機構合作</div>
+            <div class="benefit-desc">Official partner status with French Tech, MEDEF, universities, and — crucially — the Taiwan Representative Office in Aix-en-Provence.</div>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon" style="background:#fce7f3;color:#9d174d;"><i class="fas fa-users"></i></div>
+          <div>
+            <div class="benefit-title">Formal Membership · 正式成員制</div>
+            <div class="benefit-desc">Issue membership cards, collect membership fees, and give members voting rights — building long-term governance and accountability.</div>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-icon" style="background:#f0fdf4;color:#166534;"><i class="fas fa-newspaper"></i></div>
+          <div>
+            <div class="benefit-title">Media Credibility · 媒體公信力</div>
+            <div class="benefit-desc">Journalists, companies, and government bodies take associations seriously. Enables press releases, official statements, and sponsorship pitches.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── FOUNDING TIMELINE ──────────────────────────────────────── -->
+    <section class="assoc-section">
+      <div class="assoc-section-title">
+        <i class="fas fa-route" style="color:#f59e0b;"></i>
+        Founding Roadmap · 籌備路線圖
+      </div>
+
+      <div class="timeline">
+
+        <div class="tl-step">
+          <div class="tl-dot done"><i class="fas fa-check" style="font-size:0.7rem;"></i></div>
+          <div class="tl-content">
+            <div class="tl-phase">Phase 1 — Completed</div>
+            <div class="tl-title">Community Building · 社群建立</div>
+            <div class="tl-desc">WhatsApp group launched, 68+ members across France, events started, official encouragement received from Taiwan Representative Office.</div>
+            <div class="tl-date">Jan – Jun 2026</div>
+          </div>
+        </div>
+
+        <div class="tl-step">
+          <div class="tl-dot active"><i class="fas fa-star" style="font-size:0.6rem;"></i></div>
+          <div class="tl-content">
+            <div class="tl-phase">Phase 2 — Now <span class="tl-active-pill"><i class="fas fa-circle" style="font-size:0.4rem;"></i> Active</span></div>
+            <div class="tl-title">Founding Team & Volunteers · 召集籌備委員</div>
+            <div class="tl-desc">Gather 5–10 founding members. Define roles: President, Secretary, Treasurer. Decide on association name and legal seat (siège social).</div>
+            <div class="tl-date">Jun – Jul 2026</div>
+          </div>
+        </div>
+
+        <div class="tl-step">
+          <div class="tl-dot pending">3</div>
+          <div class="tl-content">
+            <div class="tl-phase">Phase 3 — Upcoming</div>
+            <div class="tl-title">Draft Statutes · 起草協會章程</div>
+            <div class="tl-desc">Write the statutes (statuts) defining mission, membership rules, governance, and dissolution procedures. Align with Loi du 1er juillet 1901.</div>
+            <div class="tl-date">Jul 2026</div>
+          </div>
+        </div>
+
+        <div class="tl-step">
+          <div class="tl-dot pending">4</div>
+          <div class="tl-content">
+            <div class="tl-phase">Phase 4</div>
+            <div class="tl-title">Founding General Assembly · 成立大會</div>
+            <div class="tl-desc">Hold the official founding assembly. Vote on statutes, elect the first board (bureau), and sign the minutes (procès-verbal).</div>
+            <div class="tl-date">Aug 2026</div>
+          </div>
+        </div>
+
+        <div class="tl-step">
+          <div class="tl-dot pending">5</div>
+          <div class="tl-content">
+            <div class="tl-phase">Phase 5</div>
+            <div class="tl-title">Prefecture Filing · 向縣政府申報</div>
+            <div class="tl-desc">File declaration at the sous-préfecture (or online via service-public.fr). Association appears in the Journal Officiel within ~5–10 days.</div>
+            <div class="tl-date">Sep 2026</div>
+          </div>
+        </div>
+
+        <div class="tl-step">
+          <div class="tl-dot pending">6</div>
+          <div class="tl-content">
+            <div class="tl-phase">Phase 6</div>
+            <div class="tl-title">Official Launch · 正式啟動</div>
+            <div class="tl-desc">Open bank account (Compte Associatif), launch membership, first official association event, reach out to the Representative Office for partnership.</div>
+            <div class="tl-date">Oct 2026</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── CALL FOR VOLUNTEERS ────────────────────────────────────── -->
+    <section class="assoc-section">
+      <div class="assoc-section-title">
+        <i class="fas fa-hands-helping" style="color:#7c3aed;"></i>
+        Call for Volunteers · 徵求志願者
+        <span style="font-size:0.65rem;font-weight:400;color:#94a3b8;margin-left:0.5rem;">We need 1–2 people per role to get started</span>
+      </div>
+      <div class="volunteer-grid">
+
+        <div class="volunteer-card">
+          <div class="volunteer-icon" style="background:#dbeafe;color:#1e40af;"><i class="fas fa-gavel"></i></div>
+          <div class="volunteer-role">Legal &amp; Admin · 法務行政</div>
+          <div class="volunteer-desc">Handle the formal registration process and legal structure of the association.</div>
+          <ul class="volunteer-tasks">
+            <li>• Draft statutes (statuts loi 1901)</li>
+            <li>• File declaration with sous-préfecture</li>
+            <li>• Manage administrative documents</li>
+            <li>• Liaise with the Representative Office</li>
+          </ul>
+          <div class="volunteer-slots"><i class="fas fa-user-plus"></i> 1–2 volunteers needed</div>
+        </div>
+
+        <div class="volunteer-card">
+          <div class="volunteer-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fas fa-calendar-check"></i></div>
+          <div class="volunteer-role">Events · 活動策劃</div>
+          <div class="volunteer-desc">Organize and run the community's events — webinars, coffee chats, meetups.</div>
+          <ul class="volunteer-tasks">
+            <li>• Find &amp; book venues (once association is set)</li>
+            <li>• Coordinate speakers and agenda</li>
+            <li>• Handle registrations and logistics</li>
+            <li>• Produce event recaps and replays</li>
+          </ul>
+          <div class="volunteer-slots"><i class="fas fa-user-plus"></i> 2–3 volunteers needed</div>
+        </div>
+
+        <div class="volunteer-card">
+          <div class="volunteer-icon" style="background:#fef9c3;color:#854d0e;"><i class="fas fa-euro-sign"></i></div>
+          <div class="volunteer-role">Sponsorship &amp; Grants · 贊助與補助</div>
+          <div class="volunteer-desc">Secure financial support to fund events, tools, and operations.</div>
+          <ul class="volunteer-tasks">
+            <li>• Identify corporate sponsors (ESN, tech companies)</li>
+            <li>• Apply for municipal / regional grants (subventions)</li>
+            <li>• Manage membership fees structure</li>
+            <li>• Track budget and treasurer duties</li>
+          </ul>
+          <div class="volunteer-slots"><i class="fas fa-user-plus"></i> 1–2 volunteers needed</div>
+        </div>
+
+        <div class="volunteer-card">
+          <div class="volunteer-icon" style="background:#fce7f3;color:#9d174d;"><i class="fas fa-paint-brush"></i></div>
+          <div class="volunteer-role">Design &amp; Communication · 設計與傳播</div>
+          <div class="volunteer-desc">Shape the visual identity and community communication.</div>
+          <ul class="volunteer-tasks">
+            <li>• Design association logo and visual kit</li>
+            <li>• Create event posters and social content</li>
+            <li>• Manage website and newsletter</li>
+            <li>• LinkedIn page and public presence</li>
+          </ul>
+          <div class="volunteer-slots"><i class="fas fa-user-plus"></i> 1–2 volunteers needed</div>
+        </div>
+
+        <div class="volunteer-card">
+          <div class="volunteer-icon" style="background:#dcfce7;color:#166534;"><i class="fas fa-network-wired"></i></div>
+          <div class="volunteer-role">Partnerships · 合作關係</div>
+          <div class="volunteer-desc">Build relationships with institutions and ecosystem players.</div>
+          <ul class="volunteer-tasks">
+            <li>• Coordinate with Taiwan Representative Office</li>
+            <li>• Connect with French Tech, MEDEF, APEC</li>
+            <li>• Reach out to Taiwanese student associations</li>
+            <li>• University and incubator partnerships</li>
+          </ul>
+          <div class="volunteer-slots"><i class="fas fa-user-plus"></i> 1–2 volunteers needed</div>
+        </div>
+
+        <div class="volunteer-card">
+          <div class="volunteer-icon" style="background:#e0f2fe;color:#0369a1;"><i class="fas fa-code"></i></div>
+          <div class="volunteer-role">Tech &amp; Tools · 技術支援</div>
+          <div class="volunteer-desc">Keep the community's digital infrastructure running and improving.</div>
+          <ul class="volunteer-tasks">
+            <li>• Maintain this website and add features</li>
+            <li>• Automation (newsletters, reminders, data)</li>
+            <li>• Event platform setup (Eventbrite, Meetup…)</li>
+            <li>• Community data and analytics</li>
+          </ul>
+          <div class="volunteer-slots"><i class="fas fa-user-plus"></i> 1–2 volunteers needed</div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── POTENTIAL PARTNERS ─────────────────────────────────────── -->
+    <section class="assoc-section">
+      <div class="assoc-section-title">
+        <i class="fas fa-globe" style="color:#0e7490;"></i>
+        Potential Partners &amp; Allies · 潛在合作夥伴
+      </div>
+      <div class="partner-grid">
+        <div class="partner-card">
+          <div class="partner-flag">🇹🇼</div>
+          <div>
+            <div class="partner-name">Bureau de Représentation de Taïwan</div>
+            <div class="partner-desc">Aix-en-Provence · Tech Division (科技組) &amp; Economic Division (經濟組)</div>
+          </div>
+        </div>
+        <div class="partner-card">
+          <div class="partner-flag">🇫🇷</div>
+          <div>
+            <div class="partner-name">La French Tech</div>
+            <div class="partner-desc">National startup and tech ecosystem — could list us as a community partner</div>
+          </div>
+        </div>
+        <div class="partner-card">
+          <div class="partner-flag">🏢</div>
+          <div>
+            <div class="partner-name">ESN &amp; Tech Companies</div>
+            <div class="partner-desc">Capgemini, Thales, Sopra Steria, Atos — potential sponsors and job partners</div>
+          </div>
+        </div>
+        <div class="partner-card">
+          <div class="partner-flag">🎓</div>
+          <div>
+            <div class="partner-name">Universities &amp; Grandes Écoles</div>
+            <div class="partner-desc">INSA, Centrale, Mines, Sciences Po — venue hosting, student outreach</div>
+          </div>
+        </div>
+        <div class="partner-card">
+          <div class="partner-flag">🏛️</div>
+          <div>
+            <div class="partner-name">Villes &amp; Métropoles</div>
+            <div class="partner-desc">Paris, Nice, Lyon, Sophia-Antipolis — municipal grants and venue support</div>
+          </div>
+        </div>
+        <div class="partner-card">
+          <div class="partner-flag">🤝</div>
+          <div>
+            <div class="partner-name">Taiwanese Associations in Europe</div>
+            <div class="partner-desc">ATEP, TFEA and other Taiwanese associations in France and Europe</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── CTA ───────────────────────────────────────────────────── -->
+    <div class="cta-wrap">
+      <div class="cta-card">
+        <div class="cta-text">
+          <h2>Join the founding team · 加入籌備委員會</h2>
+          <p>
+            We need a small, motivated team to make this happen — legally, organizationally, and visually.
+            Any time you can give helps. This community is ours to build.
+          </p>
+          <p style="margin-top:0.5rem;font-size:0.72rem;color:rgba(255,255,255,0.4);">
+            無論您有多少時間，任何貢獻都很寶貴。這是屬於我們大家的社群。
+          </p>
+        </div>
+        <div class="cta-actions">
+          <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener"
+             class="cta-btn-primary">
+            <i class="fab fa-whatsapp"></i> Join WhatsApp · 加入群組
+          </a>
+          <a href="presentation.html" class="cta-btn-secondary">
+            <i class="fas fa-info-circle"></i> About the group
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</body>
+</html>

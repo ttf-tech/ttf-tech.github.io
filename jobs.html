@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jobs &amp; Missions · 職缺 — Taiwan Tech France</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇹🇼</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="assets/css/stastic_member.css">
+
+  <style>
+    #app-sidebar {
+      position: fixed; top: 0; left: 0; height: 100%; width: 4rem;
+      background: #111827; display: flex; flex-direction: column; align-items: center;
+      padding: 1.25rem 0; z-index: 20; box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+    }
+    .sidebar-logo { font-size: 1.6rem; line-height: 1; margin-bottom: 2rem; cursor: default; user-select: none; }
+    .sidebar-nav  { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+    .sidebar-link {
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.15s;
+      padding: 0.5rem; border-radius: 10px; width: 3rem; justify-content: center; font-size: 1.15rem;
+    }
+    .sidebar-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
+    .sidebar-link.active { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .sidebar-link span { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75; }
+    .sidebar-link.active span { opacity: 1; }
+    .sidebar-link-admin { margin-top: auto; }
+
+    .page-header {
+      background: linear-gradient(160deg,#0a2d42 0%,#0f4060 100%);
+      color: #fff; padding: 1.75rem 1.5rem 1.5rem;
+    }
+    .page-header-inner { max-width: 900px; margin: 0 auto; }
+    .page-header h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.2rem; }
+    .page-header p  { font-size: 0.8rem; color: rgba(255,255,255,0.55); }
+
+    /* ── Filter bar ──────────────────────────────────────────── */
+    .filter-bar {
+      max-width: 900px; margin: 1rem auto 0; padding: 0 1.5rem;
+      display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .filter-search-wrap {
+      display: flex; align-items: center; gap: 0.6rem;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 0.6rem 0.9rem; transition: border-color 0.15s;
+    }
+    .filter-search-wrap:focus-within { border-color: #94a3b8; }
+    .filter-search-wrap i { color: #94a3b8; font-size: 0.82rem; flex-shrink: 0; }
+    .filter-search-wrap input {
+      flex: 1; border: none; outline: none; font-size: 0.82rem; color: #0f172a; background: transparent;
+    }
+    .filter-search-wrap input::placeholder { color: #94a3b8; }
+    .jobs-count { font-size: 0.7rem; color: #94a3b8; white-space: nowrap; }
+    .filter-row  { display: flex; gap: 0.35rem; flex-wrap: wrap; align-items: center; }
+    .filter-row-label { font-size: 0.62rem; font-weight: 700; color: #94a3b8;
+                        text-transform: uppercase; letter-spacing: 0.05em; margin-right: 0.2rem; }
+    .fchip {
+      padding: 0.25rem 0.7rem; border-radius: 99px; font-size: 0.7rem; font-weight: 600;
+      border: 1px solid #e2e8f0; background: #f8fafc; color: #64748b;
+      cursor: pointer; transition: all 0.12s; white-space: nowrap;
+    }
+    .fchip:hover { border-color: #cbd5e1; background: #f1f5f9; }
+    .fchip.active { background: #0a2d42; border-color: #0a2d42; color: #fff; }
+    .fchip.loc-active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+
+    /* ── Jobs list ───────────────────────────────────────────── */
+    .jobs-wrap { max-width: 900px; margin: 1rem auto 2rem; padding: 0 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+
+    /* ── Job card ────────────────────────────────────────────── */
+    .job-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+      overflow: hidden; transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .job-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.09); border-color: #cbd5e1; }
+    .job-card-closed { opacity: 0.65; }
+
+    /* Header band */
+    .job-card-head {
+      display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+      padding: 0.7rem 1.1rem 0;
+    }
+    .job-badge { font-size: 0.62rem; font-weight: 700; padding: 0.18rem 0.6rem; border-radius: 99px; }
+    .job-loc-tag {
+      font-size: 0.68rem; color: #64748b;
+      display: flex; align-items: center; gap: 0.25rem;
+    }
+    .job-status-open   { margin-left: auto; font-size: 0.62rem; font-weight: 700; padding: 0.18rem 0.6rem;
+                         border-radius: 99px; background: #dcfce7; color: #166534; display: flex; align-items: center; gap: 0.3rem; }
+    .job-status-closed { margin-left: auto; font-size: 0.62rem; font-weight: 700; padding: 0.18rem 0.6rem;
+                         border-radius: 99px; background: #fee2e2; color: #991b1b; display: flex; align-items: center; gap: 0.3rem; }
+    .job-status-new    { font-size: 0.6rem; font-weight: 700; padding: 0.12rem 0.5rem;
+                         border-radius: 99px; background: #fef9c3; color: #854d0e; }
+
+    /* Body */
+    .job-card-body { padding: 0.4rem 1.1rem 1rem; }
+    .job-title  { font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0.3rem 0 0.25rem; line-height: 1.2; }
+    .job-meta2  { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 0.35rem; }
+    .job-company { font-size: 0.73rem; color: #475569; font-weight: 600; display: flex; align-items: center; gap: 0.25rem; }
+    .job-salary  { font-size: 0.73rem; color: #059669; font-weight: 600; display: flex; align-items: center; gap: 0.25rem; }
+    .job-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.1rem; margin-bottom: 0.4rem;
+                  padding-bottom: 0.5rem; border-bottom: 1px solid #f1f5f9; }
+    .job-verified { font-size: 0.68rem; color: #059669; display: flex; align-items: center; gap: 0.2rem; font-weight: 600; }
+    .job-poster-name { font-size: 0.68rem; color: #64748b; }
+    .job-date   { font-size: 0.65rem; color: #94a3b8; margin-left: auto; }
+    .job-desc   { font-size: 0.78rem; color: #475569; line-height: 1.55; white-space: pre-line; word-break: break-word; }
+    .job-reqs   { font-size: 0.75rem; color: #64748b; margin-top: 0.55rem; line-height: 1.5;
+                  white-space: pre-line; word-break: break-word;
+                  border-top: 1px dashed #e2e8f0; padding-top: 0.45rem; }
+    .job-reqs-label { font-weight: 700; color: #475569; font-size: 0.7rem; margin-bottom: 0.15rem; }
+
+    /* Expand/collapse */
+    .job-expand-btn {
+      display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.4rem;
+      padding: 0.2rem 0.65rem; border-radius: 99px; border: 1px solid #cbd5e1;
+      background: #f8fafc; color: #64748b; font-size: 0.68rem; font-weight: 600;
+      cursor: pointer; transition: background 0.12s, color 0.12s;
+    }
+    .job-expand-btn:hover { background: #e2e8f0; color: #334155; }
+
+    /* CV button */
+    .job-cv-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.7rem;
+      padding: 0.35rem 0.9rem; border-radius: 99px; background: #ecfdf5;
+      border: 1px solid #6ee7b7; color: #065f46; font-size: 0.72rem; font-weight: 600;
+      text-decoration: none; transition: background 0.12s;
+    }
+    .job-cv-btn:hover { background: #d1fae5; }
+
+    .jobs-empty {
+      text-align: center; padding: 3rem 1.5rem; color: #94a3b8;
+      background: #fff; border: 1px dashed #e2e8f0; border-radius: 12px;
+    }
+    .jobs-empty i { display: block; font-size: 2rem; opacity: 0.2; margin-bottom: 0.5rem; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen">
+
+  <aside id="app-sidebar">
+    <div class="sidebar-logo">🇹🇼</div>
+    <nav class="sidebar-nav">
+      <a href="index.html"        class="sidebar-link"        title="Home · 首頁"><i class="fas fa-home"></i><span>Home</span></a>
+      <a href="events.html"       class="sidebar-link"        title="Events · 活動"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
+      <a href="jobs.html"         class="sidebar-link active" title="Jobs · 職缺"><i class="fas fa-briefcase"></i><span>Jobs</span></a>
+      <a href="resources.html"    class="sidebar-link"        title="Resources · 資源"><i class="fas fa-book-open"></i><span>Docs</span></a>
+      <a href="association.html"  class="sidebar-link"        title="Association · 協會"><i class="fas fa-landmark"></i><span>Assoc</span></a>
+      <a href="presentation.html" class="sidebar-link"        title="About · 關於"><i class="fas fa-info-circle"></i><span>About</span></a>
+      <a href="admin.html"        class="sidebar-link sidebar-link-admin" title="Admin"><i class="fas fa-lock"></i><span>Admin</span></a>
+    </nav>
+  </aside>
+
+  <main class="ml-16">
+    <div class="page-header">
+      <div class="page-header-inner">
+        <h1><i class="fas fa-briefcase" style="margin-right:0.5rem;opacity:0.8;"></i>Jobs &amp; Missions · 職缺分享</h1>
+        <p>Opportunités partagées par la communauté · 社群成員分享的工作機會</p>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <div class="filter-search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" id="job-search" placeholder="Search title, company, skills… · 搜尋職位、公司或技能">
+        <span id="jobs-count" class="jobs-count"></span>
+      </div>
+      <div class="filter-row">
+        <span class="filter-row-label">Type</span>
+        <button class="fchip active" data-contract="all">All</button>
+        <button class="fchip" data-contract="CDI">CDI</button>
+        <button class="fchip" data-contract="Freelance">Freelance</button>
+        <button class="fchip" data-contract="CDD">CDD</button>
+        <button class="fchip" data-contract="Stage">Stage</button>
+        <button class="fchip" data-contract="Alternance">Alternance</button>
+      </div>
+      <div class="filter-row">
+        <span class="filter-row-label">Lieu</span>
+        <button class="fchip loc active" data-loc="all">All cities</button>
+        <button class="fchip loc" data-loc="remote">Remote</button>
+        <button class="fchip loc" data-loc="paris">Paris</button>
+        <button class="fchip loc" data-loc="sophia">Sophia-Antipolis</button>
+        <button class="fchip loc" data-loc="lyon">Lyon</button>
+        <button class="fchip loc" data-loc="nice">Nice</button>
+      </div>
+    </div>
+
+    <div class="jobs-wrap" id="jobs-list">
+      <div class="jobs-empty"><i class="fas fa-briefcase"></i>Loading…</div>
+    </div>
+  </main>
+
+  <script src="assets/js/firebase-read.js"></script>
+  <script>
+  'use strict';
+
+  const JOB_COLORS = {
+    'CDI':       { bg:'#dbeafe', color:'#1e40af' },
+    'CDD':       { bg:'#fef9c3', color:'#854d0e' },
+    'Freelance': { bg:'#dcfce7', color:'#166534' },
+    'Stage':     { bg:'#fce7f3', color:'#9d174d' },
+    'Autre':     { bg:'#f1f5f9', color:'#475569' }
+  };
+
+  const EXPAND_LIMIT = 400;
+
+  function makeExpandable(text, cls) {
+    const escaped = escHtmlRead(text);
+    if (text.length <= EXPAND_LIMIT) return `<div class="${cls}">${escaped}</div>`;
+    const preview = escHtmlRead(text.slice(0, EXPAND_LIMIT));
+    return `
+      <div class="${cls} expandable">
+        <span class="exp-short">${preview}…</span>
+        <span class="exp-full" style="display:none">${escaped}</span>
+      </div>
+      <button class="job-expand-btn" type="button">展開 · Voir plus <i class="fas fa-chevron-down"></i></button>`;
+  }
+
+  let _allJobs       = [];
+  let _activeContract = 'all';
+  let _activeLoc      = 'all';
+
+  const LOC_KEYWORDS = {
+    remote: ['remote', 'télétravail', 'teletravail', 'à distance'],
+    paris:  ['paris', 'île-de-france', 'ile-de-france', 'idf'],
+    sophia: ['sophia', 'antipolis', 'nice'],
+    lyon:   ['lyon'],
+    nice:   ['nice', 'côte d\'azur']
+  };
+
+  function daysAgo(isoDate) {
+    if (!isoDate) return null;
+    const d = Math.floor((Date.now() - new Date(isoDate)) / 86400000);
+    if (d === 0) return 'Today · 今日';
+    if (d === 1) return '1 day ago · 1天前';
+    if (d < 7)   return `${d} days ago · ${d}天前`;
+    if (d < 30)  return `${Math.floor(d/7)}w ago`;
+    return fmtDateRead(isoDate);
+  }
+
+  function isExpired(isoDate) {
+    if (!isoDate) return false;
+    return new Date(isoDate) < new Date();
+  }
+
+  function isNew(isoDate) {
+    if (!isoDate) return false;
+    return (Date.now() - new Date(isoDate)) < 7 * 86400000;
+  }
+
+  function renderJobs(jobs) {
+    const container = document.getElementById('jobs-list');
+    if (!container) return;
+
+    const countEl = document.getElementById('jobs-count');
+    if (countEl) {
+      countEl.textContent = jobs.length === _allJobs.length
+        ? `${_allJobs.length} offre${_allJobs.length !== 1 ? 's' : ''}`
+        : `${jobs.length} / ${_allJobs.length}`;
+    }
+
+    if (jobs.length === 0) {
+      container.innerHTML = '<div class="jobs-empty"><i class="fas fa-briefcase"></i>Aucune offre trouvée · 沒有符合的職缺</div>';
+      return;
+    }
+
+    container.innerHTML = jobs.map(j => {
+      const cs       = JOB_COLORS[j.contract] || JOB_COLORS['Autre'];
+      const expired  = isExpired(j.expiresAt);
+      const newBadge = isNew(j.createdAt) && !expired
+        ? `<span class="job-status-new">NEW</span>` : '';
+      const statusBadge = expired
+        ? `<span class="job-status-closed"><i class="fas fa-times-circle"></i> Closed · 已結束</span>`
+        : `<span class="job-status-open"><i class="fas fa-circle" style="font-size:0.45rem;"></i> Open · 開放中</span>`;
+
+      const cvBtn = j.email
+        ? `<a class="job-cv-btn" href="mailto:${escHtmlRead(j.email)}?subject=${encodeURIComponent('Candidature – ' + (j.title || ''))}">
+             <i class="fas fa-paper-plane"></i> Envoyer CV · 投遞履歷
+           </a>` : '';
+
+      const reqs = j.requirements
+        ? `<div class="job-reqs">
+             <div class="job-reqs-label">【條件 / Conditions】</div>
+             ${makeExpandable(j.requirements, 'job-reqs-body')}
+           </div>` : '';
+
+      return `
+        <div class="job-card${expired ? ' job-card-closed' : ''}">
+          <div class="job-card-head">
+            <span class="job-badge" style="background:${cs.bg};color:${cs.color};">${escHtmlRead(j.contract || '')}</span>
+            <span class="job-loc-tag"><i class="fas fa-map-marker-alt" style="font-size:0.55rem;"></i>${escHtmlRead(j.location || '')}</span>
+            ${newBadge}
+            ${statusBadge}
+          </div>
+          <div class="job-card-body">
+            <div class="job-title">${escHtmlRead(j.title || '')}</div>
+            <div class="job-meta2">
+              ${j.company ? `<span class="job-company"><i class="fas fa-building" style="font-size:0.6rem;color:#94a3b8;"></i>${escHtmlRead(j.company)}</span>` : ''}
+              ${j.salary  ? `<span class="job-salary"><i class="fas fa-coins" style="font-size:0.6rem;"></i>${escHtmlRead(j.salary)}</span>` : ''}
+            </div>
+            <div class="job-footer">
+              <span class="job-verified"><i class="fas fa-check-circle"></i> Verified member · 已驗證成員</span>
+              ${j.poster ? `<span class="job-poster-name">${escHtmlRead(j.poster)}</span>` : ''}
+              <span class="job-date">${daysAgo(j.createdAt) || ''}</span>
+            </div>
+            ${j.description ? makeExpandable(j.description, 'job-desc') : ''}
+            ${reqs}
+            ${cvBtn}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function locMatch(location, key) {
+    if (key === 'all') return true;
+    const loc = (location || '').toLowerCase();
+    return (LOC_KEYWORDS[key] || []).some(kw => loc.includes(kw));
+  }
+
+  function applyFilter() {
+    const text = (document.getElementById('job-search')?.value || '').trim().toLowerCase();
+    const filtered = _allJobs.filter(j => {
+      const matchContract = _activeContract === 'all' || j.contract === _activeContract;
+      const matchLoc      = locMatch(j.location, _activeLoc);
+      const matchText     = !text ||
+        (j.title       || '').toLowerCase().includes(text) ||
+        (j.company     || '').toLowerCase().includes(text) ||
+        (j.location    || '').toLowerCase().includes(text) ||
+        (j.description || '').toLowerCase().includes(text) ||
+        (j.poster      || '').toLowerCase().includes(text);
+      return matchContract && matchLoc && matchText;
+    });
+    renderJobs(filtered);
+  }
+
+  // Expand/collapse — single delegated listener
+  document.getElementById('jobs-list').addEventListener('click', e => {
+    const btn = e.target.closest('.job-expand-btn');
+    if (!btn) return;
+    const prev = btn.previousElementSibling;
+    const expandable = prev?.classList.contains('expandable') ? prev : prev?.querySelector('.expandable');
+    if (!expandable) return;
+    const short = expandable.querySelector('.exp-short');
+    const full  = expandable.querySelector('.exp-full');
+    if (!short || !full) return;
+    const isExpanded = full.style.display !== 'none';
+    short.style.display = isExpanded ? '' : 'none';
+    full.style.display  = isExpanded ? 'none' : '';
+    btn.innerHTML = isExpanded
+      ? '展開 · Voir plus <i class="fas fa-chevron-down"></i>'
+      : '收起 · Réduire <i class="fas fa-chevron-up"></i>';
+  });
+
+  // Contract type filter
+  document.querySelectorAll('.fchip:not(.loc)').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.fchip:not(.loc)').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      _activeContract = chip.dataset.contract;
+      applyFilter();
+    });
+  });
+
+  // Location filter
+  document.querySelectorAll('.fchip.loc').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.fchip.loc').forEach(c => c.classList.remove('active', 'loc-active'));
+      chip.classList.add(chip.dataset.loc === 'all' ? 'active' : 'loc-active');
+      _activeLoc = chip.dataset.loc;
+      applyFilter();
+    });
+  });
+
+  // Text search
+  document.getElementById('job-search')?.addEventListener('input', applyFilter);
+
+  subscribeFirebaseData(function(data) {
+    _allJobs = data.jobs; // newest-first from firebase-read.js
+    applyFilter();
+  });
+  </script>
+</body>
+</html>

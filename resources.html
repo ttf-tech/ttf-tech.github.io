@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resources · 資源 — Taiwan Tech France</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇹🇼</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/stastic_member.css">
+
+  <style>
+    #app-sidebar {
+      position: fixed; top: 0; left: 0; height: 100%; width: 4rem;
+      background: #111827; display: flex; flex-direction: column; align-items: center;
+      padding: 1.25rem 0; z-index: 20; box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+    }
+    .sidebar-logo { font-size: 1.6rem; line-height: 1; margin-bottom: 2rem; cursor: default; user-select: none; }
+    .sidebar-nav  { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+    .sidebar-link {
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.15s;
+      padding: 0.5rem; border-radius: 10px; width: 3rem; justify-content: center; font-size: 1.15rem;
+    }
+    .sidebar-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
+    .sidebar-link.active { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .sidebar-link span { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75; }
+    .sidebar-link.active span { opacity: 1; }
+    .sidebar-link-admin { margin-top: auto; }
+
+    .page-header {
+      background: linear-gradient(160deg,#0a2d42 0%,#0f4060 100%);
+      color: #fff; padding: 1.75rem 1.5rem 1.5rem;
+    }
+    .page-header-inner { max-width: 900px; margin: 0 auto; }
+    .page-header h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.2rem; }
+    .page-header p  { font-size: 0.8rem; color: rgba(255,255,255,0.55); }
+
+    .resources-wrap { max-width: 900px; margin: 1.5rem auto 2rem; padding: 0 1.5rem; }
+
+    .res-section { margin-bottom: 1.75rem; }
+    .res-section-title {
+      font-size: 0.85rem; font-weight: 800; color: #0f172a;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+    }
+    .res-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.65rem; }
+    .res-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 0.9rem 1rem; display: flex; align-items: flex-start; gap: 0.75rem;
+      text-decoration: none; color: inherit; transition: box-shadow 0.15s, border-color 0.15s;
+    }
+    .res-card:hover { border-color: #cbd5e1; box-shadow: 0 2px 10px rgba(0,0,0,0.07); }
+    .res-icon {
+      width: 36px; height: 36px; border-radius: 8px; display: flex;
+      align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;
+    }
+    .res-card-title { font-size: 0.82rem; font-weight: 700; color: #0f172a; margin-bottom: 0.15rem; }
+    .res-card-desc  { font-size: 0.72rem; color: #64748b; line-height: 1.4; }
+    .res-coming { font-size: 0.72rem; color: #94a3b8; font-style: italic; padding: 0.75rem 1rem;
+                  background: #f8fafc; border: 1px dashed #e2e8f0; border-radius: 8px; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen">
+
+  <aside id="app-sidebar">
+    <div class="sidebar-logo">🇹🇼</div>
+    <nav class="sidebar-nav">
+      <a href="index.html"        class="sidebar-link"        title="Home · 首頁"><i class="fas fa-home"></i><span>Home</span></a>
+      <a href="events.html"       class="sidebar-link"        title="Events · 活動"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
+      <a href="jobs.html"         class="sidebar-link"        title="Jobs · 職缺"><i class="fas fa-briefcase"></i><span>Jobs</span></a>
+      <a href="resources.html"    class="sidebar-link active" title="Resources · 資源"><i class="fas fa-book-open"></i><span>Docs</span></a>
+      <a href="association.html"  class="sidebar-link"        title="Association · 協會"><i class="fas fa-landmark"></i><span>Assoc</span></a>
+      <a href="presentation.html" class="sidebar-link"        title="About · 關於"><i class="fas fa-info-circle"></i><span>About</span></a>
+      <a href="admin.html"        class="sidebar-link sidebar-link-admin" title="Admin"><i class="fas fa-lock"></i><span>Admin</span></a>
+    </nav>
+  </aside>
+
+  <main class="ml-16">
+    <div class="page-header">
+      <div class="page-header-inner">
+        <h1><i class="fas fa-book-open" style="margin-right:0.5rem;opacity:0.8;"></i>Resources · 資源</h1>
+        <p>Useful links, guides and tools for the community · 社群實用連結與資源</p>
+      </div>
+    </div>
+
+    <div class="resources-wrap">
+
+      <!-- Community -->
+      <div class="res-section">
+        <div class="res-section-title"><i class="fas fa-users" style="color:#7c3aed;"></i>Community · 社群</div>
+        <div class="res-grid">
+          <a class="res-card" href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener">
+            <div class="res-icon" style="background:#dcfce7;color:#16a34a;"><i class="fab fa-whatsapp"></i></div>
+            <div>
+              <div class="res-card-title">WhatsApp Group · 社群群組</div>
+              <div class="res-card-desc">Join the main community chat — 加入主要群組討論</div>
+            </div>
+          </a>
+          <a class="res-card" href="presentation.html">
+            <div class="res-icon" style="background:#dbeafe;color:#1d4ed8;"><i class="fas fa-info-circle"></i></div>
+            <div>
+              <div class="res-card-title">About the group · 關於本群</div>
+              <div class="res-card-desc">Who we are, what we do — 我們是誰、我們做什麼</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- France Work & Visa -->
+      <div class="res-section">
+        <div class="res-section-title"><i class="fas fa-passport" style="color:#0e7490;"></i>Work in France · 在法工作</div>
+        <div class="res-grid">
+          <a class="res-card" href="https://www.service-public.fr/particuliers/vosdroits/N19807" target="_blank" rel="noopener">
+            <div class="res-icon" style="background:#e0f2fe;color:#0369a1;"><i class="fas fa-landmark"></i></div>
+            <div>
+              <div class="res-card-title">Visa &amp; Titre de séjour</div>
+              <div class="res-card-desc">Official France visa and residency permit info — 法國官方簽證與居留資訊</div>
+            </div>
+          </a>
+          <a class="res-card" href="https://www.pole-emploi.fr" target="_blank" rel="noopener">
+            <div class="res-icon" style="background:#fef9c3;color:#854d0e;"><i class="fas fa-briefcase"></i></div>
+            <div>
+              <div class="res-card-title">France Travail (Pôle Emploi)</div>
+              <div class="res-card-desc">Job search &amp; unemployment registration — 求職與失業登記</div>
+            </div>
+          </a>
+          <a class="res-card" href="https://www.apec.fr" target="_blank" rel="noopener">
+            <div class="res-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fas fa-user-tie"></i></div>
+            <div>
+              <div class="res-card-title">APEC — Cadres</div>
+              <div class="res-card-desc">Executive &amp; engineer job board — 工程師/主管職位平台</div>
+            </div>
+          </a>
+          <a class="res-card" href="https://www.linkedin.com" target="_blank" rel="noopener">
+            <div class="res-icon" style="background:#dbeafe;color:#1d4ed8;"><i class="fab fa-linkedin"></i></div>
+            <div>
+              <div class="res-card-title">LinkedIn</div>
+              <div class="res-card-desc">Professional networking &amp; job search — 職業社群與求職</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Tech & Learning -->
+      <div class="res-section">
+        <div class="res-section-title"><i class="fas fa-code" style="color:#059669;"></i>Tech &amp; Learning</div>
+        <div class="res-grid">
+          <a class="res-card" href="https://github.com" target="_blank" rel="noopener">
+            <div class="res-icon" style="background:#f1f5f9;color:#0f172a;"><i class="fab fa-github"></i></div>
+            <div>
+              <div class="res-card-title">GitHub</div>
+              <div class="res-card-desc">Code hosting &amp; open source collaboration</div>
+            </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Slides & Replays (community contributed) -->
+      <div class="res-section">
+        <div class="res-section-title"><i class="fas fa-file-powerpoint" style="color:#dc2626;"></i>Slides &amp; Replays · 簡報與回放</div>
+        <div class="res-coming">
+          Slides and replay links from past webinars will be added here by the community.<br>
+          過去 webinar 的簡報與錄影連結將由社群成員陸續補充。
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>

@@ -1213,12 +1213,16 @@ function openAnncModal(id = null) {
 
 function _fillAnncForm(a) {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-  set('annc-title', a.title);
-  set('annc-date',  a.date ? a.date.slice(0, 16) : '');
-  set('annc-host',  a.host);
-  set('annc-type',  a.type || 'Webinaire');
-  set('annc-desc',  a.description || '');
-  set('annc-link',  a.link || '');
+  set('annc-title',         a.title);
+  set('annc-date',          a.date ? a.date.slice(0, 16) : '');
+  set('annc-host',          a.host);
+  set('annc-type',          a.type || 'Webinaire');
+  set('annc-desc',          a.description || '');
+  set('annc-link',          a.link || '');
+  set('annc-replay',        a.replayUrl || '');
+  set('annc-slides',        a.slideUrl  || '');
+  set('annc-speaker-title', a.speakerTitle || '');
+  set('annc-topics',        Array.isArray(a.topics) ? a.topics.join(', ') : (a.topics || ''));
 }
 
 function _clearAnncForm() {
@@ -1226,10 +1230,14 @@ function _clearAnncForm() {
   set('annc-title', '');
   const now = new Date();
   set('annc-date', new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
-  set('annc-host', '');
-  set('annc-type', 'Webinaire');
-  set('annc-desc', '');
-  set('annc-link', '');
+  set('annc-host',          '');
+  set('annc-type',          'Webinaire');
+  set('annc-desc',          '');
+  set('annc-link',          '');
+  set('annc-replay',        '');
+  set('annc-slides',        '');
+  set('annc-speaker-title', '');
+  set('annc-topics',        '');
 }
 
 function closeAnncModal() {
@@ -1267,33 +1275,46 @@ function saveAnnc() {
   if (!date)  { showToast('Veuillez saisir une date.'); return; }
   if (!host)  { showToast('Veuillez saisir un hôte.'); return; }
 
-  const desc = get('annc-desc');
-  const type = get('annc-type');
-  const link = get('annc-link');
+  const desc         = get('annc-desc');
+  const type         = get('annc-type');
+  const link         = get('annc-link');
+  const replayUrl    = get('annc-replay');
+  const slideUrl     = get('annc-slides');
+  const speakerTitle = get('annc-speaker-title');
+  const topicsRaw    = get('annc-topics');
+  const topics       = topicsRaw ? topicsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
 
   if (_anncModalId) {
     const a = state.announcements.find(x => x.id === _anncModalId);
     if (a) {
-      a.title       = title;
-      a.date        = new Date(date).toISOString();
-      a.host        = host;
-      a.type        = type;
-      a.description = desc;
-      a.link        = link;
-      a.author      = author;
+      a.title        = title;
+      a.date         = new Date(date).toISOString();
+      a.host         = host;
+      a.type         = type;
+      a.description  = desc;
+      a.link         = link;
+      a.author       = author;
+      a.replayUrl    = replayUrl;
+      a.slideUrl     = slideUrl;
+      a.speakerTitle = speakerTitle;
+      a.topics       = topics;
     }
     showToast('Annonce mise à jour · 公告已更新');
   } else {
     state.announcements.unshift({
-      id:          uid(),
+      id:           uid(),
       title,
-      date:        new Date(date).toISOString(),
+      date:         new Date(date).toISOString(),
       host,
       type,
-      description: desc,
+      description:  desc,
       link,
       author,
-      createdAt:   new Date().toISOString()
+      replayUrl,
+      slideUrl,
+      speakerTitle,
+      topics,
+      createdAt:    new Date().toISOString()
     });
     showToast('Annonce ajoutée ! · 公告已新增！');
   }
@@ -1432,23 +1453,27 @@ function openJobModal(id = null) {
 function _fillJobForm(j) {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   set('job-title',    j.title);
+  set('job-company',  j.company || '');
   set('job-location', j.location);
   set('job-contract', j.contract || 'CDI');
   set('job-salary',   j.salary || '');
   set('job-desc',     j.description);
   set('job-reqs',     j.requirements || '');
   set('job-email',    j.email || '');
+  set('job-expires',  j.expiresAt ? j.expiresAt.slice(0, 10) : '');
 }
 
 function _clearJobForm() {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
   set('job-title',    '');
+  set('job-company',  '');
   set('job-location', '');
   set('job-contract', 'CDI');
   set('job-salary',   '');
   set('job-desc',     '');
   set('job-reqs',     '');
   set('job-email',    '');
+  set('job-expires',  '');
 }
 
 function closeJobModal() {
@@ -1490,10 +1515,13 @@ function saveJob() {
   if (!title)  { showToast('Veuillez saisir un titre de poste.'); return; }
   if (!loc)    { showToast('Veuillez saisir un lieu.'); return; }
 
-  const contract = get('job-contract') || 'CDI';
-  const salary   = get('job-salary');
-  const desc     = get('job-desc');
-  const reqs     = get('job-reqs');
+  const contract  = get('job-contract') || 'CDI';
+  const company   = get('job-company');
+  const salary    = get('job-salary');
+  const desc      = get('job-desc');
+  const reqs      = get('job-reqs');
+  const expiresRaw = get('job-expires');
+  const expiresAt  = expiresRaw ? new Date(expiresRaw).toISOString() : '';
 
   if (!state.jobs) state.jobs = [];
 
@@ -1502,12 +1530,14 @@ function saveJob() {
     if (j) {
       j.poster       = poster;
       j.title        = title;
+      j.company      = company;
       j.location     = loc;
       j.contract     = contract;
       j.salary       = salary;
       j.description  = desc;
       j.requirements = reqs;
       j.email        = email;
+      j.expiresAt    = expiresAt;
     }
     showToast('Offre mise à jour · 職缺已更新');
   } else {
@@ -1515,12 +1545,15 @@ function saveJob() {
       id: uid(),
       poster,
       title,
+      company,
       location:     loc,
       contract,
       salary,
       description:  desc,
       requirements: reqs,
-      email
+      email,
+      expiresAt,
+      createdAt:    new Date().toISOString()
     });
     showToast('Offre ajoutée · 職缺已新增');
   }

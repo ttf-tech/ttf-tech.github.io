@@ -142,12 +142,11 @@
   <aside id="app-sidebar">
     <div class="sidebar-logo">🇹🇼</div>
     <nav class="sidebar-nav">
-      <a href="index.html"        class="sidebar-link"        title="Home · 首頁"><i class="fas fa-home"></i><span>Home</span></a>
-      <a href="events.html"       class="sidebar-link"        title="Events · 活動"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
-      <a href="jobs.html"         class="sidebar-link active" title="Jobs · 職缺"><i class="fas fa-briefcase"></i><span>Jobs</span></a>
+      <a href="index.html"        class="sidebar-link"        title="Home · 首頁"><i class="fas fa-home"></i><span>Accueil</span></a>
+      <a href="events.html"       class="sidebar-link"        title="Events · 活動"><i class="fas fa-calendar-alt"></i><span>Agenda</span></a>
+      <a href="jobs.html"         class="sidebar-link active" title="Jobs · 職缺"><i class="fas fa-briefcase"></i><span>Offres</span></a>
       <a href="resources.html"    class="sidebar-link"        title="Resources · 資源"><i class="fas fa-book-open"></i><span>Docs</span></a>
       <a href="association.html"  class="sidebar-link"        title="Association · 協會"><i class="fas fa-landmark"></i><span>Assoc</span></a>
-      <a href="presentation.html" class="sidebar-link"        title="About · 關於"><i class="fas fa-info-circle"></i><span>About</span></a>
       <a href="admin.html"        class="sidebar-link sidebar-link-admin" title="Admin"><i class="fas fa-lock"></i><span>Admin</span></a>
     </nav>
   </aside>
@@ -164,7 +163,7 @@
     <div class="filter-bar">
       <div class="filter-search-wrap">
         <i class="fas fa-search"></i>
-        <input type="text" id="job-search" placeholder="Search title, company, skills… · 搜尋職位、公司或技能">
+        <input type="text" id="job-search" placeholder="Rechercher poste, entreprise, compétences… · 搜尋職位、公司或技能">
         <span id="jobs-count" class="jobs-count"></span>
       </div>
       <div class="filter-row">
@@ -178,7 +177,7 @@
       </div>
       <div class="filter-row">
         <span class="filter-row-label">Lieu</span>
-        <button class="fchip loc active" data-loc="all">All cities</button>
+        <button class="fchip loc active" data-loc="all">Toutes les villes</button>
         <button class="fchip loc" data-loc="remote">Remote</button>
         <button class="fchip loc" data-loc="paris">Paris</button>
         <button class="fchip loc" data-loc="sophia">Sophia-Antipolis</button>
@@ -188,7 +187,7 @@
     </div>
 
     <div class="jobs-wrap" id="jobs-list">
-      <div class="jobs-empty"><i class="fas fa-briefcase"></i>Loading…</div>
+      <div class="jobs-empty"><i class="fas fa-briefcase"></i>Chargement…</div>
     </div>
   </main>
 
@@ -233,10 +232,10 @@
   function daysAgo(isoDate) {
     if (!isoDate) return null;
     const d = Math.floor((Date.now() - new Date(isoDate)) / 86400000);
-    if (d === 0) return 'Today · 今日';
-    if (d === 1) return '1 day ago · 1天前';
-    if (d < 7)   return `${d} days ago · ${d}天前`;
-    if (d < 30)  return `${Math.floor(d/7)}w ago`;
+    if (d === 0) return 'Aujourd\'hui · 今日';
+    if (d === 1) return 'il y a 1 jour · 1天前';
+    if (d < 7)   return `il y a ${d} jours · ${d}天前`;
+    if (d < 30)  return `il y a ${Math.floor(d/7)} sem.`;
     return fmtDateRead(isoDate);
   }
 
@@ -262,7 +261,7 @@
     }
 
     if (jobs.length === 0) {
-      container.innerHTML = '<div class="jobs-empty"><i class="fas fa-briefcase"></i>Aucune offre trouvée · 沒有符合的職缺</div>';
+      container.innerHTML = '<div class="jobs-empty"><i class="fas fa-briefcase"></i>Aucune offre trouvée · 沒有符合</div>';
       return;
     }
 
@@ -272,8 +271,8 @@
       const newBadge = isNew(j.createdAt) && !expired
         ? `<span class="job-status-new">NEW</span>` : '';
       const statusBadge = expired
-        ? `<span class="job-status-closed"><i class="fas fa-times-circle"></i> Closed · 已結束</span>`
-        : `<span class="job-status-open"><i class="fas fa-circle" style="font-size:0.45rem;"></i> Open · 開放中</span>`;
+        ? `<span class="job-status-closed"><i class="fas fa-times-circle"></i> Clôturé · 已結束</span>`
+        : `<span class="job-status-open"><i class="fas fa-circle" style="font-size:0.45rem;"></i> Ouvert · 開放中</span>`;
 
       const cvBtn = j.email
         ? `<a class="job-cv-btn" href="mailto:${escHtmlRead(j.email)}?subject=${encodeURIComponent('Candidature – ' + (j.title || ''))}">
@@ -301,7 +300,7 @@
               ${j.salary  ? `<span class="job-salary"><i class="fas fa-coins" style="font-size:0.6rem;"></i>${escHtmlRead(j.salary)}</span>` : ''}
             </div>
             <div class="job-footer">
-              <span class="job-verified"><i class="fas fa-check-circle"></i> Verified member · 已驗證成員</span>
+              <span class="job-verified"><i class="fas fa-check-circle"></i> Membre vérifié · 已驗證成員</span>
               ${j.poster ? `<span class="job-poster-name">${escHtmlRead(j.poster)}</span>` : ''}
               <span class="job-date">${daysAgo(j.createdAt) || ''}</span>
             </div>

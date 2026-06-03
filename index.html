@@ -143,6 +143,51 @@
     }
     .pub-stat-card-body { padding: 0.75rem 1rem 1rem; }
 
+    /* À propos section */
+    .about-section { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .about-section-title {
+      font-size: 1rem; font-weight: 800; color: #0f172a;
+      display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;
+    }
+    .about-section-title i { color: #fbbf24; }
+    .about-section-sub  { font-size: 0.78rem; color: #64748b; margin-bottom: 1.25rem; }
+    .about-cards-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.85rem;
+      margin-bottom: 2rem;
+    }
+    .about-card {
+      background: #fff; border-radius: 12px; border: 1px solid #e2e8f0;
+      padding: 1.25rem; display: flex; flex-direction: column; gap: 0.6rem;
+      transition: box-shadow 0.15s;
+    }
+    .about-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.07); }
+    .about-card-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, #0a2d42, #1a5f7a);
+      display: flex; align-items: center; justify-content: center;
+      color: #fbbf24; font-size: 1rem; flex-shrink: 0;
+    }
+    .about-card-title { font-size: 0.88rem; font-weight: 700; color: #1e293b; }
+    .about-card-desc  { font-size: 0.75rem; color: #64748b; line-height: 1.6; }
+    .join-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .join-item {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 0.85rem 1.1rem; display: flex; align-items: flex-start; gap: 0.7rem;
+      font-size: 0.83rem; color: #1e293b;
+    }
+    .join-item i { color: #059669; font-size: 0.95rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .about-welcome {
+      margin-top: 1rem; padding: 0.9rem 1.1rem;
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+      font-size: 0.83rem; color: #065f46; font-weight: 600;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .about-spirit {
+      margin-top: 0.85rem; padding: 1.1rem 1.3rem;
+      background: linear-gradient(135deg,#0a2d42 0%,#0f3d5c 100%);
+      border-radius: 12px; color: #fff; line-height: 1.85; font-size: 0.85rem;
+    }
+
     /* Join section */
     .pub-join {
       max-width: 1280px; margin: 2rem auto 2.5rem; padding: 0 1.5rem;
@@ -164,12 +209,11 @@
   <aside id="app-sidebar">
     <div class="sidebar-logo">🇹🇼</div>
     <nav class="sidebar-nav">
-      <a href="index.html"        class="sidebar-link active" title="Home · 首頁"><i class="fas fa-home"></i><span>Home</span></a>
-      <a href="events.html"       class="sidebar-link"        title="Events · 活動"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
-      <a href="jobs.html"         class="sidebar-link"        title="Jobs · 職缺"><i class="fas fa-briefcase"></i><span>Jobs</span></a>
+      <a href="index.html"        class="sidebar-link active" title="Home · 首頁"><i class="fas fa-home"></i><span>Accueil</span></a>
+      <a href="events.html"       class="sidebar-link"        title="Events · 活動"><i class="fas fa-calendar-alt"></i><span>Agenda</span></a>
+      <a href="jobs.html"         class="sidebar-link"        title="Jobs · 職缺"><i class="fas fa-briefcase"></i><span>Offres</span></a>
       <a href="resources.html"    class="sidebar-link"        title="Resources · 資源"><i class="fas fa-book-open"></i><span>Docs</span></a>
       <a href="association.html"  class="sidebar-link"        title="Association · 協會"><i class="fas fa-landmark"></i><span>Assoc</span></a>
-      <a href="presentation.html" class="sidebar-link"        title="About · 關於"><i class="fas fa-info-circle"></i><span>About</span></a>
       <a href="admin.html"        class="sidebar-link sidebar-link-admin" title="Admin"><i class="fas fa-lock"></i><span>Admin</span></a>
     </nav>
   </aside>
@@ -189,8 +233,8 @@
             在法臺灣科技社群 · Communauté tech taïwanaise en France
           </div>
           <div style="font-size:0.78rem;color:rgba(255,255,255,0.4);max-width:440px;margin:0.5rem auto 0;line-height:1.5;">
-            For Taiwanese tech professionals, students and builders working or moving to France —
-            share jobs, meet peers, grow together.
+            Pour les ingénieurs et professionnels tech taïwanais en France —
+            partager des opportunités, rencontrer des pairs, évoluer ensemble.
           </div>
         </div>
 
@@ -215,10 +259,10 @@
             <i class="fab fa-whatsapp"></i> Join WhatsApp · 加入群組
           </a>
           <a href="jobs.html" class="sm-hero-cta-secondary">
-            <i class="fas fa-briefcase"></i> See Jobs · 職缺
+            <i class="fas fa-briefcase"></i> Voir les offres · 職缺
           </a>
           <a href="events.html" class="sm-hero-cta-secondary">
-            <i class="fas fa-calendar-alt"></i> See Events · 活動
+            <i class="fas fa-calendar-alt"></i> Voir les activités · 活動
           </a>
         </div>
 
@@ -231,9 +275,9 @@
       <div class="pub-section-head">
         <div class="pub-section-title">
           <i class="fas fa-calendar-alt" style="color:#7c3aed;"></i>
-          Upcoming Events · 即將到來的活動
+          Événements à venir · 即將到來的活動
         </div>
-        <a href="events.html" class="pub-section-viewall">View all <i class="fas fa-arrow-right" style="font-size:0.6rem;"></i></a>
+        <a href="events.html" class="pub-section-viewall">Voir tout <i class="fas fa-arrow-right" style="font-size:0.6rem;"></i></a>
       </div>
       <div class="pub-event-list" id="home-events"></div>
     </section>
@@ -280,9 +324,9 @@
         <div class="activity-icon" style="background:#fef3c7;color:#92400e;font-size:1.1rem;">☕</div>
         <div>
           <div class="activity-label" style="color:#92400e;">Coffee Chat · 咖啡聊聊</div>
-          <div class="activity-value" style="font-size:0.78rem;color:#78350f;">1:1 with the community</div>
+          <div class="activity-value" style="font-size:0.78rem;color:#78350f;">En tête-à-tête avec la communauté</div>
           <div class="activity-sub" style="color:#a16207;margin-top:0.3rem;font-size:0.68rem;font-weight:600;">
-            Book a 20 min slot →
+            Réserver un créneau →
           </div>
         </div>
       </a>
@@ -295,9 +339,9 @@
       <div class="pub-section-head">
         <div class="pub-section-title">
           <i class="fas fa-briefcase" style="color:#059669;"></i>
-          Latest Jobs & Missions · 最新職缺
+          Dernières offres & Missions · 最新職缺
         </div>
-        <a href="jobs.html" class="pub-section-viewall">View all <i class="fas fa-arrow-right" style="font-size:0.6rem;"></i></a>
+        <a href="jobs.html" class="pub-section-viewall">Voir tout <i class="fas fa-arrow-right" style="font-size:0.6rem;"></i></a>
       </div>
       <div class="pub-job-list" id="home-jobs"></div>
     </section>
@@ -307,9 +351,9 @@
       <div class="pub-stats-head">
         <div class="pub-stats-title">
           <i class="fas fa-chart-bar" style="color:#0a2d42;"></i>
-          Community Stats · 社群統計
+          Statistiques communauté · 社群統計
         </div>
-        <span class="pub-stats-note"><i class="fab fa-whatsapp" style="margin-right:0.25rem;"></i>From WhatsApp surveys · 來自 WhatsApp 問卷</span>
+        <span class="pub-stats-note"><i class="fab fa-whatsapp" style="margin-right:0.25rem;"></i>Données WhatsApp · 來自 WhatsApp 問卷</span>
       </div>
       <div class="pub-stats-grid">
 
@@ -373,12 +417,93 @@
              class="sm-hero-cta-primary" style="font-size:0.95rem;padding:0.75rem 1.75rem;">
             <i class="fab fa-whatsapp"></i> Join WhatsApp
           </a>
-          <a href="presentation.html" class="sm-hero-cta-secondary" style="font-size:0.82rem;">
-            <i class="fas fa-info-circle"></i> Learn more
-          </a>
         </div>
       </div>
     </div>
+
+    <!-- ── À PROPOS ──────────────────────────────────────────────── -->
+    <section class="about-section" id="a-propos" style="border-top:1px solid #f1f5f9;">
+
+      <div class="about-section-title">
+        <i class="fas fa-bullseye"></i> 群組目標 · Nos Objectifs
+      </div>
+      <div class="about-section-sub">Ce que nous faisons ensemble · 我們一起做的事</div>
+
+      <div class="about-cards-grid">
+        <div class="about-card">
+          <div class="about-card-icon"><i class="fas fa-handshake"></i></div>
+          <div class="about-card-title">Networking · 人脈建立</div>
+          <div class="about-card-desc">認識在法國各城市的臺灣工程師，建立長期互相支持的 network。<br>Connectez-vous avec des ingénieurs taïwanais à travers toute la France.</div>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon"><i class="fas fa-briefcase"></i></div>
+          <div class="about-card-title">Opportunités d'emploi · 職缺分享</div>
+          <div class="about-card-desc">分享工作機會與 mission 資訊（CDI / Freelance / ESN），互相推薦與引薦。<br>Partagez et découvrez des offres d'emploi et missions dans la tech.</div>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon"><i class="fas fa-lightbulb"></i></div>
+          <div class="about-card-title">Partage de connaissances · 知識分享</div>
+          <div class="about-card-desc">交流技術、職涯與法國職場經驗，組織 webinaires 和 coffee chats。<br>Échangez sur la tech, la carrière et la vie professionnelle en France.</div>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon"><i class="fas fa-chart-line"></i></div>
+          <div class="about-card-title">Investissement · 投資交流</div>
+          <div class="about-card-desc">交流在法國長期發展與投資的相關資訊，共同學習理財策略。<br>Échangez sur l'investissement et le développement financier en France.</div>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon"><i class="fas fa-users"></i></div>
+          <div class="about-card-title">Communauté · 社群建立</div>
+          <div class="about-card-desc">建立長期互相支持的臺灣工程師 network，不論你在哪個城市。<br>Construisons ensemble une communauté solidaire et durable.</div>
+        </div>
+        <div class="about-card">
+          <div class="about-card-icon"><i class="fas fa-info-circle"></i></div>
+          <div class="about-card-title">Ressources pratiques · 實用資訊</div>
+          <div class="about-card-desc">分享關於法國生活、行政、簽證等實用資訊，降低在法生活的門檻。<br>Infos pratiques sur la vie en France : administratif, visa, logement, etc.</div>
+        </div>
+      </div>
+
+      <div class="about-section-title" style="margin-bottom:0.3rem;">
+        <i class="fas fa-door-open"></i> 誰可以加入 · Qui peut rejoindre ?
+      </div>
+      <div class="about-section-sub">Le groupe est ouvert à · 歡迎加入的對象</div>
+
+      <div class="join-list">
+        <div class="join-item">
+          <i class="fas fa-check-circle"></i>
+          <span><strong>已在法國工作的工程師</strong>，或科技業等 · Ingénieurs taïwanais déjà en poste en France</span>
+        </div>
+        <div class="join-item">
+          <i class="fas fa-check-circle"></i>
+          <span><strong>剛到法國</strong>，正在適應新環境 · Nouveaux arrivants en France</span>
+        </div>
+        <div class="join-item">
+          <i class="fas fa-check-circle"></i>
+          <span><strong>正在找工作或 mission</strong> · En recherche active d'emploi ou de mission</span>
+        </div>
+        <div class="join-item">
+          <i class="fas fa-check-circle"></i>
+          <span><strong>未來計畫來法國發展</strong>（法文能力非必要）· Envisagent de s'installer en France — le français n'est pas obligatoire !</span>
+        </div>
+      </div>
+
+      <div class="about-welcome">
+        <i class="fas fa-smile-beam" style="font-size:1.1rem;"></i>
+        歡迎加入 · Bienvenue ! 🙌 — La communauté vous accueille chaleureusement.
+      </div>
+
+      <div class="about-spirit">
+        <div style="margin-bottom:0.5rem;">
+          📍 分享科技業相關職缺、面試心得<br>
+          📍 分享科技業求職經歷或心事<br>
+          📍 請教前輩職涯規劃
+        </div>
+        <div style="color:rgba(255,255,255,0.85);font-size:0.82rem;">
+          這裡不只是討論工作賣肝，更是一個<strong style="color:#6ee7b7;">相互支持與取暖</strong>的社群，期待看到各位的精彩分享！🔥
+        </div>
+      </div>
+
+    </section>
+    <!-- /À PROPOS -->
 
   </main>
 
@@ -397,9 +522,14 @@
   function renderEventsPreview(announcements) {
     const el = document.getElementById('home-events');
     if (!el) return;
-    const list = announcements.slice(0, 3);
+    const now = Date.now();
+    // Only future events, sorted soonest first
+    const list = announcements
+      .filter(a => a.date && new Date(a.date) > now)
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .slice(0, 3);
     if (list.length === 0) {
-      el.innerHTML = '<div class="pub-empty"><i class="fas fa-calendar-alt" style="display:block;font-size:1.5rem;opacity:0.2;margin-bottom:0.4rem;"></i>No upcoming events · 目前沒有活動</div>';
+      el.innerHTML = '<div class="pub-empty"><i class="fas fa-calendar-alt" style="display:block;font-size:1.5rem;opacity:0.2;margin-bottom:0.4rem;"></i>Aucun événement à venir · 目前沒有活動</div>';
       return;
     }
     el.innerHTML = list.map(a => {
@@ -430,7 +560,7 @@
     if (!el) return;
     const list = jobs.slice(0, 3);
     if (list.length === 0) {
-      el.innerHTML = '<div class="pub-empty"><i class="fas fa-briefcase" style="display:block;font-size:1.5rem;opacity:0.2;margin-bottom:0.4rem;"></i>No job posts yet · 目前沒有職缺</div>';
+      el.innerHTML = '<div class="pub-empty"><i class="fas fa-briefcase" style="display:block;font-size:1.5rem;opacity:0.2;margin-bottom:0.4rem;"></i>Aucune offre · 目前沒有職缺</div>';
       return;
     }
     el.innerHTML = list.map(j => {
@@ -457,7 +587,7 @@
       if (jobTitle) jobTitle.textContent = job.title || '—';
       if (jobMeta)  jobMeta.textContent  = [job.contract, job.location].filter(Boolean).join(' · ');
     } else {
-      if (jobTitle) jobTitle.textContent = 'No jobs yet · 尚無職缺';
+      if (jobTitle) jobTitle.textContent = 'Aucune offre pour le moment · 尚無職缺';
     }
 
     // Next upcoming event (soonest in the future, or last one if all past)
@@ -473,14 +603,16 @@
       if (evTitle) evTitle.textContent = event.title || '—';
       if (evDate)  evDate.textContent  = event.date ? fmtDateRead(event.date) : '';
     } else {
-      if (evTitle) evTitle.textContent = 'No events yet · 尚無活動';
+      if (evTitle) evTitle.textContent = 'Aucun événement · 尚無活動';
     }
   }
 
   subscribeFirebaseData(function(data) {
+    const now = Date.now();
+    const upcomingCount = data.announcements.filter(a => a.date && new Date(a.date) > now).length;
     document.getElementById('kpi-members').textContent = data.memberCount;
     document.getElementById('kpi-jobs').textContent    = data.jobs.length;
-    document.getElementById('kpi-events').textContent  = data.announcements.length;
+    document.getElementById('kpi-events').textContent  = upcomingCount;
     renderEventsPreview(data.announcements);
     renderJobsPreview(data.jobs);
     updateActivityStrip(data);

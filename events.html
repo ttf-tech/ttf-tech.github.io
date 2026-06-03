@@ -218,12 +218,11 @@
   <aside id="app-sidebar">
     <div class="sidebar-logo">🇹🇼</div>
     <nav class="sidebar-nav">
-      <a href="index.html"        class="sidebar-link"        title="Home · 首頁"><i class="fas fa-home"></i><span>Home</span></a>
-      <a href="events.html"       class="sidebar-link active" title="Events · 活動"><i class="fas fa-calendar-alt"></i><span>Events</span></a>
-      <a href="jobs.html"         class="sidebar-link"        title="Jobs · 職缺"><i class="fas fa-briefcase"></i><span>Jobs</span></a>
+      <a href="index.html"        class="sidebar-link"        title="Home · 首頁"><i class="fas fa-home"></i><span>Accueil</span></a>
+      <a href="events.html"       class="sidebar-link active" title="Events · 活動"><i class="fas fa-calendar-alt"></i><span>Agenda</span></a>
+      <a href="jobs.html"         class="sidebar-link"        title="Jobs · 職缺"><i class="fas fa-briefcase"></i><span>Offres</span></a>
       <a href="resources.html"    class="sidebar-link"        title="Resources · 資源"><i class="fas fa-book-open"></i><span>Docs</span></a>
       <a href="association.html"  class="sidebar-link"        title="Association · 協會"><i class="fas fa-landmark"></i><span>Assoc</span></a>
-      <a href="presentation.html" class="sidebar-link"        title="About · 關於"><i class="fas fa-info-circle"></i><span>About</span></a>
       <a href="admin.html"        class="sidebar-link sidebar-link-admin" title="Admin"><i class="fas fa-lock"></i><span>Admin</span></a>
     </nav>
   </aside>
@@ -243,10 +242,10 @@
       <div class="coffee-card">
         <div class="coffee-left">
           <div class="coffee-pill"><i class="fas fa-coffee"></i> Community · 社群咖啡聊聊</div>
-          <h2>Coffee Chat — 20 min with the community ☕</h2>
+          <h2>Coffee Chat — 40 min with the community ☕</h2>
           <p>
-            Informal one-on-one conversations with community members.<br>
-            Ask questions, share experience, get career feedback — in French or English.
+            Échanges informels en tête-à-tête avec des membres de la communauté.<br>
+            Posez vos questions, partagez votre expérience, obtenez des retours sur votre parcours.
           </p>
           <div class="coffee-topics">
             <span class="coffee-topic">🇫🇷 New arrival in France</span>
@@ -262,9 +261,9 @@
         <div class="coffee-actions">
           <a href="https://calendly.com/tess-hsu/parlon-ton-project-cyber"
              target="_blank" rel="noopener" class="coffee-book-btn">
-            <i class="fas fa-calendar-check"></i> Book a Coffee Chat
+            <i class="fas fa-calendar-check"></i> Réserver un Coffee Chat
           </a>
-          <span class="coffee-note">Free · 免費 · ~20-30 min via Google Meet</span>
+          <span class="coffee-note">Gratuit · 免費 · ~20-30 min via Google Meet</span>
         </div>
       </div>
     </div>
@@ -284,15 +283,15 @@
       <button class="topic-chip" data-topic="Tech">💻 Tech</button>
     </div>
 
-    <!-- Upcoming events -->
+    <!-- À venir events -->
     <section class="events-section">
       <div class="section-title">
         <i class="fas fa-calendar-alt" style="color:#7c3aed;"></i>
-        Upcoming · 即將到來
+        À venir · 即將到來
         <span class="section-count" id="upcoming-count">0</span>
       </div>
       <div class="events-grid" id="upcoming-list">
-        <div class="ev-empty"><i class="fas fa-calendar-alt"></i>Loading…</div>
+        <div class="ev-empty"><i class="fas fa-calendar-alt"></i>Chargement…</div>
       </div>
     </section>
 
@@ -300,11 +299,11 @@
     <section class="events-section">
       <div class="section-title">
         <i class="fas fa-play-circle" style="color:#f59e0b;"></i>
-        Content Library · 過往內容
+        Bibliothèque · 過往內容
         <span class="section-count" id="past-count">0</span>
       </div>
       <div class="events-grid" id="past-list">
-        <div class="ev-empty"><i class="fas fa-play-circle"></i>Loading…</div>
+        <div class="ev-empty"><i class="fas fa-play-circle"></i>Chargement…</div>
       </div>
     </section>
 
@@ -312,11 +311,11 @@
     <section class="events-section" id="speakers-section">
       <div class="section-title">
         <i class="fas fa-microphone" style="color:#0e7490;"></i>
-        Community Speakers · 社群講者
+        Intervenants · 社群講者
         <span class="section-count" id="speakers-count">0</span>
       </div>
       <div class="speakers-grid" id="speakers-grid">
-        <div class="ev-empty" style="grid-column:1/-1;"><i class="fas fa-microphone"></i>Loading…</div>
+        <div class="ev-empty" style="grid-column:1/-1;"><i class="fas fa-microphone"></i>Chargement…</div>
       </div>
     </section>
 
@@ -366,7 +365,7 @@
 
     const statusBadge = isPast
       ? `<span class="ev-past-badge">${fmtDateRead(ev.date)}</span>`
-      : `<span class="ev-upcoming-badge"><i class="fas fa-circle" style="font-size:0.4rem;"></i>Upcoming</span>`;
+      : `<span class="ev-upcoming-badge"><i class="fas fa-circle" style="font-size:0.4rem;"></i>À venir</span>`;
 
     const speakerLine = ev.host ? `
       <div class="ev-speaker">
@@ -380,20 +379,20 @@
     if (!isPast) {
       if (ev.link) {
         actions = `<a class="ev-btn ev-btn-join" href="${escHtmlRead(ev.link)}" target="_blank" rel="noopener">
-                     <i class="fas fa-external-link-alt"></i> Join · 加入
+                     <i class="fas fa-external-link-alt"></i> Rejoindre · 加入
                    </a>`;
       }
     } else {
       const replayBtn = ev.replayUrl
         ? `<a class="ev-btn ev-btn-replay" href="${escHtmlRead(ev.replayUrl)}" target="_blank" rel="noopener">
-             <i class="fas fa-play"></i> Watch replay · 觀看錄影
+             <i class="fas fa-play"></i> Voir l'enregistrement · 觀看錄影
            </a>` : '';
       const slidesBtn = ev.slideUrl
         ? `<a class="ev-btn ev-btn-slides" href="${escHtmlRead(ev.slideUrl)}" target="_blank" rel="noopener">
-             <i class="fas fa-file-powerpoint"></i> View slides · 查看簡報
+             <i class="fas fa-file-powerpoint"></i> Voir les slides · 查看簡報
            </a>` : '';
       const noMedia = !ev.replayUrl && !ev.slideUrl
-        ? `<span class="ev-no-media"><i class="fas fa-clock" style="margin-right:0.2rem;"></i>Recording / slides coming soon</span>` : '';
+        ? `<span class="ev-no-media"><i class="fas fa-clock" style="margin-right:0.2rem;"></i>Enregistrement / slides à venir</span>` : '';
       actions = replayBtn + slidesBtn + noMedia;
     }
 
@@ -441,7 +440,7 @@
     if (countEl) countEl.textContent = filtered.length;
 
     if (filtered.length === 0) {
-      const msg = isPast ? 'No past recordings yet · 尚無過往錄影' : 'No upcoming events · 目前沒有活動';
+      const msg = isPast ? 'Aucun enregistrement pour le moment · 尚無過往錄影' : 'Aucun événement à venir · 目前沒有活動';
       containerEl.innerHTML = `<div class="ev-empty"><i class="fas fa-calendar-alt"></i>${msg}</div>`;
       return;
     }
@@ -468,7 +467,7 @@
     if (countEl) countEl.textContent = speakers.length;
 
     if (speakers.length === 0) {
-      if (grid) grid.innerHTML = '<div class="ev-empty" style="grid-column:1/-1;"><i class="fas fa-microphone"></i>No speakers yet · 尚無講者資料</div>';
+      if (grid) grid.innerHTML = '<div class="ev-empty" style="grid-column:1/-1;"><i class="fas fa-microphone"></i>Aucun intervenant · 尚無講者資料</div>';
       return;
     }
     if (grid) {

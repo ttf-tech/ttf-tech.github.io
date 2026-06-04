@@ -1018,6 +1018,8 @@ function openMemberModal(id = null) {
   const joinEl   = document.getElementById('m-joined');
   const noteEl   = document.getElementById('m-note');
   const delBtn   = document.getElementById('member-modal-delete');
+  const errEl    = document.getElementById('m-name-error');
+  if (errEl) errEl.style.display = 'none'; // always clear on open
 
   if (id) {
     const m = state.members.find(x => x.id === id);
@@ -1045,15 +1047,36 @@ function closeMemberModal() {
 }
 
 function saveMember() {
-  const nameEl = document.getElementById('m-name');
-  const joinEl = document.getElementById('m-joined');
-  const noteEl = document.getElementById('m-note');
+  const nameEl  = document.getElementById('m-name');
+  const joinEl  = document.getElementById('m-joined');
+  const noteEl  = document.getElementById('m-note');
+  const errEl   = document.getElementById('m-name-error');
 
   const name   = nameEl?.value.trim();
   const joined = joinEl?.value;
   const note   = noteEl?.value.trim();
 
+  if (errEl) errEl.style.display = 'none';
+
   if (!name) { showToast('Le nom est obligatoire.'); return; }
+
+  // Duplicate name check — skip for edits of the same member
+  const nameLower = name.toLowerCase();
+  const duplicate = state.members.find(m =>
+    m.name.trim().toLowerCase() === nameLower && m.id !== _memberModalId
+  );
+  if (duplicate) {
+    if (errEl) {
+      errEl.innerHTML =
+        '<i class="fas fa-exclamation-triangle" style="margin-right:0.35rem;"></i>' +
+        `<strong>Ce nom existe déjà · 名字已存在：「${duplicate.name}」</strong><br>` +
+        'Veuillez utiliser un nom différent, par exemple en ajoutant un chiffre ou un prénom supplémentaire.<br>' +
+        '<span style="opacity:0.8;">請更換名稱，例如：Terry Chen、Terry 2、Wei (Paris)…</span>';
+      errEl.style.display = 'block';
+    }
+    nameEl?.focus();
+    return;
+  }
 
   // Work directly on addedMembers (non-seed) — never mutate SEED_MEMBERS
   const dyn = extractDynamic();

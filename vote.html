@@ -482,8 +482,10 @@
   let _surveyVotes = {};       // { surveyId: { memberName: [optionIds] } }
   let _addedMembers = [];      // from Firebase
   let _allMembers = [...SEED_MEMBER_NAMES];
-  let _myVotes = JSON.parse(sessionStorage.getItem('ttf_my_votes') || '{}'); // { surveyId: [optIds] }
-  let _myName  = sessionStorage.getItem('ttf_my_name') || '';
+  // localStorage = persists across browser sessions (name remembered forever)
+  // _myVotes is derived from Firebase on every load — not from localStorage
+  let _myVotes = {};  // populated from Firebase once we know the member name
+  let _myName  = localStorage.getItem('ttf_my_name') || '';
 
   // Modal state
   let _activeSurveyId  = null;
@@ -643,7 +645,9 @@
       statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Membre vérifié · 成員身份已驗證';
       statusEl.className = 'vm-name-status valid';
       _myName = name;
-      sessionStorage.setItem('ttf_my_name', name);
+      localStorage.setItem('ttf_my_name', name);
+      // Re-derive myVotes from Firebase for this name
+      _deriveMyVotesFromFirebase();
     } else {
       statusEl.innerHTML = '<i class="fas fa-times-circle"></i> Nom non trouvé dans la liste des membres · 名字不在成員列表中';
       statusEl.className = 'vm-name-status invalid';
@@ -687,12 +691,28 @@
       }
     }
 
-    // Save locally
+    // Update local cache immediately (don't wait for next Firebase event)
     _myVotes[surveyId] = [..._selectedOptions];
-    sessionStorage.setItem('ttf_my_votes', JSON.stringify(_myVotes));
 
     closeVoteModal();
     renderSurveys(); // re-render to show "already voted" state
+  }
+
+  /* ── Derive "already voted" from Firebase for stored member name ── */
+  function _deriveMyVotesFromFirebase() {
+    if (!_myName) return;
+    const nameLower = _myName.trim().toLowerCase();
+    _myVotes = {};
+    for (const survey of SURVEYS) {
+      const votes = _surveyVotes[survey.id] || {};
+      // Check case-insensitively
+      for (const [key, opts] of Object.entries(votes)) {
+        if (key.trim().toLowerCase() === nameLower && Array.isArray(opts) && opts.length > 0) {
+          _myVotes[survey.id] = opts;
+          break;
+        }
+      }
+    }
   }
 
   /* ── Firebase listener ─────────────────────────────────────── */
@@ -708,6 +728,8 @@
           _allMembers   = [...SEED_MEMBER_NAMES, ..._addedMembers.map(m => m.name).filter(Boolean)];
         } catch(_) {}
       }
+      // Always re-derive voted state from Firebase (not sessionStorage)
+      _deriveMyVotesFromFirebase();
       renderSurveys();
     });
   }

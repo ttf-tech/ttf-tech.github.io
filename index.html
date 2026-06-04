@@ -674,7 +674,7 @@
   </script>
 
   <script>
-  /* ── Community stats charts (read-only, seed data from WhatsApp surveys) ── */
+  /* ── Community stats charts — live-synced with Firebase votes ── */
   'use strict';
 
   const CHART_PALETTE = [
@@ -683,9 +683,46 @@
     '#9333ea','#c2410c','#0284c7'
   ];
 
+  // Seed baseline (WhatsApp legacy counts) + option key mapping for each survey
+  const SURVEY_META = {
+    'seed_s1_tech': {
+      keys:   ['Backend Dev','Frontend Dev','Full Stack','DevOps/SRE/Cloud','Data/AI/ML','Mobile','QA/Test','Security/Cybersec','Architect/Tech Lead','PM','Designer','Biz Manager','Others'],
+      labels: ['Backend Dev','Frontend Dev','Full Stack','DevOps/SRE/Cloud','Data / AI / ML','Mobile','QA / Test','Security','Architect/Tech Lead','PM','Designer','Biz Manager','Others'],
+      legacy: [3,2,2,2,11,1,1,1,2,10,1,4,14]
+    },
+    'seed_s2_invest': {
+      keys:   ['不感興趣','有興趣但無額外資金','有興趣且已在投資','很有興趣願增加','有興趣但不方便GMeet','有興趣可參加GMeet'],
+      labels: ['Pas intéressé(e)','Intéressé mais sans fonds','Intéressé et déjà investi','Très intéressé','Pas dispo GMeet','Intéressé et dispo GMeet'],
+      legacy: [0,5,4,0,0,11]
+    },
+    'seed_s3_city': {
+      keys:   ['Paris','Lyon','Toulouse','Bordeaux','Lille','Strasbourg','Nice','Taiwan','Autres'],
+      labels: ['Paris / Île-de-France','Lyon','Toulouse','Bordeaux','Lille','Strasbourg','Nice / Sophia','🇹🇼 Taiwan','Autres'],
+      legacy: [38,5,0,2,0,0,2,8,8]
+    },
+    'seed_s4_status': {
+      keys:   ['CDI','Freelance','Searching','Stable','Hiring','NewArrival'],
+      labels: ['CDI (Stable)','Freelance','En recherche active','Stable, ouvert aux opps','Recrute','Nouvel arrivant'],
+      legacy: [17,4,37,7,2,10]
+    }
+  };
+
+  function mergeCounts(surveyId, surveyVotes) {
+    const meta   = SURVEY_META[surveyId];
+    const counts = [...meta.legacy]; // copy seed baseline
+    const votes  = (surveyVotes || {})[surveyId] || {};
+    for (const optArray of Object.values(votes)) {
+      for (const optId of (Array.isArray(optArray) ? optArray : [])) {
+        const idx = meta.keys.indexOf(optId);
+        if (idx >= 0) counts[idx]++;
+      }
+    }
+    return counts;
+  }
+
   function makeChart(id, type, labels, data, options = {}) {
     const ctx = document.getElementById(id);
-    if (!ctx) return;
+    if (!ctx) return null;
     const total = data.reduce((a, b) => a + b, 0);
     return new Chart(ctx, {
       type,
@@ -693,16 +730,13 @@
         labels,
         datasets: [{
           data,
-          backgroundColor: type === 'bar'
-            ? CHART_PALETTE.slice(0, data.length)
-            : CHART_PALETTE.slice(0, data.length),
+          backgroundColor: CHART_PALETTE.slice(0, data.length),
           borderWidth: 0,
           borderRadius: type === 'bar' ? 4 : 0
         }]
       },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         indexAxis: options.horizontal ? 'y' : 'x',
         plugins: {
           legend: options.showLegend
@@ -710,15 +744,15 @@
             : { display: false },
           tooltip: {
             callbacks: {
-              label: ctx => {
-                const pct = total > 0 ? ((ctx.parsed[options.horizontal ? 'x' : 'y'] ?? ctx.parsed) / total * 100).toFixed(1) : '0.0';
-                return ` ${ctx.parsed[options.horizontal ? 'x' : 'y'] ?? ctx.parsed} (${pct}%)`;
+              label: c => {
+                const val = c.parsed[options.horizontal ? 'x' : 'y'] ?? c.parsed;
+                const pct = total > 0 ? (val / total * 100).toFixed(1) : '0.0';
+                return ` ${val} (${pct}%)`;
               }
             }
-          },
-          datalabels: { display: false }
+          }
         },
-        scales: type === 'doughnut' ? { } : {
+        scales: type === 'doughnut' ? {} : {
           x: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 9 } } },
           y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 9 } } }
         }
@@ -726,38 +760,33 @@
     });
   }
 
-  // Tech domains (horizontal bar)
-  makeChart('pub-chart-tech', 'bar',
-    ['Backend Dev','Frontend Dev','Full Stack','DevOps/SRE/Cloud',
-     'Data / AI / ML','Mobile','QA / Test','Security','Architect/Tech Lead',
-     'PM','Designer','Biz Manager','Others'],
-    [3, 2, 2, 2, 11, 1, 1, 1, 2, 10, 1, 4, 14],
-    { horizontal: true }
-  );
+  // Init charts immediately with seed baseline (no Firebase wait)
+  const m = SURVEY_META;
+  let _chartTech   = makeChart('pub-chart-tech',    'bar',      m['seed_s1_tech'].labels,   m['seed_s1_tech'].legacy,   { horizontal: true });
+  let _chartInvest = makeChart('pub-chart-invest',  'doughnut', m['seed_s2_invest'].labels, m['seed_s2_invest'].legacy, { showLegend: true });
+  let _chartCity   = makeChart('pub-chart-city',    'bar',      m['seed_s3_city'].labels,   m['seed_s3_city'].legacy,   { horizontal: true });
+  let _chartStatus = makeChart('pub-chart-status',  'doughnut', m['seed_s4_status'].labels, m['seed_s4_status'].legacy, { showLegend: true });
 
-  // Investment interest (doughnut)
-  makeChart('pub-chart-invest', 'doughnut',
-    ['Pas intéressé(e)','Intéressé mais sans fonds','Intéressé et déjà investi',
-     'Très intéressé','Pas dispo GMeet','Intéressé et dispo GMeet'],
-    [0, 5, 4, 0, 0, 11],
-    { showLegend: true }
-  );
+  // Called every time Firebase updates — merges live votes on top of seed baseline
+  function updateCharts(surveyVotes) {
+    if (!surveyVotes) return;
+    const pairs = [
+      [_chartTech,   'seed_s1_tech'],
+      [_chartInvest, 'seed_s2_invest'],
+      [_chartCity,   'seed_s3_city'],
+      [_chartStatus, 'seed_s4_status']
+    ];
+    for (const [chart, id] of pairs) {
+      if (!chart) continue;
+      chart.data.datasets[0].data = mergeCounts(id, surveyVotes);
+      chart.update('none'); // no animation — feels instant
+    }
+  }
 
-  // City distribution (horizontal bar)
-  makeChart('pub-chart-city', 'bar',
-    ['Paris / Île-de-France','Lyon','Toulouse','Bordeaux',
-     'Lille','Strasbourg','Nice / Sophia','🇹🇼 Taiwan','Autres'],
-    [38, 5, 0, 2, 0, 0, 2, 8, 8],
-    { horizontal: true }
-  );
-
-  // Professional status (doughnut)
-  makeChart('pub-chart-status', 'doughnut',
-    ['CDI (Stable)','Freelance','En recherche active',
-     'Stable, ouvert aux opps','Recrute','Nouvel arrivant'],
-    [17, 4, 37, 7, 2, 10],
-    { showLegend: true }
-  );
+  // Hook into the existing Firebase subscription (already initialised above)
+  subscribeFirebaseData(function(data) {
+    updateCharts(data.surveyVotes);
+  });
   </script>
 
   <footer class="site-footer">

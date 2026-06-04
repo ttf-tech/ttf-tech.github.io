@@ -36,7 +36,8 @@ function subscribeFirebaseData(onData) {
       memberCount:   SEED_MEMBER_COUNT + added.length,
       announcements: Array.isArray(dyn?.announcements) ? [...dyn.announcements].reverse() : [],
       jobs:          Array.isArray(dyn?.jobs)           ? [...dyn.jobs].reverse()          : [],
-      surveyVotes:   (dyn?.surveyVotes && typeof dyn.surveyVotes === 'object') ? dyn.surveyVotes : {}
+      surveyVotes:   (dyn?.surveyVotes && typeof dyn.surveyVotes === 'object') ? dyn.surveyVotes : {},
+      userSurveys:   Array.isArray(dyn?.userSurveys) ? dyn.userSurveys : []
     });
   }
 

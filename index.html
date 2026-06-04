@@ -445,6 +445,21 @@
     </div>
     <!-- /COMMUNITY STATS -->
 
+    <!-- ── USER SURVEYS (dynamic, from admin) ───────────────────── -->
+    <div id="user-surveys-wrap" class="pub-stats-wrap" style="display:none;">
+      <div class="pub-stats-head">
+        <div class="pub-stats-title">
+          <i class="fas fa-poll" style="color:#6366f1;"></i>
+          Nouvelles questions · 最新問卷
+        </div>
+        <a href="vote.html" class="pub-section-viewall">
+          Voter · 前往投票 <i class="fas fa-arrow-right" style="font-size:0.6rem;"></i>
+        </a>
+      </div>
+      <div class="pub-stats-grid" id="user-surveys-list"></div>
+    </div>
+    <!-- /USER SURVEYS -->
+
     <!-- ── JOIN SECTION ─────────────────────────────────────────── -->
     <div class="pub-join">
       <div class="pub-join-card">
@@ -856,7 +871,74 @@
   // Hook into the existing Firebase subscription (already initialised above)
   subscribeFirebaseData(function(data) {
     updateCharts(data.surveyVotes);
+    renderUserSurveySection(data.userSurveys, data.surveyVotes);
   });
+
+  /* ── Live user-created survey section ─────────────────────────── */
+  function renderUserSurveySection(surveys, surveyVotes) {
+    const wrap = document.getElementById('user-surveys-wrap');
+    if (!wrap) return;
+    if (!surveys || surveys.length === 0) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+
+    const container = document.getElementById('user-surveys-list');
+    if (!container) return;
+
+    container.innerHTML = surveys.filter(s => s.status === 'open').map(survey => {
+      const votes = surveyVotes[survey.id] || {};
+      const counts = {};
+      for (const optArray of Object.values(votes)) {
+        for (const oid of (Array.isArray(optArray) ? optArray : [])) {
+          counts[oid] = (counts[oid] || 0) + 1;
+        }
+      }
+      const total   = Object.values(counts).reduce((a, b) => a + b, 0);
+      const voters  = Object.keys(votes).length;
+
+      const bars = (survey.options || []).map(opt => {
+        const cnt = counts[opt.id] || 0;
+        const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
+        let voterNames = '';
+        if (survey.privacy === 'show_voters' && cnt > 0) {
+          const names = Object.entries(votes)
+            .filter(([, opts]) => opts.includes(opt.id))
+            .map(([n]) => n).join(', ');
+          if (names) voterNames = `<div style="font-size:0.6rem;color:#94a3b8;margin-top:0.1rem;">${names}</div>`;
+        }
+        return `
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.45rem;">
+            <div style="font-size:0.72rem;color:#475569;min-width:200px;flex-shrink:0;">${opt.label || opt.id}</div>
+            <div style="flex:1;background:#f1f5f9;border-radius:99px;height:7px;overflow:hidden;">
+              <div style="height:100%;border-radius:99px;background:#6366f1;width:${pct}%;transition:width 0.4s;"></div>
+            </div>
+            <div style="font-size:0.68rem;color:#6366f1;font-weight:700;min-width:32px;text-align:right;">${pct}%</div>
+            <div style="font-size:0.65rem;color:#cbd5e1;min-width:20px;text-align:right;">${cnt}</div>
+          </div>${voterNames}`;
+      }).join('');
+
+      const typeLabel  = survey.type === 'multi' ? '可複選' : '單選';
+      const privBadge  = survey.privacy === 'show_voters'
+        ? '<span style="font-size:0.58rem;background:#fef9c3;color:#854d0e;padding:0.1rem 0.4rem;border-radius:99px;margin-left:0.3rem;">Noms visibles</span>'
+        : '<span style="font-size:0.58rem;background:#f1f5f9;color:#475569;padding:0.1rem 0.4rem;border-radius:99px;margin-left:0.3rem;">Anonyme</span>';
+
+      return `
+        <div class="pub-stat-card" style="border-top:3px solid #6366f1;">
+          <div class="pub-stat-card-head" style="background:linear-gradient(135deg,#4f46e5,#6366f1);">
+            <i class="fas fa-poll"></i>
+            ${survey.title || ''}
+            ${privBadge}
+            <span style="margin-left:auto;font-size:0.6rem;opacity:0.7;">${typeLabel} · ${voters} réponse${voters !== 1 ? 's' : ''}</span>
+          </div>
+          <div class="pub-stat-card-body">
+            ${survey.titleFr ? `<div style="font-size:0.7rem;color:#94a3b8;font-style:italic;margin-bottom:0.75rem;">${survey.titleFr}</div>` : ''}
+            ${bars || '<div style="font-size:0.75rem;color:#94a3b8;">Aucune réponse · 尚無投票</div>'}
+            <a href="vote.html" style="display:inline-flex;align-items:center;gap:0.35rem;margin-top:0.75rem;font-size:0.7rem;font-weight:600;color:#6366f1;text-decoration:none;">
+              <i class="fas fa-poll"></i> Voter sur cette question · 前往投票 →
+            </a>
+          </div>
+        </div>`;
+    }).join('');
+  }
   </script>
 
   <footer class="site-footer">

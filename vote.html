@@ -481,6 +481,7 @@
   /* ── State ─────────────────────────────────────────────────── */
   let _surveyVotes = {};       // { surveyId: { memberName: [optionIds] } }
   let _addedMembers = [];      // from Firebase
+  let _userSurveys  = [];      // user-created surveys from Firebase (admin → Sondages)
   let _allMembers = [...SEED_MEMBER_NAMES];
   // localStorage = persists across browser sessions (name remembered forever)
   // _myVotes is derived from Firebase on every load — not from localStorage
@@ -516,11 +517,106 @@
     return _allMembers.some(m => m.toLowerCase() === n);
   }
 
+  /* ── Helpers for user surveys (no legacy counts) ──────────────── */
+  function computeUserCounts(survey) {
+    const votes = _surveyVotes[survey.id] || {};
+    const counts = {};
+    for (const optArray of Object.values(votes)) {
+      for (const oid of (Array.isArray(optArray) ? optArray : [])) {
+        counts[oid] = (counts[oid] || 0) + 1;
+      }
+    }
+    return counts;
+  }
+
+  function totalUserVoters(survey) {
+    return Object.keys(_surveyVotes[survey.id] || {}).length;
+  }
+
+  function renderUserSurveyCard(survey) {
+    const counts   = computeUserCounts(survey);
+    const total    = Object.values(counts).reduce((a, b) => a + b, 0);
+    const voters   = totalUserVoters(survey);
+    const myVote   = _myVotes[survey.id] || [];
+    const hasVoted = myVote.length > 0;
+    const isOpen   = survey.status === 'open';
+    const typeLabel = survey.type === 'multi' ? 'Choix multiple · 可複選' : 'Choix unique · 單選';
+    const privacyLabel = survey.privacy === 'show_voters'
+      ? '<span class="survey-card-badge badge-type" style="background:#fef9c3;color:#854d0e;margin-left:0.3rem;"><i class="fas fa-eye" style="margin-right:0.2rem;"></i>Noms visibles</span>'
+      : '<span class="survey-card-badge badge-type" style="background:#f1f5f9;color:#475569;margin-left:0.3rem;"><i class="fas fa-eye-slash" style="margin-right:0.2rem;"></i>Anonyme</span>';
+
+    const bars = (survey.options || []).map(opt => {
+      const cnt = counts[opt.id] || 0;
+      const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
+      const isMyVote = myVote.includes(opt.id);
+      // Show voter names if privacy === show_voters
+      let voterNames = '';
+      if (survey.privacy === 'show_voters') {
+        const votes = _surveyVotes[survey.id] || {};
+        const names = Object.entries(votes)
+          .filter(([, opts]) => opts.includes(opt.id))
+          .map(([name]) => name).join(', ');
+        if (names) voterNames = `<div style="font-size:0.62rem;color:#94a3b8;margin-top:0.15rem;">${escHtmlRead(names)}</div>`;
+      }
+      return `
+        <div class="survey-opt-row${isMyVote ? ' my-vote' : ''}">
+          <div class="survey-opt-label">${escHtmlRead(opt.label || opt.id)}${isMyVote ? ' <i class="fas fa-check" style="font-size:0.6rem;"></i>' : ''}</div>
+          <div class="survey-opt-bar-wrap"><div class="survey-opt-bar" style="width:${pct}%;background:${isMyVote ? '#059669' : '#6366f1'};"></div></div>
+          <div class="survey-opt-pct">${pct}%</div>
+          <div class="survey-opt-count">${cnt}</div>
+        </div>${voterNames}`;
+    }).join('');
+
+    const footer = !isOpen
+      ? `<span style="font-size:0.7rem;color:#94a3b8;font-style:italic;">Sondage clôturé · 已結束</span>`
+      : hasVoted
+        ? `<span class="survey-voted-badge"><i class="fas fa-check-circle"></i> Votre vote enregistré · 已投票</span>
+           <button class="vote-btn" disabled style="background:#e2e8f0;color:#64748b;cursor:default;">
+             <i class="fas fa-check"></i> Voté · 已完成
+           </button>`
+        : `<span style="font-size:0.7rem;color:#94a3b8;">Résultats visibles par tous · 結果對所有人公開</span>
+           <button class="vote-btn" style="background:#6366f1;" onclick="openVoteModalUser('${survey.id}')">
+             <i class="fas fa-poll"></i> Voter · 投票
+           </button>`;
+
+    return `
+      <div class="survey-card" id="card-${survey.id}" style="border-top:3px solid #6366f1;">
+        <div class="survey-card-head">
+          <div class="survey-card-left">
+            <span class="survey-card-badge badge-open" style="background:#ede9fe;color:#6366f1;">
+              <i class="fas fa-poll" style="margin-right:0.2rem;"></i>
+              ${isOpen ? 'Ouvert · 開放投票' : 'Clôturé · 已結束'}
+            </span>
+            <span class="survey-card-badge badge-type" style="margin-left:0.3rem;">${typeLabel}</span>
+            ${privacyLabel}
+            <div class="survey-card-title">${escHtmlRead(survey.title || '')}</div>
+            ${survey.titleFr ? `<div class="survey-card-title-fr">${escHtmlRead(survey.titleFr)}</div>` : ''}
+            ${survey.description ? `<div class="survey-card-desc">${escHtmlRead(survey.description)}</div>` : ''}
+          </div>
+          <div class="survey-resp-count">
+            <i class="fas fa-users" style="font-size:0.65rem;margin-right:0.2rem;color:#94a3b8;"></i>
+            ${voters} réponse${voters !== 1 ? 's' : ''}
+          </div>
+        </div>
+        <div class="survey-card-results">${bars || '<div style="padding:0.5rem;font-size:0.75rem;color:#94a3b8;">Aucune réponse pour le moment · 尚無投票</div>'}</div>
+        <div class="survey-card-footer">${footer}</div>
+      </div>`;
+  }
+
   /* ── Render surveys ─────────────────────────────────────────── */
   function renderSurveys() {
     const container = document.getElementById('surveys-container');
     if (!container) return;
-    container.innerHTML = SURVEYS.map(s => renderSurveyCard(s)).join('');
+    const seedHtml = SURVEYS.map(s => renderSurveyCard(s)).join('');
+    const userHtml = _userSurveys.length > 0
+      ? `<div style="margin-top:0.5rem;padding:0.4rem 0;border-top:2px dashed #e2e8f0;display:flex;align-items:center;gap:0.5rem;">
+           <span style="font-size:0.7rem;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.06em;">
+             <i class="fas fa-plus-circle" style="margin-right:0.3rem;"></i>Nouvelles questions · 新增問卷
+           </span>
+         </div>`
+        + _userSurveys.map(s => renderUserSurveyCard(s)).join('')
+      : '';
+    container.innerHTML = seedHtml + userHtml;
   }
 
   function renderSurveyCard(survey) {
@@ -703,9 +799,9 @@
     if (!_myName) return;
     const nameLower = _myName.trim().toLowerCase();
     _myVotes = {};
-    for (const survey of SURVEYS) {
+    const allSurveys = [...SURVEYS, ..._userSurveys];
+    for (const survey of allSurveys) {
       const votes = _surveyVotes[survey.id] || {};
-      // Check case-insensitively
       for (const [key, opts] of Object.entries(votes)) {
         if (key.trim().toLowerCase() === nameLower && Array.isArray(opts) && opts.length > 0) {
           _myVotes[survey.id] = opts;
@@ -713,6 +809,36 @@
         }
       }
     }
+  }
+
+  /* ── Open vote modal for user-created surveys ──────────────────── */
+  function openVoteModalUser(surveyId) {
+    const survey = _userSurveys.find(s => s.id === surveyId);
+    if (!survey) return;
+    _activeSurveyId  = surveyId;
+    _selectedOptions = [];
+
+    document.getElementById('vm-title').textContent = survey.title || 'Voter · 投票';
+    document.getElementById('vm-type-hint').textContent =
+      survey.type === 'multi' ? '(可複選 · choix multiple)' : '(單選 · choix unique)';
+
+    const list = document.getElementById('vm-options-list');
+    const inputType = survey.type === 'multi' ? 'checkbox' : 'radio';
+    list.innerHTML = (survey.options || []).map(opt => `
+      <label class="vm-option" id="vmo-${opt.id}" onclick="toggleOption('${opt.id}','${survey.type}')">
+        <input type="${inputType}" name="vm-opt" value="${opt.id}" id="vmoi-${opt.id}">
+        <span class="vm-option-label">${escHtmlRead(opt.label || opt.id)}</span>
+      </label>`).join('');
+
+    const dl = document.getElementById('vm-name-datalist');
+    dl.innerHTML = _allMembers.map(n => `<option value="${n}">`).join('');
+
+    const nameInput = document.getElementById('vm-name');
+    nameInput.value = _myName;
+    validateName(_myName);
+
+    document.getElementById('vm-error').classList.add('hidden');
+    document.getElementById('vote-modal').classList.remove('hidden');
   }
 
   /* ── Firebase listener ─────────────────────────────────────── */
@@ -725,6 +851,7 @@
           const dyn = JSON.parse(raw.data);
           _surveyVotes  = dyn.surveyVotes || {};
           _addedMembers = Array.isArray(dyn.addedMembers) ? dyn.addedMembers : [];
+          _userSurveys  = Array.isArray(dyn.userSurveys) ? dyn.userSurveys : [];
           _allMembers   = [...SEED_MEMBER_NAMES, ..._addedMembers.map(m => m.name).filter(Boolean)];
         } catch(_) {}
       }

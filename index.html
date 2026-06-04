@@ -196,6 +196,45 @@
       border-radius: 12px; color: #fff; line-height: 1.85; font-size: 0.85rem;
     }
 
+    /* Coffee Chat action strip */
+    .about-coffee-strip {
+      margin-top: 1.25rem; border-radius: 14px; overflow: hidden;
+      background: linear-gradient(135deg,#78350f 0%,#92400e 100%);
+      display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem;
+      padding: 1.4rem 1.75rem; position: relative;
+    }
+    .about-coffee-strip::before {
+      content: '☕'; position: absolute; right: 1.5rem; top: 50%;
+      transform: translateY(-50%); font-size: 5rem; opacity: 0.1; line-height: 1;
+      pointer-events: none;
+    }
+    .about-coffee-strip-left { flex: 1; min-width: 240px; position: relative; z-index: 1; }
+    .about-coffee-strip-eyebrow {
+      font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+      color: #fcd34d; margin-bottom: 0.4rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .about-coffee-strip-title {
+      font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem; line-height: 1.25;
+    }
+    .about-coffee-strip-desc {
+      font-size: 0.75rem; color: rgba(255,255,255,0.65); line-height: 1.5; margin-bottom: 0.75rem;
+    }
+    .about-coffee-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .about-coffee-chip  {
+      font-size: 0.65rem; font-weight: 600; padding: 0.18rem 0.55rem; border-radius: 99px;
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.85);
+    }
+    .about-coffee-strip-cta {
+      display: inline-flex; align-items: center; gap: 0.5rem; position: relative; z-index: 1;
+      padding: 0.7rem 1.4rem; border-radius: 99px;
+      background: #fef3c7; color: #78350f;
+      font-size: 0.85rem; font-weight: 800; text-decoration: none;
+      transition: background 0.15s, transform 0.1s; white-space: nowrap;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .about-coffee-strip-cta:hover { background: #fde68a; transform: translateY(-1px); }
+
     /* Join section */
     .pub-join {
       max-width: 1280px; margin: 2rem auto 2.5rem; padding: 0 1.5rem;
@@ -516,7 +555,38 @@
 
       </div>
 
-      <div class="about-section-title" style="margin-bottom:0.3rem;">
+      <!-- Coffee Chat action strip -->
+      <div class="about-coffee-strip">
+        <div class="about-coffee-strip-left">
+          <div class="about-coffee-strip-eyebrow">
+            <i class="fas fa-coffee"></i> Par où commencer ? · 從哪裡開始？
+          </div>
+          <div class="about-coffee-strip-title">
+            Réservez un Coffee Chat · 預約一杯咖啡聊聊 ☕
+          </div>
+          <div class="about-coffee-strip-desc">
+            Pour chacun des objectifs ci-dessus — networking, emploi, fiscalité, visa, CV — une conversation de 30 min avec un membre de la communauté peut tout changer.
+            Gratuit, informel, en français ou en mandarin.<br>
+            <span style="color:rgba(255,255,255,0.5);">以上每個目標，都可以透過一次 30 分鐘的 Coffee Chat 開始。免費、輕鬆、中文或法語皆可。</span>
+          </div>
+          <div class="about-coffee-chips">
+            <span class="about-coffee-chip">🔍 Job search</span>
+            <span class="about-coffee-chip">📄 CV & Interview</span>
+            <span class="about-coffee-chip">🏢 ESN / CDI</span>
+            <span class="about-coffee-chip">🛂 Visa & Titre de séjour</span>
+            <span class="about-coffee-chip">💰 Salary & Négociation</span>
+            <span class="about-coffee-chip">🚀 Startup / Founder</span>
+            <span class="about-coffee-chip">🏠 Long-term life in France</span>
+          </div>
+        </div>
+        <a href="https://calendly.com/tess-hsu/parlon-ton-project-cyber"
+           target="_blank" rel="noopener" class="about-coffee-strip-cta">
+          <i class="fas fa-calendar-check"></i> Réserver · 預約
+        </a>
+      </div>
+      <!-- /Coffee Chat strip -->
+
+      <div class="about-section-title" style="margin-bottom:0.3rem;margin-top:2rem;">
         <i class="fas fa-door-open"></i> 誰可以加入 · Qui peut rejoindre ?
       </div>
       <div class="about-section-sub">Le groupe est ouvert à · 歡迎加入的對象</div>

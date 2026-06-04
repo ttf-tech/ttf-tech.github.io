@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZTM2QR5VPV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag("js", new Date());
+    gtag("config", "G-ZTM2QR5VPV");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sondages · 投票 — Taiwan Tech France</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇹🇼</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="assets/css/stastic_member.css">
+
+  <style>
+    /* ── Sidebar ──────────────────────────────────────────────── */
+    #app-sidebar {
+      position: fixed; top: 0; left: 0; height: 100%; width: 4rem;
+      background: #111827; display: flex; flex-direction: column; align-items: center;
+      padding: 1.25rem 0; z-index: 20; box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+    }
+    .sidebar-logo { font-size: 1.6rem; line-height: 1; margin-bottom: 2rem; cursor: default; user-select: none; }
+    .sidebar-nav  { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; }
+    .sidebar-link {
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.15s;
+      padding: 0.5rem; border-radius: 10px; width: 3rem; justify-content: center; font-size: 1.1rem;
+    }
+    .sidebar-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
+    .sidebar-link.active { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .sidebar-link span { font-size: 0.5rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75; }
+    .sidebar-link.active span { opacity: 1; }
+    .sidebar-link-admin { margin-top: auto; }
+
+    /* ── Page header ─────────────────────────────────────────── */
+    .vote-page-header {
+      background: linear-gradient(160deg,#0a2d42 0%,#0f4060 100%);
+      color: #fff; padding: 1.75rem 1.5rem 1.5rem;
+    }
+    .vote-page-header-inner { max-width: 860px; margin: 0 auto; }
+    .vote-page-header h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.2rem; }
+    .vote-page-header p  { font-size: 0.8rem; color: rgba(255,255,255,0.55); }
+
+    /* ── Membership requirement banner ───────────────────────── */
+    .member-required-banner {
+      max-width: 860px; margin: 1.25rem auto 0; padding: 0 1.5rem;
+    }
+    .member-required-card {
+      background: linear-gradient(135deg,#fffbeb,#fef9c3);
+      border: 1.5px solid #fcd34d; border-radius: 14px;
+      padding: 1.25rem 1.5rem; display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: flex-start;
+    }
+    .member-required-left { flex: 1; min-width: 240px; }
+    .member-required-title {
+      font-size: 0.85rem; font-weight: 800; color: #78350f;
+      display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem;
+    }
+    .member-steps { display: flex; flex-direction: column; gap: 0.45rem; }
+    .member-step  {
+      display: flex; align-items: flex-start; gap: 0.6rem;
+      font-size: 0.78rem; color: #92400e; line-height: 1.45;
+    }
+    .member-step-num {
+      min-width: 20px; height: 20px; border-radius: 50%;
+      background: #92400e; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.6rem; font-weight: 800; flex-shrink: 0; margin-top: 0.05rem;
+    }
+    .member-required-why {
+      margin-top: 0.85rem; padding-top: 0.75rem; border-top: 1px dashed #fbbf24;
+      font-size: 0.72rem; color: #78350f; line-height: 1.5;
+    }
+    .member-required-why strong { color: #92400e; }
+    .member-required-actions { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+    .member-wa-btn {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      padding: 0.6rem 1.25rem; border-radius: 99px;
+      background: #25d366; color: #fff; font-size: 0.82rem; font-weight: 700;
+      text-decoration: none; transition: background 0.12s;
+      white-space: nowrap;
+    }
+    .member-wa-btn:hover { background: #1db954; }
+    .member-note { font-size: 0.65rem; color: #92400e; opacity: 0.7; max-width: 160px; line-height: 1.4; }
+
+    /* ── Survey cards ─────────────────────────────────────────── */
+    .surveys-wrap { max-width: 860px; margin: 1.5rem auto 2rem; padding: 0 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+
+    .survey-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+    .survey-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.08); }
+
+    .survey-card-head {
+      padding: 1rem 1.25rem 0.75rem;
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .survey-card-left { flex: 1; min-width: 0; }
+    .survey-card-badge {
+      font-size: 0.6rem; font-weight: 700; padding: 0.15rem 0.55rem;
+      border-radius: 99px; display: inline-block; margin-bottom: 0.3rem;
+    }
+    .badge-open   { background: #dcfce7; color: #166534; }
+    .badge-type   { background: #dbeafe; color: #1e40af; }
+    .survey-card-title    { font-size: 0.95rem; font-weight: 800; color: #0f172a; line-height: 1.3; }
+    .survey-card-title-fr { font-size: 0.75rem; color: #64748b; margin-top: 0.1rem; font-style: italic; }
+    .survey-card-desc     { font-size: 0.7rem; color: #94a3b8; margin-top: 0.2rem; }
+    .survey-resp-count    { font-size: 0.7rem; color: #64748b; white-space: nowrap; text-align: right; }
+
+    /* Results bars */
+    .survey-card-results { padding: 0.85rem 1.25rem; }
+    .survey-opt-row {
+      display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.55rem;
+    }
+    .survey-opt-label { font-size: 0.75rem; color: #475569; min-width: 160px; flex-shrink: 0; }
+    .survey-opt-bar-wrap { flex: 1; background: #f1f5f9; border-radius: 99px; height: 8px; overflow: hidden; }
+    .survey-opt-bar { height: 100%; border-radius: 99px; transition: width 0.4s ease; min-width: 0; }
+    .survey-opt-pct { font-size: 0.68rem; color: #94a3b8; min-width: 38px; text-align: right; }
+    .survey-opt-count { font-size: 0.65rem; color: #cbd5e1; min-width: 28px; text-align: right; }
+    .survey-opt-row.my-vote .survey-opt-label { color: #059669; font-weight: 700; }
+    .survey-opt-row.my-vote .survey-opt-pct   { color: #059669; font-weight: 700; }
+
+    /* Footer row */
+    .survey-card-footer {
+      padding: 0.7rem 1.25rem; border-top: 1px solid #f1f5f9;
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+    }
+    .survey-voted-badge {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.7rem; font-weight: 600; color: #059669;
+    }
+    .vote-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.4rem 1rem; border-radius: 99px;
+      background: #0a2d42; color: #fff;
+      font-size: 0.75rem; font-weight: 700; border: none; cursor: pointer;
+      transition: background 0.12s, transform 0.1s;
+    }
+    .vote-btn:hover { background: #0f3d5c; transform: translateY(-1px); }
+    .vote-btn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; transform: none; }
+
+    /* ── Vote modal ───────────────────────────────────────────── */
+    .vote-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: 1rem;
+    }
+    .vote-modal-overlay.hidden { display: none; }
+    .vote-modal-box {
+      background: #fff; border-radius: 16px; width: 100%; max-width: 520px;
+      max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+    .vote-modal-head {
+      background: linear-gradient(135deg,#0a2d42,#0f4060);
+      color: #fff; padding: 1.1rem 1.25rem;
+      display: flex; align-items: center; justify-content: space-between;
+      border-radius: 16px 16px 0 0;
+    }
+    .vote-modal-head h3 { font-size: 0.9rem; font-weight: 700; }
+    .vote-modal-close   { background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer; font-size: 1.1rem; }
+    .vote-modal-close:hover { color: #fff; }
+    .vote-modal-body { padding: 1.25rem; }
+
+    /* Name input */
+    .vm-field { margin-bottom: 1rem; }
+    .vm-label { font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 0.35rem; display: block; }
+    .vm-input {
+      width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #e2e8f0; border-radius: 8px;
+      font-size: 0.82rem; color: #0f172a; outline: none; transition: border-color 0.15s;
+    }
+    .vm-input:focus { border-color: #0a2d42; }
+    .vm-name-status {
+      margin-top: 0.35rem; font-size: 0.7rem; display: flex; align-items: center; gap: 0.3rem; min-height: 1.2rem;
+    }
+    .vm-name-status.valid   { color: #059669; }
+    .vm-name-status.invalid { color: #be123c; }
+
+    /* Options */
+    .vm-options-title { font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem; }
+    .vm-option {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.55rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px;
+      margin-bottom: 0.4rem; cursor: pointer; transition: all 0.12s;
+    }
+    .vm-option:hover { border-color: #0a2d42; background: #f8fafc; }
+    .vm-option.selected { border-color: #0a2d42; background: #f0f7ff; }
+    .vm-option input { width: 16px; height: 16px; cursor: pointer; accent-color: #0a2d42; flex-shrink: 0; }
+    .vm-option-label { font-size: 0.8rem; color: #0f172a; }
+
+    .vm-footer { margin-top: 1rem; display: flex; gap: 0.6rem; justify-content: flex-end; }
+    .vm-cancel-btn {
+      padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid #e2e8f0;
+      background: #fff; color: #64748b; font-size: 0.78rem; font-weight: 600; cursor: pointer;
+    }
+    .vm-submit-btn {
+      padding: 0.5rem 1.25rem; border-radius: 8px; border: none;
+      background: #059669; color: #fff; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; gap: 0.35rem; transition: background 0.12s;
+    }
+    .vm-submit-btn:hover { background: #047857; }
+    .vm-submit-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+    .vm-error { font-size: 0.72rem; color: #be123c; margin-top: 0.5rem; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen">
+
+  <!-- ── SIDEBAR ──────────────────────────────────────────────── -->
+  <aside id="app-sidebar">
+    <div class="sidebar-logo">🇹🇼</div>
+    <nav class="sidebar-nav">
+      <a href="index.html"     class="sidebar-link"        title="Accueil · 首頁"><i class="fas fa-home"></i><span>Accueil</span></a>
+      <a href="events.html"    class="sidebar-link"        title="Agenda · 活動"><i class="fas fa-calendar-alt"></i><span>Agenda</span></a>
+      <a href="jobs.html"      class="sidebar-link"        title="Offres · 職缺"><i class="fas fa-briefcase"></i><span>Offres</span></a>
+      <a href="resources.html" class="sidebar-link"        title="Docs · 資源"><i class="fas fa-book-open"></i><span>Docs</span></a>
+      <a href="vote.html"      class="sidebar-link active" title="Sondages · 投票"><i class="fas fa-poll"></i><span>Vote</span></a>
+      <a href="association.html" class="sidebar-link"      title="Association · 協會"><i class="fas fa-landmark"></i><span>Assoc</span></a>
+      <a href="admin.html"     class="sidebar-link sidebar-link-admin" title="Admin"><i class="fas fa-lock"></i><span>Admin</span></a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN ──────────────────────────────────────────────────── -->
+  <main class="ml-16">
+
+    <!-- Page header -->
+    <div class="vote-page-header">
+      <div class="vote-page-header-inner">
+        <h1><i class="fas fa-poll" style="margin-right:0.5rem;opacity:0.8;"></i>Sondages communautaires · 社群投票</h1>
+        <p>Donnez votre avis · 分享你的意見 — vos réponses aident à organiser de meilleures activités pour la communauté · 您的投票幫助我們更了解社群、規劃更好的活動</p>
+      </div>
+    </div>
+
+    <!-- Membership requirement banner -->
+    <div class="member-required-banner">
+      <div class="member-required-card">
+        <div class="member-required-left">
+          <div class="member-required-title">
+            <i class="fas fa-shield-alt"></i>
+            Comment voter ? · 如何投票？
+          </div>
+          <div class="member-steps">
+            <div class="member-step">
+              <div class="member-step-num">1</div>
+              <div>Rejoignez le groupe WhatsApp · 加入 WhatsApp 社群群組</div>
+            </div>
+            <div class="member-step">
+              <div class="member-step-num">2</div>
+              <div>L'admin valide votre adhésion · 等待管理員驗證您的成員資格</div>
+            </div>
+            <div class="member-step">
+              <div class="member-step-num">3</div>
+              <div>Votre nom apparaît dans la liste → vous pouvez voter · 您的名字出現在成員列表後即可投票</div>
+            </div>
+          </div>
+          <div class="member-required-why">
+            <strong>📊 Pourquoi voter ? · 為什麼要投票？</strong><br>
+            Ces sondages nous permettent de mieux connaître la communauté, d'organiser des événements adaptés et de planifier les activités futures de l'association.
+            投票幫助我們了解社群組成、規劃更適合的活動，並作為未來協會計畫的重要參考依據。
+          </div>
+          <div style="margin-top:0.75rem;padding:0.65rem 0.9rem;background:rgba(255,255,255,0.7);border-radius:8px;border-left:3px solid #f59e0b;font-size:0.72rem;color:#78350f;line-height:1.55;">
+            <i class="fas fa-exclamation-circle" style="margin-right:0.35rem;color:#f59e0b;"></i>
+            <strong>Votre nom n'apparaît pas dans la liste ?</strong>
+            Rejoignez d'abord le groupe WhatsApp, puis envoyez un message à l'admin pour demander votre ajout en tant que membre.<br>
+            <span style="color:#92400e;">您的名字不在列表中？請先加入 WhatsApp 群組，然後私訊管理員請求將您加入成員名單，即可開始投票。</span>
+          </div>
+        </div>
+        <div class="member-required-actions">
+          <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener" class="member-wa-btn">
+            <i class="fab fa-whatsapp"></i> Rejoindre WhatsApp
+          </a>
+          <div class="member-note">Les résultats sont visibles par tous · 結果對所有人公開。只有已驗證成員可以投票。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Survey cards -->
+    <div class="surveys-wrap" id="surveys-container">
+      <!-- Rendered by JS -->
+    </div>
+
+  </main>
+
+  <!-- ── VOTE MODAL ──────────────────────────────────────────────── -->
+  <div class="vote-modal-overlay hidden" id="vote-modal">
+    <div class="vote-modal-box">
+      <div class="vote-modal-head">
+        <h3 id="vm-title">Voter · 投票</h3>
+        <button class="vote-modal-close" onclick="closeVoteModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="vote-modal-body">
+
+        <div class="vm-field">
+          <label class="vm-label" for="vm-name">
+            <i class="fas fa-user" style="margin-right:0.3rem;color:#94a3b8;"></i>
+            Votre nom de membre · 您的成員名稱 <span style="color:#be123c;">*</span>
+          </label>
+          <input type="text" id="vm-name" class="vm-input"
+                 placeholder="Entrez votre nom... · 請輸入您的成員名稱"
+                 list="vm-name-datalist" autocomplete="off">
+          <datalist id="vm-name-datalist"></datalist>
+          <div class="vm-name-status" id="vm-name-status"></div>
+        </div>
+
+        <div class="vm-field">
+          <div class="vm-options-title" id="vm-options-label">
+            <i class="fas fa-check-square" style="margin-right:0.3rem;color:#94a3b8;"></i>
+            Options <span style="color:#be123c;">*</span>
+            <span id="vm-type-hint" style="font-weight:400;color:#94a3b8;margin-left:0.3rem;"></span>
+          </div>
+          <div id="vm-options-list"></div>
+        </div>
+
+        <div class="vm-error hidden" id="vm-error"></div>
+
+        <div class="vm-footer">
+          <button class="vm-cancel-btn" onclick="closeVoteModal()">Annuler · 取消</button>
+          <button class="vm-submit-btn" id="vm-submit" onclick="submitVote()" disabled>
+            <i class="fas fa-paper-plane"></i> Soumettre · 提交投票
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-brand">
+        <strong>🇹🇼 Taiwan Tech France</strong>
+        <span>在法臺灣科技社群 · Communauté tech taïwanaise en France</span>
+      </div>
+      <div class="site-footer-copy">
+        &copy; 2026 Taiwan Tech France
+        <em>Association en cours de création · Loi 1901 · Fait avec ❤️ par la communauté · 由社群共同打造</em>
+      </div>
+      <div class="site-footer-links">
+        <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+        <a href="association.html"><i class="fas fa-landmark"></i> Association</a>
+        <a href="admin.html"><i class="fas fa-lock"></i> Admin</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js" defer></script>
+  <script>
+  'use strict';
+
+  /* ── Firebase ──────────────────────────────────────────────── */
+  const _FB_CONFIG = {
+    apiKey:            'AIzaSyCSfJ6-F9OEdmXQvwVHX9hpYvkp57mpeO8',
+    authDomain:        'groupe-tech-fr.firebaseapp.com',
+    databaseURL:       'https://groupe-tech-fr-default-rtdb.europe-west1.firebasedatabase.app',
+    projectId:         'groupe-tech-fr',
+    storageBucket:     'groupe-tech-fr.firebasestorage.app',
+    messagingSenderId: '461066170665',
+    appId:             '1:461066170665:web:1b090d8e383404c4320738'
+  };
+  let _fbRef = null;
+  if (typeof firebase !== 'undefined') {
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(_FB_CONFIG);
+      _fbRef = firebase.database().ref('grp_hub_v2');
+    } catch(e) { console.warn('Firebase init error', e); }
+  }
+
+  /* ── Seed data ─────────────────────────────────────────────── */
+  const SEED_MEMBER_NAMES = [
+    'Chia-Hsin','Yu-Peng','Sabrina C.','Ashley','Paul','Amber','Catherine','Chen-Yu',
+    'Chi','Chi Yun','Chi-Wei','Chia Lun','Chiawei','Chieh Yang','Chieh Yu Chen',
+    'Chiung-Yueh','Chris','CJ Eileen','EJ','Ella Chenyu Chen','Enli Jen','Fay',
+    'Fuwei','Houwen','HWC','I-Chun','IChing (Yi-Jin) Chen','James','Jenny Yen',
+    'Johnny','Karen','Kevin','Kevin (2)','Linghan Liao','Lu','Manping','Miriam C.',
+    'Miya Lee','Nai Chieh Lin','Nancy','Peggy Liao','Pz','S-P','Sanny','Sheepo',
+    'Shuhan Chang (Shelly)','Sun','Sylvia','Tachun Lin','Terry TAN','Tina','Vivi N',
+    'W','Wallace','Wan-Erh (Annie)','Wen','Wen (2)','Wentzu 文慈','Yih-Dar',
+    'Yochen Shih','Yu Ting Chao','Yu-Chuan Cheng','Yuhsin','Yun-Hsuan',
+    'ZHANG ZUO AN (Joanne)','Zoe (lo-yi) Wu','Zoe T','Brett','Tess'
+  ];
+
+  const SURVEYS = [
+    {
+      id: 'seed_s1_tech',
+      color: '#1d4ed8',
+      colorBg: '#dbeafe',
+      icon: 'fa-code',
+      title: '你的主要技術領域是？（可複選）',
+      titleFr: 'Quel est votre domaine technique principal ? (choix multiple)',
+      desc: 'Sondage WhatsApp communautaire · 來自 WhatsApp 社群調查',
+      type: 'multi',
+      options: [
+        { id: 'Backend Dev',         label: 'Backend Developer' },
+        { id: 'Frontend Dev',        label: 'Frontend Developer' },
+        { id: 'Full Stack',          label: 'Full Stack Developer' },
+        { id: 'DevOps/SRE/Cloud',    label: 'DevOps / SRE / Cloud' },
+        { id: 'Data/AI/ML',          label: 'Data / AI / ML' },
+        { id: 'Mobile',              label: 'Mobile (iOS / Android)' },
+        { id: 'QA/Test',             label: 'QA / Test / Automation' },
+        { id: 'Security/Cybersec',   label: 'Security / Cybersecurity' },
+        { id: 'Architect/Tech Lead', label: 'Architect / Tech Lead' },
+        { id: 'PM',                  label: 'PM (Product / Project)' },
+        { id: 'Designer',            label: 'Designer' },
+        { id: 'Biz Manager',         label: 'Business Manager' },
+        { id: 'Others',              label: 'Others' }
+      ],
+      legacyCounts: { 'Backend Dev':3,'Frontend Dev':2,'Full Stack':2,'DevOps/SRE/Cloud':2,
+        'Data/AI/ML':11,'Mobile':1,'QA/Test':1,'Security/Cybersec':1,'Architect/Tech Lead':2,
+        'PM':10,'Designer':1,'Biz Manager':4,'Others':14 }
+    },
+    {
+      id: 'seed_s2_invest',
+      color: '#0e7490',
+      colorBg: '#e0f2fe',
+      icon: 'fa-chart-line',
+      title: '是否有興趣交流「在法國投資/長期發展」？',
+      titleFr: 'Êtes-vous intéressé(e) par les échanges sur l\'investissement en France ?',
+      desc: 'Sondage WhatsApp communautaire · 來自 WhatsApp 社群調查',
+      type: 'multi',
+      options: [
+        { id: '不感興趣',          label: '不感興趣 · Pas intéressé(e)' },
+        { id: '有興趣但無額外資金',  label: '有興趣但無額外資金 · Intéressé mais sans fonds' },
+        { id: '有興趣且已在投資',    label: '有興趣且已在投資 · Intéressé et déjà investi' },
+        { id: '很有興趣願增加',      label: '很有興趣願增加 · Très intéressé, prêt à augmenter' },
+        { id: '有興趣但不方便GMeet', label: '有興趣但不方便GMeet · Intéressé mais pas dispo GMeet' },
+        { id: '有興趣可參加GMeet',   label: '有興趣可參加GMeet · Intéressé et dispo GMeet' }
+      ],
+      legacyCounts: { '不感興趣':0,'有興趣但無額外資金':5,'有興趣且已在投資':4,
+        '很有興趣願增加':0,'有興趣但不方便GMeet':0,'有興趣可參加GMeet':11 }
+    },
+    {
+      id: 'seed_s3_city',
+      color: '#7c3aed',
+      colorBg: '#ede9fe',
+      icon: 'fa-map-marker-alt',
+      title: '你目前主要所在城市是？（可複選）',
+      titleFr: 'Dans quelle ville êtes-vous principalement basé(e) ?',
+      desc: 'Sondage WhatsApp communautaire · 來自 WhatsApp 社群調查',
+      type: 'single',
+      options: [
+        { id: 'Paris',      label: 'Paris / Île-de-France' },
+        { id: 'Lyon',       label: 'Lyon' },
+        { id: 'Toulouse',   label: 'Toulouse' },
+        { id: 'Bordeaux',   label: 'Bordeaux' },
+        { id: 'Lille',      label: 'Lille' },
+        { id: 'Strasbourg', label: 'Strasbourg' },
+        { id: 'Nice',       label: 'Nice / Sophia-Antipolis' },
+        { id: 'Taiwan',     label: '🇹🇼 Taiwan (bientôt en France)' },
+        { id: 'Autres',     label: 'Autre ville · 其他城市' }
+      ],
+      legacyCounts: { 'Paris':38,'Lyon':5,'Toulouse':0,'Bordeaux':2,
+        'Lille':0,'Strasbourg':0,'Nice':2,'Taiwan':8,'Autres':8 }
+    },
+    {
+      id: 'seed_s4_status',
+      color: '#059669',
+      colorBg: '#dcfce7',
+      icon: 'fa-briefcase',
+      title: '你目前的狀態是？',
+      titleFr: 'Quel est votre statut professionnel actuel ?',
+      desc: 'Sondage WhatsApp communautaire · 來自 WhatsApp 社群調查',
+      type: 'multi',
+      options: [
+        { id: 'CDI',        label: '已在法國工作（CDI）' },
+        { id: 'Freelance',  label: 'Freelance / Consultant' },
+        { id: 'Searching',  label: '正在找新機會 · En recherche active' },
+        { id: 'Stable',     label: '目前穩定，但願意了解機會 · Stable, ouvert aux opportunités' },
+        { id: 'Hiring',     label: '公司有職缺，可分享 · Mon entreprise recrute' },
+        { id: 'NewArrival', label: '剛到法國 / 準備來法國 · Nouvel arrivant' }
+      ],
+      legacyCounts: { 'CDI':17,'Freelance':4,'Searching':37,'Stable':7,'Hiring':2,'NewArrival':10 }
+    }
+  ];
+
+  /* ── State ─────────────────────────────────────────────────── */
+  let _surveyVotes = {};       // { surveyId: { memberName: [optionIds] } }
+  let _addedMembers = [];      // from Firebase
+  let _allMembers = [...SEED_MEMBER_NAMES];
+  let _myVotes = JSON.parse(sessionStorage.getItem('ttf_my_votes') || '{}'); // { surveyId: [optIds] }
+  let _myName  = sessionStorage.getItem('ttf_my_name') || '';
+
+  // Modal state
+  let _activeSurveyId  = null;
+  let _selectedOptions = [];
+  let _nameValid       = false;
+
+  /* ── Helpers ───────────────────────────────────────────────── */
+  function computeCounts(survey) {
+    const counts = { ...survey.legacyCounts };
+    const votes = _surveyVotes[survey.id] || {};
+    for (const opts of Object.values(votes)) {
+      for (const oid of opts) {
+        counts[oid] = (counts[oid] || 0) + 1;
+      }
+    }
+    return counts;
+  }
+
+  function totalVoters(survey) {
+    const legacy = Object.values(survey.legacyCounts).reduce((a, b) => a + b, 0);
+    const live   = Object.keys(_surveyVotes[survey.id] || {}).length;
+    return legacy + live;
+  }
+
+  function isMember(name) {
+    if (!name) return false;
+    const n = name.trim().toLowerCase();
+    return _allMembers.some(m => m.toLowerCase() === n);
+  }
+
+  /* ── Render surveys ─────────────────────────────────────────── */
+  function renderSurveys() {
+    const container = document.getElementById('surveys-container');
+    if (!container) return;
+    container.innerHTML = SURVEYS.map(s => renderSurveyCard(s)).join('');
+  }
+
+  function renderSurveyCard(survey) {
+    const counts     = computeCounts(survey);
+    const total      = Object.values(counts).reduce((a, b) => a + b, 0);
+    const voters     = totalVoters(survey);
+    const myVote     = _myVotes[survey.id] || [];
+    const hasVoted   = myVote.length > 0;
+    const typeLabel  = survey.type === 'multi' ? 'Choix multiple · 可複選' : 'Choix unique · 單選';
+
+    const bars = survey.options.map(opt => {
+      const cnt = counts[opt.id] || 0;
+      const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
+      const isMyVote = myVote.includes(opt.id);
+      const barColor = isMyVote ? '#059669' : survey.color;
+      return `
+        <div class="survey-opt-row${isMyVote ? ' my-vote' : ''}">
+          <div class="survey-opt-label">${opt.label}${isMyVote ? ' <i class="fas fa-check" style="font-size:0.6rem;"></i>' : ''}</div>
+          <div class="survey-opt-bar-wrap">
+            <div class="survey-opt-bar" style="width:${pct}%;background:${barColor};"></div>
+          </div>
+          <div class="survey-opt-pct">${pct}%</div>
+          <div class="survey-opt-count">${cnt}</div>
+        </div>`;
+    }).join('');
+
+    const footer = hasVoted
+      ? `<span class="survey-voted-badge"><i class="fas fa-check-circle"></i> Votre vote enregistré · 已投票</span>
+         <button class="vote-btn" style="background:#e2e8f0;color:#64748b;cursor:default;" disabled>
+           <i class="fas fa-check"></i> Voté · 已完成
+         </button>`
+      : `<span style="font-size:0.7rem;color:#94a3b8;">Résultats visibles par tous · 結果對所有人公開</span>
+         <button class="vote-btn" onclick="openVoteModal('${survey.id}')">
+           <i class="fas fa-poll"></i> Voter · 投票
+         </button>`;
+
+    return `
+      <div class="survey-card" id="card-${survey.id}">
+        <div class="survey-card-head">
+          <div class="survey-card-left">
+            <span class="survey-card-badge badge-open" style="background:${survey.colorBg};color:${survey.color};">
+              <i class="fas ${survey.icon}" style="margin-right:0.2rem;"></i> Ouvert · 開放投票
+            </span>
+            <span class="survey-card-badge badge-type" style="margin-left:0.3rem;">${typeLabel}</span>
+            <div class="survey-card-title">${survey.title}</div>
+            <div class="survey-card-title-fr">${survey.titleFr}</div>
+            <div class="survey-card-desc">${survey.desc}</div>
+          </div>
+          <div class="survey-resp-count">
+            <i class="fas fa-users" style="font-size:0.65rem;margin-right:0.2rem;color:#94a3b8;"></i>
+            ${voters} réponses · ${voters} 票
+          </div>
+        </div>
+        <div class="survey-card-results">${bars}</div>
+        <div class="survey-card-footer">${footer}</div>
+      </div>`;
+  }
+
+  /* ── Vote modal ─────────────────────────────────────────────── */
+  function openVoteModal(surveyId) {
+    _activeSurveyId  = surveyId;
+    _selectedOptions = [];
+    const survey = SURVEYS.find(s => s.id === surveyId);
+    if (!survey) return;
+
+    document.getElementById('vm-title').textContent = survey.title;
+    document.getElementById('vm-type-hint').textContent =
+      survey.type === 'multi' ? '(可複選 · choix multiple)' : '(單選 · choix unique)';
+
+    // Populate options
+    const list = document.getElementById('vm-options-list');
+    const inputType = survey.type === 'multi' ? 'checkbox' : 'radio';
+    list.innerHTML = survey.options.map(opt => `
+      <label class="vm-option" id="vmo-${opt.id}" onclick="toggleOption('${opt.id}','${survey.type}')">
+        <input type="${inputType}" name="vm-opt" value="${opt.id}" id="vmoi-${opt.id}">
+        <span class="vm-option-label">${opt.label}</span>
+      </label>`).join('');
+
+    // Populate datalist
+    const dl = document.getElementById('vm-name-datalist');
+    dl.innerHTML = _allMembers.map(n => `<option value="${n}">`).join('');
+
+    // Restore name if previously validated
+    const nameInput = document.getElementById('vm-name');
+    nameInput.value = _myName;
+    validateName(_myName);
+
+    document.getElementById('vm-error').classList.add('hidden');
+    document.getElementById('vm-error').textContent = '';
+    document.getElementById('vote-modal').classList.remove('hidden');
+  }
+
+  function closeVoteModal() {
+    document.getElementById('vote-modal').classList.add('hidden');
+    _activeSurveyId  = null;
+    _selectedOptions = [];
+  }
+
+  function toggleOption(optId, type) {
+    if (type === 'multi') {
+      const i = _selectedOptions.indexOf(optId);
+      if (i >= 0) { _selectedOptions.splice(i, 1); }
+      else { _selectedOptions.push(optId); }
+    } else {
+      _selectedOptions = [optId];
+      // Deselect all other radio options visually
+      document.querySelectorAll('.vm-option').forEach(el => el.classList.remove('selected'));
+    }
+    const lbl = document.getElementById('vmo-' + optId);
+    if (lbl) lbl.classList.toggle('selected', _selectedOptions.includes(optId));
+    document.getElementById('vmoi-' + optId).checked = _selectedOptions.includes(optId);
+    updateSubmitState();
+  }
+
+  function validateName(name) {
+    const statusEl = document.getElementById('vm-name-status');
+    _nameValid = isMember(name);
+    if (!name) {
+      statusEl.textContent = '';
+      statusEl.className = 'vm-name-status';
+    } else if (_nameValid) {
+      statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Membre vérifié · 成員身份已驗證';
+      statusEl.className = 'vm-name-status valid';
+      _myName = name;
+      sessionStorage.setItem('ttf_my_name', name);
+    } else {
+      statusEl.innerHTML = '<i class="fas fa-times-circle"></i> Nom non trouvé dans la liste des membres · 名字不在成員列表中';
+      statusEl.className = 'vm-name-status invalid';
+    }
+    updateSubmitState();
+  }
+
+  function updateSubmitState() {
+    const btn = document.getElementById('vm-submit');
+    btn.disabled = !(_nameValid && _selectedOptions.length > 0);
+  }
+
+  async function submitVote() {
+    if (!_activeSurveyId || !_nameValid || _selectedOptions.length === 0) return;
+    const btn = document.getElementById('vm-submit');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi…';
+
+    const surveyId = _activeSurveyId;
+    const memberName = document.getElementById('vm-name').value.trim();
+
+    // Read → merge → write
+    if (_fbRef) {
+      try {
+        const snapshot = await _fbRef.once('value');
+        const raw = snapshot.val();
+        let dyn = { addedMembers:[], announcements:[], jobs:[], surveyVotes:{}, sharings:[], userSurveys:[] };
+        if (raw && typeof raw.data === 'string') {
+          try { dyn = JSON.parse(raw.data); } catch(_) {}
+        }
+        if (!dyn.surveyVotes) dyn.surveyVotes = {};
+        if (!dyn.surveyVotes[surveyId]) dyn.surveyVotes[surveyId] = {};
+        dyn.surveyVotes[surveyId][memberName] = [..._selectedOptions];
+
+        await _fbRef.set({ ts: Date.now(), data: JSON.stringify(dyn) });
+
+        // Update local state
+        _surveyVotes[surveyId] = dyn.surveyVotes[surveyId];
+      } catch(e) {
+        console.warn('Vote write error', e);
+      }
+    }
+
+    // Save locally
+    _myVotes[surveyId] = [..._selectedOptions];
+    sessionStorage.setItem('ttf_my_votes', JSON.stringify(_myVotes));
+
+    closeVoteModal();
+    renderSurveys(); // re-render to show "already voted" state
+  }
+
+  /* ── Firebase listener ─────────────────────────────────────── */
+  function initFirebase() {
+    if (!_fbRef) { renderSurveys(); return; }
+    _fbRef.on('value', snap => {
+      const raw = snap.val();
+      if (raw && typeof raw.data === 'string') {
+        try {
+          const dyn = JSON.parse(raw.data);
+          _surveyVotes  = dyn.surveyVotes || {};
+          _addedMembers = Array.isArray(dyn.addedMembers) ? dyn.addedMembers : [];
+          _allMembers   = [...SEED_MEMBER_NAMES, ..._addedMembers.map(m => m.name).filter(Boolean)];
+        } catch(_) {}
+      }
+      renderSurveys();
+    });
+  }
+
+  /* ── Event bindings ─────────────────────────────────────────── */
+  document.getElementById('vm-name')?.addEventListener('input', e => validateName(e.target.value));
+  document.getElementById('vote-modal')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('vote-modal')) closeVoteModal();
+  });
+
+  initFirebase();
+  </script>
+</body>
+</html>

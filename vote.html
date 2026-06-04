@@ -348,10 +348,22 @@
     </div>
   </footer>
 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" defer></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js" defer></script>
   <script>
   'use strict';
+
+  /* ── HTML escape helper (same as firebase-read.js) ─────────── */
+  function escHtmlRead(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function fmtDateRead(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('fr-FR', { year:'numeric', month:'short', day:'numeric' });
+  }
 
   /* ── Firebase ──────────────────────────────────────────────── */
   const _FB_CONFIG = {

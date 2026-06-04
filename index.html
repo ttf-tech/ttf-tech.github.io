@@ -448,9 +448,12 @@
     <!-- ── USER SURVEYS (dynamic, from admin) ───────────────────── -->
     <div id="user-surveys-wrap" class="pub-stats-wrap" style="display:none;">
       <div class="pub-stats-head">
-        <div class="pub-stats-title">
-          <i class="fas fa-poll" style="color:#6366f1;"></i>
-          Nouvelles questions · 最新問卷
+        <div>
+          <div class="pub-stats-title">
+            <i class="fas fa-poll" style="color:#6366f1;"></i>
+            Nouvelles questions · 最新問卷
+          </div>
+          <div id="user-surveys-threshold" style="font-size:0.65rem;color:#94a3b8;margin-top:0.2rem;"></div>
         </div>
         <a href="vote.html" class="pub-section-viewall">
           Voter · 前往投票 <i class="fas fa-arrow-right" style="font-size:0.6rem;"></i>
@@ -808,14 +811,15 @@
   function makeChart(id, type, labels, data, options = {}) {
     const ctx = document.getElementById(id);
     if (!ctx) return null;
-    const total = data.reduce((a, b) => a + b, 0);
+    const total   = data.reduce((a, b) => a + b, 0);
+    const palette = options.palette || CHART_PALETTE;
     return new Chart(ctx, {
       type,
       data: {
         labels,
         datasets: [{
           data,
-          backgroundColor: CHART_PALETTE.slice(0, data.length),
+          backgroundColor: palette.slice(0, data.length),
           borderWidth: 0,
           borderRadius: type === 'bar' ? 4 : 0
         }]
@@ -868,76 +872,82 @@
     }
   }
 
-  // Hook into the existing Firebase subscription (already initialised above)
+  // Hook into the existing Firebase subscription
   subscribeFirebaseData(function(data) {
     updateCharts(data.surveyVotes);
-    renderUserSurveySection(data.userSurveys, data.surveyVotes);
+    renderUserSurveySection(data.userSurveys, data.surveyVotes, data.memberCount);
   });
 
-  /* ── Live user-created survey section ─────────────────────────── */
-  function renderUserSurveySection(surveys, surveyVotes) {
-    const wrap = document.getElementById('user-surveys-wrap');
+  /* ── User-created survey section — Chart.js + 10% threshold ─── */
+  const INDIGO_PALETTE = ['#6366f1','#818cf8','#4f46e5','#a5b4fc','#4338ca','#c7d2fe','#3730a3','#e0e7ff'];
+  let _userCharts = {}; // track instances for destroy-before-rerender
+
+  function renderUserSurveySection(surveys, surveyVotes, memberCount) {
+    const wrap      = document.getElementById('user-surveys-wrap');
+    const threshEl  = document.getElementById('user-surveys-threshold');
     if (!wrap) return;
-    if (!surveys || surveys.length === 0) { wrap.style.display = 'none'; return; }
+
+    const THRESHOLD = Math.max(1, Math.ceil((memberCount || 0) * 0.1)); // 10% of members
+    const eligible  = (surveys || []).filter(s => {
+      if (s.status !== 'open') return false;
+      return Object.keys(surveyVotes[s.id] || {}).length >= THRESHOLD;
+    });
+
+    // Show threshold hint even when hidden
+    if (threshEl) threshEl.textContent = `Affiché à partir de ${THRESHOLD} réponses (10% des membres) · 達 ${THRESHOLD} 票後顯示`;
+
+    if (eligible.length === 0) { wrap.style.display = 'none'; return; }
     wrap.style.display = '';
+
+    // Destroy old chart instances before re-render
+    for (const c of Object.values(_userCharts)) { try { c.destroy(); } catch(_) {} }
+    _userCharts = {};
 
     const container = document.getElementById('user-surveys-list');
     if (!container) return;
 
-    container.innerHTML = surveys.filter(s => s.status === 'open').map(survey => {
-      const votes = surveyVotes[survey.id] || {};
+    // Build HTML shells with canvas elements
+    container.innerHTML = eligible.map(survey => {
+      const voters    = Object.keys(surveyVotes[survey.id] || {}).length;
+      const chartType = survey.type === 'single' ? 'doughnut' : 'bar';
+      const height    = chartType === 'bar' ? Math.max(180, (survey.options || []).length * 22) : 220;
+      return `
+        <div class="pub-stat-card" style="border-top:3px solid #6366f1;">
+          <div class="pub-stat-card-head" style="background:linear-gradient(135deg,#4f46e5,#6366f1);">
+            <i class="fas fa-poll"></i>
+            ${survey.title || ''}
+            <span style="margin-left:auto;font-size:0.6rem;opacity:0.75;">${voters} réponse${voters !== 1 ? 's' : ''}</span>
+          </div>
+          <div class="pub-stat-card-body">
+            ${survey.titleFr ? `<div style="font-size:0.68rem;color:#94a3b8;font-style:italic;margin-bottom:0.6rem;">${survey.titleFr}</div>` : ''}
+            <canvas id="uchart-${survey.id}" height="${height}"></canvas>
+            <a href="vote.html" style="display:inline-flex;align-items:center;gap:0.3rem;margin-top:0.75rem;font-size:0.68rem;font-weight:600;color:#6366f1;text-decoration:none;">
+              <i class="fas fa-poll"></i> Voter · 前往投票 →
+            </a>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Render charts into the canvases
+    eligible.forEach(survey => {
+      const votes  = surveyVotes[survey.id] || {};
       const counts = {};
       for (const optArray of Object.values(votes)) {
         for (const oid of (Array.isArray(optArray) ? optArray : [])) {
           counts[oid] = (counts[oid] || 0) + 1;
         }
       }
-      const total   = Object.values(counts).reduce((a, b) => a + b, 0);
-      const voters  = Object.keys(votes).length;
+      const labels    = (survey.options || []).map(o => o.label || o.id);
+      const data      = (survey.options || []).map(o => counts[o.id] || 0);
+      const chartType = survey.type === 'single' ? 'doughnut' : 'bar';
 
-      const bars = (survey.options || []).map(opt => {
-        const cnt = counts[opt.id] || 0;
-        const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
-        let voterNames = '';
-        if (survey.privacy === 'show_voters' && cnt > 0) {
-          const names = Object.entries(votes)
-            .filter(([, opts]) => opts.includes(opt.id))
-            .map(([n]) => n).join(', ');
-          if (names) voterNames = `<div style="font-size:0.6rem;color:#94a3b8;margin-top:0.1rem;">${names}</div>`;
-        }
-        return `
-          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.45rem;">
-            <div style="font-size:0.72rem;color:#475569;min-width:200px;flex-shrink:0;">${opt.label || opt.id}</div>
-            <div style="flex:1;background:#f1f5f9;border-radius:99px;height:7px;overflow:hidden;">
-              <div style="height:100%;border-radius:99px;background:#6366f1;width:${pct}%;transition:width 0.4s;"></div>
-            </div>
-            <div style="font-size:0.68rem;color:#6366f1;font-weight:700;min-width:32px;text-align:right;">${pct}%</div>
-            <div style="font-size:0.65rem;color:#cbd5e1;min-width:20px;text-align:right;">${cnt}</div>
-          </div>${voterNames}`;
-      }).join('');
-
-      const typeLabel  = survey.type === 'multi' ? '可複選' : '單選';
-      const privBadge  = survey.privacy === 'show_voters'
-        ? '<span style="font-size:0.58rem;background:#fef9c3;color:#854d0e;padding:0.1rem 0.4rem;border-radius:99px;margin-left:0.3rem;">Noms visibles</span>'
-        : '<span style="font-size:0.58rem;background:#f1f5f9;color:#475569;padding:0.1rem 0.4rem;border-radius:99px;margin-left:0.3rem;">Anonyme</span>';
-
-      return `
-        <div class="pub-stat-card" style="border-top:3px solid #6366f1;">
-          <div class="pub-stat-card-head" style="background:linear-gradient(135deg,#4f46e5,#6366f1);">
-            <i class="fas fa-poll"></i>
-            ${survey.title || ''}
-            ${privBadge}
-            <span style="margin-left:auto;font-size:0.6rem;opacity:0.7;">${typeLabel} · ${voters} réponse${voters !== 1 ? 's' : ''}</span>
-          </div>
-          <div class="pub-stat-card-body">
-            ${survey.titleFr ? `<div style="font-size:0.7rem;color:#94a3b8;font-style:italic;margin-bottom:0.75rem;">${survey.titleFr}</div>` : ''}
-            ${bars || '<div style="font-size:0.75rem;color:#94a3b8;">Aucune réponse · 尚無投票</div>'}
-            <a href="vote.html" style="display:inline-flex;align-items:center;gap:0.35rem;margin-top:0.75rem;font-size:0.7rem;font-weight:600;color:#6366f1;text-decoration:none;">
-              <i class="fas fa-poll"></i> Voter sur cette question · 前往投票 →
-            </a>
-          </div>
-        </div>`;
-    }).join('');
+      const chart = makeChart(
+        `uchart-${survey.id}`, chartType, labels, data,
+        chartType === 'bar' ? { horizontal: true, palette: INDIGO_PALETTE }
+                            : { showLegend: true,  palette: INDIGO_PALETTE }
+      );
+      if (chart) _userCharts[survey.id] = chart;
+    });
   }
   </script>
 

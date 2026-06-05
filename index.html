@@ -887,14 +887,14 @@
     const threshEl  = document.getElementById('user-surveys-threshold');
     if (!wrap) return;
 
-    const THRESHOLD = Math.max(1, Math.ceil((memberCount || 0) * 0.1)); // 10% of members
+    const THRESHOLD = 10; // show when votes exceed 10
     const eligible  = (surveys || []).filter(s => {
       if (s.status !== 'open') return false;
       return Object.keys(surveyVotes[s.id] || {}).length >= THRESHOLD;
     });
 
     // Show threshold hint even when hidden
-    if (threshEl) threshEl.textContent = `Affiché à partir de ${THRESHOLD} réponses (10% des membres) · 達 ${THRESHOLD} 票後顯示`;
+    if (threshEl) threshEl.textContent = `Affiché à partir de ${THRESHOLD} réponses · 達 ${THRESHOLD} 票後顯示`;
 
     if (eligible.length === 0) { wrap.style.display = 'none'; return; }
     wrap.style.display = '';

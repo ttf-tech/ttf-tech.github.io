@@ -147,9 +147,39 @@
     .pub-stat-card-head {
       background: #0a2d42; color: #fff;
       padding: 0.65rem 1rem; font-size: 0.72rem; font-weight: 700;
-      display: flex; align-items: center; gap: 0.4rem;
+      display: flex; flex-direction: column; align-items: flex-start; gap: 0.28rem;
     }
+    .pub-stat-card-head-title { display: flex; align-items: center; gap: 0.4rem; line-height: 1.3; }
     .pub-stat-card-body { padding: 0.75rem 1rem 1rem; }
+
+    /* Chart meta badges */
+    .chart-meta-badges { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .chart-badge {
+      font-size: 0.58rem; font-weight: 700; padding: 0.1rem 0.45rem;
+      border-radius: 99px; white-space: nowrap;
+    }
+    .chart-badge-type   { background: rgba(255,255,255,0.13); color: rgba(255,255,255,0.85); }
+    .chart-badge-count  { background: rgba(251,191,36,0.22);  color: #fbbf24; }
+    .chart-badge-source { background: rgba(37,211,102,0.18);  color: #4ade80; }
+
+    /* Chart footer */
+    .chart-footer { padding-top: 0.6rem; border-top: 1px solid #f1f5f9; margin-top: 0.65rem; }
+    .chart-top-label {
+      font-size: 0.6rem; font-weight: 700; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.3rem;
+    }
+    .chart-top-pills { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+    .chart-top-pill {
+      font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.55rem;
+      border-radius: 99px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
+    }
+    .chart-top-pill.rank-1 { background: #fef3c7; color: #78350f; border-color: #fde68a; }
+    .chart-top-pill.rank-2 { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+    .chart-top-pill.rank-3 { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .chart-footnote {
+      font-size: 0.6rem; color: #94a3b8; margin-top: 0.45rem;
+      font-style: italic; line-height: 1.4;
+    }
 
     /* À propos section */
     .about-section { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem; }
@@ -407,37 +437,76 @@
 
         <div class="pub-stat-card">
           <div class="pub-stat-card-head">
-            <i class="fas fa-code"></i> 你的主要技術領域是？ — Domaines techniques
+            <div class="pub-stat-card-head-title"><i class="fas fa-code"></i> 你的主要技術領域是？ — Domaines techniques</div>
+            <div class="chart-meta-badges">
+              <span class="chart-badge chart-badge-type">Multi-choice · 可複選</span>
+              <span class="chart-badge chart-badge-count" id="badge-count-tech">54 sélections</span>
+              <span class="chart-badge chart-badge-source"><i class="fab fa-whatsapp" style="margin-right:0.15rem;"></i>WhatsApp</span>
+            </div>
           </div>
           <div class="pub-stat-card-body">
             <canvas id="pub-chart-tech" height="260"></canvas>
+            <div class="chart-footer">
+              <div class="chart-top-label">Top résultats · 前幾名</div>
+              <div class="chart-top-pills" id="chart-top-tech"></div>
+              <div class="chart-footnote">* Choix multiple · 可複選 — les % peuvent dépasser 100% · 百分比總和可超過 100%</div>
+            </div>
           </div>
         </div>
 
         <div class="pub-stat-card">
           <div class="pub-stat-card-head">
-            <i class="fas fa-chart-pie"></i> 是否有興趣交流投資？ — Intérêt investissement
+            <div class="pub-stat-card-head-title"><i class="fas fa-chart-pie"></i> 是否有興趣交流投資？ — Intérêt investissement</div>
+            <div class="chart-meta-badges">
+              <span class="chart-badge chart-badge-type">Multi-choice · 可複選</span>
+              <span class="chart-badge chart-badge-count" id="badge-count-invest">20 sélections</span>
+              <span class="chart-badge chart-badge-source"><i class="fab fa-whatsapp" style="margin-right:0.15rem;"></i>WhatsApp</span>
+            </div>
           </div>
           <div class="pub-stat-card-body">
             <canvas id="pub-chart-invest" height="260"></canvas>
+            <div class="chart-footer">
+              <div class="chart-top-label">Top résultats · 前幾名</div>
+              <div class="chart-top-pills" id="chart-top-invest"></div>
+              <div class="chart-footnote">* Choix multiple · 可複選 — les % peuvent dépasser 100% · 百分比總和可超過 100%</div>
+            </div>
           </div>
         </div>
 
         <div class="pub-stat-card">
           <div class="pub-stat-card-head">
-            <i class="fas fa-map-marker-alt"></i> 你目前主要所在城市是？ — Localisation
+            <div class="pub-stat-card-head-title"><i class="fas fa-map-marker-alt"></i> 你目前主要所在城市是？ — Localisation</div>
+            <div class="chart-meta-badges">
+              <span class="chart-badge chart-badge-type">Single-choice · 單選</span>
+              <span class="chart-badge chart-badge-count" id="badge-count-city">63 réponses</span>
+              <span class="chart-badge chart-badge-source"><i class="fab fa-whatsapp" style="margin-right:0.15rem;"></i>WhatsApp</span>
+            </div>
           </div>
           <div class="pub-stat-card-body">
             <canvas id="pub-chart-city" height="240"></canvas>
+            <div class="chart-footer">
+              <div class="chart-top-label">Top résultats · 前幾名</div>
+              <div class="chart-top-pills" id="chart-top-city"></div>
+            </div>
           </div>
         </div>
 
         <div class="pub-stat-card">
           <div class="pub-stat-card-head">
-            <i class="fas fa-briefcase"></i> 你目前的狀態是？ — Statut professionnel
+            <div class="pub-stat-card-head-title"><i class="fas fa-briefcase"></i> 你目前的狀態是？ — Statut professionnel</div>
+            <div class="chart-meta-badges">
+              <span class="chart-badge chart-badge-type">Multi-choice · 可複選</span>
+              <span class="chart-badge chart-badge-count" id="badge-count-status">77 sélections</span>
+              <span class="chart-badge chart-badge-source"><i class="fab fa-whatsapp" style="margin-right:0.15rem;"></i>WhatsApp</span>
+            </div>
           </div>
           <div class="pub-stat-card-body">
             <canvas id="pub-chart-status" height="240"></canvas>
+            <div class="chart-footer">
+              <div class="chart-top-label">Top résultats · 前幾名</div>
+              <div class="chart-top-pills" id="chart-top-status"></div>
+              <div class="chart-footnote">* Choix multiple · 可複選 — les % peuvent dépasser 100% · 百分比總和可超過 100%</div>
+            </div>
           </div>
         </div>
 
@@ -856,6 +925,37 @@
   let _chartCity   = makeChart('pub-chart-city',    'bar',      m['seed_s3_city'].labels,   m['seed_s3_city'].legacy,   { horizontal: true });
   let _chartStatus = makeChart('pub-chart-status',  'doughnut', m['seed_s4_status'].labels, m['seed_s4_status'].legacy, { showLegend: true });
 
+  const CHART_KEY_MAP = {
+    'seed_s1_tech':   { key: 'tech',   isMulti: true  },
+    'seed_s2_invest': { key: 'invest', isMulti: true  },
+    'seed_s3_city':   { key: 'city',   isMulti: false },
+    'seed_s4_status': { key: 'status', isMulti: true  }
+  };
+
+  function updateChartMeta(surveyId, surveyVotes) {
+    const meta   = SURVEY_META[surveyId];
+    const counts = mergeCounts(surveyId, surveyVotes || {});
+    const { key, isMulti } = CHART_KEY_MAP[surveyId];
+    const total  = counts.reduce((a, b) => a + b, 0);
+
+    const badgeEl = document.getElementById('badge-count-' + key);
+    if (badgeEl) badgeEl.textContent = total + (isMulti ? ' sélections' : ' réponses');
+
+    const topEl = document.getElementById('chart-top-' + key);
+    if (topEl) {
+      const ranked = meta.labels
+        .map((label, i) => ({ label, count: counts[i] }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 3);
+      topEl.innerHTML = ranked.map((item, rank) =>
+        `<span class="chart-top-pill rank-${rank + 1}">${item.label} <strong>${item.count}</strong></span>`
+      ).join('');
+    }
+  }
+
+  // Seed init for meta (no Firebase needed)
+  for (const id of Object.keys(CHART_KEY_MAP)) updateChartMeta(id, {});
+
   // Called every time Firebase updates — merges live votes on top of seed baseline
   function updateCharts(surveyVotes) {
     if (!surveyVotes) return;
@@ -868,8 +968,9 @@
     for (const [chart, id] of pairs) {
       if (!chart) continue;
       chart.data.datasets[0].data = mergeCounts(id, surveyVotes);
-      chart.update('none'); // no animation — feels instant
+      chart.update('none');
     }
+    for (const [, id] of pairs) updateChartMeta(id, surveyVotes);
   }
 
   // Hook into the existing Firebase subscription

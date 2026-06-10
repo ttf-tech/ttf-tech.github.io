@@ -1936,12 +1936,29 @@ function handleImport(evt) {
 
 function _fbWrite(dyn) {
   if (!_fbRef) return;
-  const ts = loadDynamic().savedAt;
-  _fbRef.set({ ts, data: JSON.stringify(dyn) })
-        .catch(e => {
-          console.warn('[Firebase] save error', e);
-          showToast('⚠️ Firebase sync failed — data saved locally only. Check database rules.', 5000);
-        });
+  // Use a transaction so admin saves never silently overwrite concurrent votes
+  // from vote.html. The update fn receives the current Firebase value, merges
+  // in any remote votes we haven't seen locally, then writes the result.
+  _fbRef.transaction(current => {
+    const empty = { addedMembers:[], announcements:[], jobs:[], surveyVotes:{}, sharings:[], userSurveys:[] };
+    let remoteDyn = empty;
+    if (current && typeof current.data === 'string') {
+      try { remoteDyn = JSON.parse(current.data); } catch(_) {}
+    }
+    // For every survey admin still has, merge remote votes in (remote-first, so
+    // a user's concurrent vote wins over stale admin state for that key).
+    // Surveys admin deleted are intentionally excluded from mergedVotes.
+    const mergedVotes = {};
+    for (const [sid, localVotes] of Object.entries(dyn.surveyVotes || {})) {
+      const remoteVotes = (remoteDyn.surveyVotes || {})[sid] || {};
+      mergedVotes[sid] = { ...remoteVotes, ...localVotes };
+    }
+    const ts = loadDynamic().savedAt || Date.now();
+    return { ts, data: JSON.stringify({ ...dyn, surveyVotes: mergedVotes }) };
+  }).catch(e => {
+    console.warn('[Firebase] save error', e);
+    showToast('⚠️ Firebase sync failed — data saved locally only. Check database rules.', 5000);
+  });
 }
 
 function initFirebase() {

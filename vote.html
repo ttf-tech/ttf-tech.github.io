@@ -774,36 +774,47 @@
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi…';
 
-    const surveyId = _activeSurveyId;
-    const memberName = document.getElementById('vm-name').value.trim();
+    const surveyId    = _activeSurveyId;
+    const memberName  = document.getElementById('vm-name').value.trim();
+    const chosenOpts  = [..._selectedOptions];
 
-    // Read → merge → write
     if (_fbRef) {
       try {
-        const snapshot = await _fbRef.once('value');
-        const raw = snapshot.val();
-        let dyn = { addedMembers:[], announcements:[], jobs:[], surveyVotes:{}, sharings:[], userSurveys:[] };
-        if (raw && typeof raw.data === 'string') {
-          try { dyn = JSON.parse(raw.data); } catch(_) {}
-        }
-        if (!dyn.surveyVotes) dyn.surveyVotes = {};
-        if (!dyn.surveyVotes[surveyId]) dyn.surveyVotes[surveyId] = {};
-        dyn.surveyVotes[surveyId][memberName] = [..._selectedOptions];
+        // Use a Firebase transaction so concurrent votes never overwrite each other.
+        // Firebase retries the update function automatically if another client
+        // writes the node between our read and our write.
+        await _fbRef.transaction(current => {
+          const empty = { addedMembers:[], announcements:[], jobs:[],
+                          surveyVotes:{}, sharings:[], userSurveys:[] };
+          let dyn = empty;
+          if (current && typeof current.data === 'string') {
+            try { dyn = JSON.parse(current.data); } catch(_) { dyn = empty; }
+          }
+          if (!dyn.surveyVotes)             dyn.surveyVotes = {};
+          if (!dyn.surveyVotes[surveyId])   dyn.surveyVotes[surveyId] = {};
+          dyn.surveyVotes[surveyId][memberName] = chosenOpts;
+          return { ts: Date.now(), data: JSON.stringify(dyn) };
+        });
 
-        await _fbRef.set({ ts: Date.now(), data: JSON.stringify(dyn) });
-
-        // Update local state
-        _surveyVotes[surveyId] = dyn.surveyVotes[surveyId];
+        // Optimistically update local cache so UI reflects result instantly
+        if (!_surveyVotes[surveyId]) _surveyVotes[surveyId] = {};
+        _surveyVotes[surveyId][memberName] = chosenOpts;
       } catch(e) {
         console.warn('Vote write error', e);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Soumettre · 提交投票';
+        const errEl = document.getElementById('vm-error');
+        errEl.textContent = 'Erreur réseau · 網路錯誤，請稍後重試';
+        errEl.classList.remove('hidden');
+        return;
       }
     }
 
-    // Update local cache immediately (don't wait for next Firebase event)
-    _myVotes[surveyId] = [..._selectedOptions];
+    // Update local "my votes" cache immediately (Firebase listener will confirm)
+    _myVotes[surveyId] = chosenOpts;
 
     closeVoteModal();
-    renderSurveys(); // re-render to show "already voted" state
+    renderSurveys();
   }
 
   /* ── Derive "already voted" from Firebase for stored member name ── */

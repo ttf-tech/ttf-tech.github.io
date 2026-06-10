@@ -24,6 +24,7 @@ const _FB_CONFIG = {
 const _FB_READY = typeof firebase !== 'undefined' &&
                   !_FB_CONFIG.apiKey.startsWith('YOUR_');
 let _fbRef = null;
+let _fbSyncDone = false; // true after first Firebase on('value') fires
 if (_FB_READY) {
   try {
     if (!firebase.apps.length) firebase.initializeApp(_FB_CONFIG);
@@ -1936,25 +1937,38 @@ function handleImport(evt) {
 
 function _fbWrite(dyn) {
   if (!_fbRef) return;
-  // Use a transaction so admin saves never silently overwrite concurrent votes
-  // from vote.html. The update fn receives the current Firebase value, merges
-  // in any remote votes we haven't seen locally, then writes the result.
   _fbRef.transaction(current => {
     const empty = { addedMembers:[], announcements:[], jobs:[], surveyVotes:{}, sharings:[], userSurveys:[] };
     let remoteDyn = empty;
     if (current && typeof current.data === 'string') {
       try { remoteDyn = JSON.parse(current.data); } catch(_) {}
     }
-    // For every survey admin still has, merge remote votes in (remote-first, so
-    // a user's concurrent vote wins over stale admin state for that key).
-    // Surveys admin deleted are intentionally excluded from mergedVotes.
-    const mergedVotes = {};
+
+    // ── surveyVotes merge ────────────────────────────────────────
+    // Start from ALL remote votes (covers surveys not yet in local state,
+    // e.g. during cold-start before first Firebase sync).
+    // Then apply local votes on top — admin-submitted vote wins for same key.
+    const mergedVotes = Object.assign({}, remoteDyn.surveyVotes || {});
     for (const [sid, localVotes] of Object.entries(dyn.surveyVotes || {})) {
-      const remoteVotes = (remoteDyn.surveyVotes || {})[sid] || {};
-      mergedVotes[sid] = { ...remoteVotes, ...localVotes };
+      mergedVotes[sid] = Object.assign({}, mergedVotes[sid] || {}, localVotes);
     }
+
+    // ── userSurveys merge ────────────────────────────────────────
+    // Once synced, local state is authoritative (honours admin deletions).
+    // During cold-start, also preserve remote surveys admin doesn't know yet.
+    let mergedSurveys;
+    if (_fbSyncDone) {
+      mergedSurveys = dyn.userSurveys || [];
+    } else {
+      const localIds = new Set((dyn.userSurveys || []).map(s => s.id));
+      mergedSurveys = [
+        ...(dyn.userSurveys || []),
+        ...(remoteDyn.userSurveys || []).filter(s => !localIds.has(s.id))
+      ];
+    }
+
     const ts = loadDynamic().savedAt || Date.now();
-    return { ts, data: JSON.stringify({ ...dyn, surveyVotes: mergedVotes }) };
+    return { ts, data: JSON.stringify({ ...dyn, surveyVotes: mergedVotes, userSurveys: mergedSurveys }) };
   }).catch(e => {
     console.warn('[Firebase] save error', e);
     showToast('⚠️ Firebase sync failed — data saved locally only. Check database rules.', 5000);
@@ -1965,6 +1979,7 @@ function initFirebase() {
   if (!_fbRef) return;
 
   _fbRef.on('value', snapshot => {
+    _fbSyncDone = true; // first Firebase reply received — local state is now considered synced
     const raw = snapshot.val();
     let dyn = null;
     console.log('[Firebase] onValue raw keys:', raw ? Object.keys(raw) : null, '| raw.ts:', raw?.ts, '| data type:', typeof raw?.data);

@@ -1976,9 +1976,11 @@ function _fbWrite(dyn) {
       votesByMember: mergedVotes[s.id] || s.votesByMember || {}
     }));
 
-    const ts = loadDynamic().savedAt || Date.now();
+    // Always produce a ts strictly > the current Firebase ts so the stale-write
+    // guard rule (".write": "newData.ts > data.ts") never blocks a legitimate save.
+    const ts = Math.max(Date.now(), ((current && current.ts) || 0) + 1);
     return { ts, data: JSON.stringify({ ...dyn, surveyVotes: mergedVotes, userSurveys: syncedSurveys }) };
-  }).catch(e => {
+                                    }).catch(e => {
     console.warn('[Firebase] save error', e);
     showToast('⚠️ Firebase sync failed — data saved locally only. Check database rules.', 5000);
   });

@@ -246,7 +246,10 @@ function _saveDynLocal(dyn) {
 function rebuildState(dyn) {
   const votes = dyn.surveyVotes || {};
   state.surveys      = SEED_SURVEYS.map(s => ({ ...s, votesByMember: votes[s.id] || {} }))
-                         .concat(dyn.userSurveys || []);
+                         .concat((dyn.userSurveys || []).map(s => ({
+                           ...s,
+                           votesByMember: votes[s.id] || s.votesByMember || {}
+                         })));
   state.members      = [...SEED_MEMBERS, ...(dyn.addedMembers || [])];
   state.announcements = dyn.announcements || [];
   state.jobs          = dyn.jobs          || [];
@@ -1967,8 +1970,14 @@ function _fbWrite(dyn) {
       ];
     }
 
+    // Keep userSurveys[i].votesByMember in sync with the merged votes
+    const syncedSurveys = mergedSurveys.map(s => ({
+      ...s,
+      votesByMember: mergedVotes[s.id] || s.votesByMember || {}
+    }));
+
     const ts = loadDynamic().savedAt || Date.now();
-    return { ts, data: JSON.stringify({ ...dyn, surveyVotes: mergedVotes, userSurveys: mergedSurveys }) };
+    return { ts, data: JSON.stringify({ ...dyn, surveyVotes: mergedVotes, userSurveys: syncedSurveys }) };
   }).catch(e => {
     console.warn('[Firebase] save error', e);
     showToast('⚠️ Firebase sync failed — data saved locally only. Check database rules.', 5000);

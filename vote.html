@@ -793,6 +793,14 @@
           if (!dyn.surveyVotes)             dyn.surveyVotes = {};
           if (!dyn.surveyVotes[surveyId])   dyn.surveyVotes[surveyId] = {};
           dyn.surveyVotes[surveyId][memberName] = chosenOpts;
+          // Keep userSurveys[i].votesByMember in sync with surveyVotes
+          if (Array.isArray(dyn.userSurveys)) {
+            const uidx = dyn.userSurveys.findIndex(s => s.id === surveyId);
+            if (uidx >= 0) {
+              if (!dyn.userSurveys[uidx].votesByMember) dyn.userSurveys[uidx].votesByMember = {};
+              dyn.userSurveys[uidx].votesByMember[memberName] = chosenOpts;
+            }
+          }
           return { ts: Date.now(), data: JSON.stringify(dyn) };
         });
 

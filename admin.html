@@ -12,6 +12,7 @@
   <!-- Firebase SDK (compat v9 — needed for Realtime Database) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <style>
     /* ── Sidebar styles ─────────────────────────────────────────── */
@@ -50,26 +51,76 @@
   </style>
 
   <script>
-    /* ── Admin password gate (SHA-256, session-persisted) ─────── */
-    (async function() {
-      const HASH = 'a2ac0f1a009c106d4a6b417c1c62206a15d3f6a0b3ec35ab21afa2ed76aee6db';
-      // Default password: ttf-admin-2026  (change hash to use a different one)
-      // To compute a new hash: crypto.subtle.digest('SHA-256', new TextEncoder().encode('yourpassword'))
-      //   then convert the bytes to hex.
-      async function sha256(str) {
-        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-        return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+    /* ── Firebase Auth gate (Google Sign-In) ───────────────────── */
+    const _ADMIN_FB_CONFIG = {
+      apiKey:            'AIzaSyCSfJ6-F9OEdmXQvwVHX9hpYvkp57mpeO8',
+      authDomain:        'groupe-tech-fr.firebaseapp.com',
+      databaseURL:       'https://groupe-tech-fr-default-rtdb.europe-west1.firebasedatabase.app',
+      projectId:         'groupe-tech-fr',
+      storageBucket:     'groupe-tech-fr.firebasestorage.app',
+      messagingSenderId: '461066170665',
+      appId:             '1:461066170665:web:1b090d8e383404c4320738'
+    };
+    // Initialize Firebase once here — stastic_member.js will reuse this app
+    if (!firebase.apps.length) firebase.initializeApp(_ADMIN_FB_CONFIG);
+
+    // Watch auth state: hide overlay when signed in as admin, show it otherwise
+    firebase.auth().onAuthStateChanged(function(user) {
+      const overlay = document.getElementById('auth-overlay');
+      if (!overlay) return;
+      if (user && user.email === 'tess.hsu@gmail.com') {
+        overlay.style.display = 'none';
+        const badge = document.getElementById('auth-badge');
+        if (badge) badge.textContent = user.displayName || user.email;
+      } else {
+        overlay.style.display = 'flex';
       }
-      if (sessionStorage.getItem('ttf_admin') === HASH) return;
-      const pwd = prompt('🔒 Admin password · 管理員密碼:');
-      if (!pwd) { location.href = 'index.html'; return; }
-      const h = await sha256(pwd);
-      if (h === HASH) { sessionStorage.setItem('ttf_admin', h); }
-      else { alert('Incorrect password · 密碼錯誤'); location.href = 'index.html'; }
-    })();
+    });
+
+    async function adminSignIn() {
+      const btn = document.getElementById('signin-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connexion…';
+      try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ login_hint: 'tess.hsu@gmail.com', prompt: 'select_account' });
+        await firebase.auth().signInWithPopup(provider);
+      } catch(e) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fab fa-google"></i> Se connecter avec Google · Google 登入';
+        document.getElementById('signin-error').textContent = 'Échec : ' + e.message;
+      }
+    }
+
+    async function adminSignOut() {
+      await firebase.auth().signOut();
+    }
   </script>
 </head>
 <body class="bg-gray-100 text-gray-900 flex flex-col min-h-screen">
+
+  <!-- ── AUTH OVERLAY ─────────────────────────────────────────── -->
+  <div id="auth-overlay" style="
+    position:fixed;inset:0;z-index:9999;background:rgba(10,20,40,0.97);
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;">
+    <div style="text-align:center;max-width:340px;">
+      <div style="font-size:3rem;margin-bottom:0.75rem;">🇹🇼</div>
+      <div style="font-size:1.2rem;font-weight:800;color:#fff;margin-bottom:0.25rem;">Taiwan Tech France</div>
+      <div style="font-size:0.8rem;color:rgba(255,255,255,0.45);margin-bottom:2rem;">Administration · 管理員登入</div>
+      <button id="signin-btn" onclick="adminSignIn()" style="
+        display:inline-flex;align-items:center;gap:0.6rem;
+        padding:0.75rem 1.75rem;border-radius:99px;border:none;cursor:pointer;
+        background:#fff;color:#1f2937;font-size:0.9rem;font-weight:700;
+        box-shadow:0 2px 12px rgba(0,0,0,0.4);transition:transform 0.1s;">
+        <i class="fab fa-google" style="color:#ea4335;"></i>
+        Se connecter avec Google · Google 登入
+      </button>
+      <div id="signin-error" style="margin-top:1rem;font-size:0.72rem;color:#fca5a5;min-height:1rem;"></div>
+      <div style="margin-top:1.5rem;font-size:0.65rem;color:rgba(255,255,255,0.25);">
+        Accès réservé à tess.hsu@gmail.com
+      </div>
+    </div>
+  </div>
 
   <!-- ── SIDEBAR ───────────────────────────────────────────────── -->
   <aside id="app-sidebar">
@@ -82,6 +133,16 @@
       <a href="vote.html"        class="sidebar-link"                      title="Sondages · 投票"><i class="fas fa-poll"></i><span>Vote</span></a>
       <a href="association.html" class="sidebar-link"                      title="Association · 協會"><i class="fas fa-landmark"></i><span>Assoc</span></a>
       <a href="admin.html"       class="sidebar-link sidebar-link-admin active" title="Admin"><i class="fas fa-lock"></i><span>Admin</span></a>
+      <button onclick="adminSignOut()" title="Se déconnecter · 登出" style="
+        margin-top:0.75rem;background:none;border:none;cursor:pointer;
+        display:flex;flex-direction:column;align-items:center;gap:0.25rem;
+        color:rgba(255,255,255,0.35);padding:0.5rem;border-radius:10px;
+        font-size:1.1rem;transition:color 0.15s;width:3rem;"
+        onmouseover="this.style.color='#fca5a5';this.style.background='rgba(252,165,165,0.1)'"
+        onmouseout="this.style.color='rgba(255,255,255,0.35)';this.style.background='none'">
+        <i class="fas fa-sign-out-alt"></i>
+        <span style="font-size:0.5rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;opacity:0.75;">Logout</span>
+      </button>
     </nav>
   </aside>
 

@@ -206,13 +206,31 @@ const SEED_MEMBERS = (() => {
 })();
 
 // ══════════════════════════════════════════════════════════════
+// ASSO MEMBER CONSTANTS
+// ══════════════════════════════════════════════════════════════
+
+const ASSO_GOALS = [
+  { id: 'networking', zh: '擴展人脈與社群連結',              fr: 'Networking'      },
+  { id: 'jobs',       zh: '獲取或分享科技業職缺機會',         fr: 'Job Opps'        },
+  { id: 'knowledge',  zh: '技術交流與職涯經驗分享',           fr: 'Knowledge'       },
+  { id: 'longterm',   zh: '探討在法長期發展（房產、退休、投資）', fr: 'Long terme'   },
+  { id: 'local',      zh: '參與不同城市的在地線下小聚',       fr: 'Local Chapters'  },
+  { id: 'info',       zh: '獲取法國生活實用資訊（行政、簽證、日常）', fr: 'Vie pratique' },
+  { id: 'collab',     zh: '推動台法機構、學校或企業間的官方合作', fr: 'Collaboration' },
+  { id: 'fiscal',     zh: '了解法國稅務與資產規劃',           fr: 'Fiscalité'       }
+];
+
+const ASSO_CITIES = ['Paris', 'Lyon', 'Toulouse', 'Bordeaux', 'Grenoble',
+                     'Sophia Antipolis', 'Montpellier', 'Taiwan', 'Autres'];
+
+// ══════════════════════════════════════════════════════════════
 // DYNAMIC STATE — only user-created content (Firebase + cache)
 // ══════════════════════════════════════════════════════════════
 
 const _DYN_KEY = STORE_KEY + '_dyn';
 
 function _emptyDynamic() {
-  return { addedMembers: [], announcements: [], jobs: [], sharings: [], surveyVotes: {}, userSurveys: [] };
+  return { addedMembers: [], announcements: [], jobs: [], sharings: [], surveyVotes: {}, userSurveys: [], assoMembers: [] };
 }
 
 // Load dynamic data from localStorage cache (fast, instant)
@@ -230,7 +248,8 @@ function loadDynamic() {
         jobs:          Array.isArray(p.jobs)           ? p.jobs          : [],
         sharings:      Array.isArray(p.sharings)       ? p.sharings      : [],
         surveyVotes:   (p.surveyVotes && typeof p.surveyVotes === 'object') ? p.surveyVotes : {},
-        userSurveys:   Array.isArray(p.userSurveys)   ? p.userSurveys   : []
+        userSurveys:   Array.isArray(p.userSurveys)   ? p.userSurveys   : [],
+        assoMembers:   Array.isArray(p.assoMembers)    ? p.assoMembers   : []
       }
     };
   } catch (_) { return { dyn: _emptyDynamic(), savedAt: 0 }; }
@@ -254,6 +273,7 @@ function rebuildState(dyn) {
   state.announcements = dyn.announcements || [];
   state.jobs          = dyn.jobs          || [];
   state.sharings      = dyn.sharings      || [];
+  state.assoMembers   = dyn.assoMembers   || [];
 }
 
 // Extract only dynamic user data from state (what gets saved to Firebase)
@@ -266,7 +286,8 @@ function extractDynamic() {
     surveyVotes:   Object.fromEntries(
                      state.surveys.map(s => [s.id, s.votesByMember || {}])
                    ),
-    userSurveys:   state.surveys.filter(s => !s.isLegacy)
+    userSurveys:   state.surveys.filter(s => !s.isLegacy),
+    assoMembers:   state.assoMembers
   };
 }
 
@@ -335,6 +356,7 @@ function setTab(name) {
 
   if (name === 'dashboard') renderDashboard();
   if (name === 'members')   renderMembers();
+  if (name === 'asso')      renderAssoMembers();
   if (name === 'surveys')   renderSurveys();
   if (name === 'sharing')   renderSharings();
 }
@@ -703,6 +725,174 @@ function renderMembers(filter = '') {
         ${m.note ? `<div class="sm-member-note">${escHtml(m.note)}</div>` : ''}
       </div>`;
   }).join('');
+}
+
+// ── Asso Membres tab ───────────────────────────────────────────
+function renderAssoMembers() {
+  const container = document.getElementById('asso-grid');
+  if (!container) return;
+
+  const query   = (document.getElementById('asso-search')?.value   || '').toLowerCase();
+  const cityFlt = (document.getElementById('asso-city-filter')?.value || '');
+
+  const list = state.assoMembers.filter(m => {
+    const matchQ    = !query   || m.name.toLowerCase().includes(query) ||
+                      (m.job  || '').toLowerCase().includes(query)     ||
+                      (m.intro|| '').toLowerCase().includes(query);
+    const matchCity = !cityFlt || m.city === cityFlt;
+    return matchQ && matchCity;
+  });
+
+  if (list.length === 0) {
+    container.innerHTML = `
+      <div class="sm-empty" style="grid-column:1/-1;">
+        <i class="fas fa-landmark"></i>
+        <h3>Aucun membre officiel${query || cityFlt ? ' trouvé' : ''}</h3>
+        <p>${query || cityFlt ? 'Essayez un autre filtre.' : 'Cliquez sur « + Ajouter membre Asso » pour enregistrer le premier membre officiel.'}</p>
+      </div>`;
+    return;
+  }
+
+  const goalMap = Object.fromEntries(ASSO_GOALS.map(g => [g.id, g.fr]));
+  container.innerHTML = list.map(m => {
+    const initials = m.name.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    const goals    = (m.goals || []).slice(0, 3).map(g =>
+      `<span class="sm-asso-goal-badge">${escHtml(goalMap[g] || g)}</span>`
+    ).join('') + (m.goals?.length > 3 ? `<span class="sm-asso-goal-badge sm-asso-goal-more">+${m.goals.length - 3}</span>` : '');
+    return `
+      <div class="sm-member-card sm-asso-card" data-id="${escHtml(m.id)}" onclick="openAssoMemberModal('${escHtml(m.id)}')">
+        <div class="sm-asso-card-top">
+          <div class="sm-member-avatar sm-asso-avatar">${escHtml(initials)}</div>
+          <div class="sm-asso-card-info">
+            <div class="sm-member-name">${escHtml(m.name)}</div>
+            ${m.city ? `<div class="sm-asso-city"><i class="fas fa-map-marker-alt"></i> ${escHtml(m.city)}</div>` : ''}
+            ${m.job  ? `<div class="sm-asso-job">${escHtml(m.job)}</div>` : ''}
+          </div>
+        </div>
+        ${goals ? `<div class="sm-asso-goals">${goals}</div>` : ''}
+        <div class="sm-asso-card-footer">
+          <span class="sm-asso-paid-badge"><i class="fas fa-check-circle"></i> Membre officiel</span>
+          ${m.linkedin ? `<a href="${escHtml(m.linkedin)}" target="_blank" onclick="event.stopPropagation()" class="sm-asso-linkedin"><i class="fab fa-linkedin"></i></a>` : ''}
+        </div>
+        <div class="sm-member-joined"><i class="fas fa-calendar-alt" style="margin-right:0.3rem;opacity:0.5;"></i>${fmtDate(m.joinedAt)}</div>
+      </div>`;
+  }).join('');
+}
+
+let _assoModalId = null;
+
+function openAssoMemberModal(id = null) {
+  _assoModalId = id;
+  const overlay = document.getElementById('asso-member-modal');
+  const title   = document.getElementById('asso-modal-title');
+  const delBtn  = document.getElementById('asso-modal-delete');
+
+  // City dropdown
+  const cityEl = document.getElementById('am-city');
+  if (cityEl && !cityEl.dataset.built) {
+    cityEl.innerHTML = '<option value="">— Sélectionner une ville —</option>' +
+      ASSO_CITIES.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+    cityEl.dataset.built = '1';
+  }
+
+  // Goals checkboxes
+  const goalsEl = document.getElementById('am-goals-list');
+  if (goalsEl && !goalsEl.dataset.built) {
+    goalsEl.innerHTML = ASSO_GOALS.map(g => `
+      <label class="sm-asso-goal-check">
+        <input type="checkbox" name="am-goal" value="${escHtml(g.id)}">
+        <span>${escHtml(g.zh)} <em>(${escHtml(g.fr)})</em></span>
+      </label>`).join('');
+    goalsEl.dataset.built = '1';
+  }
+
+  if (id) {
+    const m = state.assoMembers.find(x => x.id === id);
+    if (!m) return;
+    if (title) title.textContent = 'Modifier membre Asso';
+    _setVal('am-name',     m.name);
+    _setVal('am-city',     m.city || '');
+    _setVal('am-job',      m.job  || '');
+    _setVal('am-intro',    m.intro || '');
+    _setVal('am-linkedin', m.linkedin || '');
+    _setVal('am-phone',    m.phone || '');
+    _setVal('am-helloasso',m.helloassoRef || '');
+    _setVal('am-joined',   m.joinedAt ? m.joinedAt.slice(0, 10) : '');
+    // Check goals
+    overlay.querySelectorAll('input[name="am-goal"]').forEach(cb => {
+      cb.checked = (m.goals || []).includes(cb.value);
+    });
+    if (delBtn) delBtn.classList.remove('hidden');
+  } else {
+    if (title) title.textContent = 'Ajouter membre Asso · 新增協會成員';
+    ['am-name','am-city','am-job','am-intro','am-linkedin','am-phone','am-helloasso'].forEach(id => _setVal(id, ''));
+    _setVal('am-joined', new Date().toISOString().slice(0, 10));
+    overlay?.querySelectorAll('input[name="am-goal"]').forEach(cb => { cb.checked = false; });
+    if (delBtn) delBtn.classList.add('hidden');
+  }
+
+  if (overlay) overlay.classList.remove('hidden');
+}
+
+function _setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
+function closeAssoMemberModal() {
+  _assoModalId = null;
+  document.getElementById('asso-member-modal')?.classList.add('hidden');
+}
+
+function saveAssoMember() {
+  const name = document.getElementById('am-name')?.value.trim();
+  if (!name) { showToast('Le nom est obligatoire · 姓名為必填'); return; }
+
+  const goals = [...document.querySelectorAll('input[name="am-goal"]:checked')].map(cb => cb.value);
+  const member = {
+    name,
+    city:         document.getElementById('am-city')?.value      || '',
+    job:          document.getElementById('am-job')?.value.trim() || '',
+    intro:        document.getElementById('am-intro')?.value.trim() || '',
+    linkedin:     document.getElementById('am-linkedin')?.value.trim() || '',
+    phone:        document.getElementById('am-phone')?.value.trim() || '',
+    helloassoRef: document.getElementById('am-helloasso')?.value.trim() || '',
+    joinedAt:     new Date(document.getElementById('am-joined')?.value || Date.now()).toISOString(),
+    goals
+  };
+
+  const dyn = extractDynamic();
+  if (_assoModalId) {
+    const idx = dyn.assoMembers.findIndex(x => x.id === _assoModalId);
+    if (idx >= 0) dyn.assoMembers[idx] = { ...dyn.assoMembers[idx], ...member };
+    showToast('Membre Asso mis à jour · 協會成員已更新');
+  } else {
+    dyn.assoMembers.push({ id: uid(), ...member });
+    showToast('Membre Asso ajouté · 協會成員已新增');
+  }
+
+  rebuildState(dyn);
+  _saveDynLocal(dyn);
+  _fbWrite(dyn);
+  closeAssoMemberModal();
+  renderAssoMembers();
+}
+
+function deleteAssoMember() {
+  if (!_assoModalId) return;
+  if (!confirm('Supprimer ce membre officiel ? · 確定刪除此協會成員？')) return;
+
+  const dyn = extractDynamic();
+  const idx = dyn.assoMembers.findIndex(x => x.id === _assoModalId);
+  if (idx < 0) return;
+  dyn.assoMembers.splice(idx, 1);
+
+  rebuildState(dyn);
+  _saveDynLocal(dyn);
+  _fbWrite(dyn);
+  closeAssoMemberModal();
+  renderAssoMembers();
+  showToast('Membre supprimé · 已刪除');
 }
 
 // ── Surveys tab ────────────────────────────────────────────────
@@ -1941,7 +2131,7 @@ function handleImport(evt) {
 function _fbWrite(dyn) {
   if (!_fbRef) return;
   _fbRef.transaction(current => {
-    const empty = { addedMembers:[], announcements:[], jobs:[], surveyVotes:{}, sharings:[], userSurveys:[] };
+    const empty = { addedMembers:[], announcements:[], jobs:[], surveyVotes:{}, sharings:[], userSurveys:[], assoMembers:[] };
     let remoteDyn = empty;
     if (current && typeof current.data === 'string') {
       try { remoteDyn = JSON.parse(current.data); } catch(_) {}
@@ -2028,6 +2218,7 @@ function initFirebase() {
     renderJobs();
     const activePane = document.querySelector('.tab-pane.active')?.dataset?.tab;
     if (activePane === 'members') renderMembers();
+    if (activePane === 'asso')    renderAssoMembers();
     if (activePane === 'surveys') renderSurveys();
     if (activePane === 'sharing') renderSharings();
   });
@@ -2095,6 +2286,32 @@ function init() {
   if (memberOverlay) {
     memberOverlay.addEventListener('click', e => {
       if (e.target === memberOverlay) closeMemberModal();
+    });
+  }
+
+  // Asso members tab
+  const addAssoBtn = document.getElementById('add-asso-member-btn');
+  if (addAssoBtn) addAssoBtn.addEventListener('click', () => openAssoMemberModal());
+
+  const assoSearch     = document.getElementById('asso-search');
+  const assoCityFilter = document.getElementById('asso-city-filter');
+  if (assoSearch)     assoSearch.addEventListener('input', renderAssoMembers);
+  if (assoCityFilter) assoCityFilter.addEventListener('change', renderAssoMembers);
+
+  // Asso member modal buttons
+  const assoClose  = document.getElementById('asso-modal-close');
+  const assoCancel = document.getElementById('asso-modal-cancel');
+  const assoSave   = document.getElementById('asso-modal-save');
+  const assoDelete = document.getElementById('asso-modal-delete');
+  if (assoClose)  assoClose.addEventListener('click', closeAssoMemberModal);
+  if (assoCancel) assoCancel.addEventListener('click', closeAssoMemberModal);
+  if (assoSave)   assoSave.addEventListener('click', saveAssoMember);
+  if (assoDelete) assoDelete.addEventListener('click', deleteAssoMember);
+
+  const assoOverlay = document.getElementById('asso-member-modal');
+  if (assoOverlay) {
+    assoOverlay.addEventListener('click', e => {
+      if (e.target === assoOverlay) closeAssoMemberModal();
     });
   }
 

@@ -165,6 +165,9 @@
         <button class="sm-tab" data-tab="members">
           <i class="fas fa-users"></i>Membres
         </button>
+        <button class="sm-tab" data-tab="asso">
+          <i class="fas fa-landmark"></i>Asso Membres
+        </button>
         <button class="sm-tab" data-tab="surveys">
           <i class="fas fa-poll"></i>Sondages
         </button>
@@ -404,6 +407,71 @@
 
     </div>
     <!-- /MEMBERS -->
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- TAB PANE: ASSO MEMBRES                                   -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="tab-pane" data-tab="asso">
+
+      <div class="sm-survey-banner-wrap">
+        <div class="sm-survey-banner">
+          <div class="sm-survey-banner-header">
+            <span class="sm-survey-banner-title">
+              <i class="fas fa-landmark"></i>
+              Taiwan Tech France 🇹🇼🇫🇷 · Membres officiels de l'association
+            </span>
+            <span class="sm-survey-banner-badges">
+              <span class="sm-badge sm-badge-open"><i class="fas fa-check-circle"></i> HelloAsso validé</span>
+              <span class="sm-badge" style="background:#fef9c3;color:#854d0e;border:1px solid #fde68a;"><i class="fas fa-euro-sign"></i> 3€ / an</span>
+            </span>
+          </div>
+          <div class="sm-survey-banner-rules">
+            <div class="sm-survey-rule">
+              <i class="fas fa-info-circle"></i>
+              <div>
+                <strong>來源 · Source</strong>
+                <span>僅限透過 HelloAsso 完成繳費（3€/年）的正式協會成員。 · Membres ayant payé leur adhésion via HelloAsso. Distinct de la communauté WhatsApp.</span>
+              </div>
+            </div>
+            <div class="sm-survey-rule">
+              <i class="fas fa-user-edit"></i>
+              <div>
+                <strong>流程 · Workflow</strong>
+                <span>收到 HelloAsso 付款通知後，由管理員手動新增至此名單。 · Après réception du paiement HelloAsso, l'admin ajoute manuellement le membre ici.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sm-members-toolbar">
+        <input id="asso-search" class="sm-search" type="text" placeholder="Rechercher un membre officiel…">
+        <select id="asso-city-filter" class="sm-input" style="max-width:160px;padding:0.5rem 0.75rem;font-size:0.82rem;">
+          <option value="">Toutes les villes</option>
+          <option>Paris</option>
+          <option>Lyon</option>
+          <option>Toulouse</option>
+          <option>Bordeaux</option>
+          <option>Grenoble</option>
+          <option>Sophia Antipolis</option>
+          <option>Montpellier</option>
+          <option>Taiwan</option>
+          <option>Autres</option>
+        </select>
+        <button id="export-asso-csv-btn" class="sm-btn" style="background:#fff;border:1px solid #e2e8f0;color:#475569;">
+          <i class="fas fa-file-csv"></i>Export CSV
+        </button>
+        <button id="add-asso-member-btn" class="sm-btn sm-btn-emerald">
+          <i class="fas fa-user-plus"></i>+ Ajouter membre Asso
+        </button>
+      </div>
+
+      <div class="sm-members-grid" id="asso-grid">
+        <!-- Injected by JS -->
+      </div>
+
+    </div>
+    <!-- /ASSO MEMBRES -->
 
     <!-- ════════════════════════════════════════════════════════ -->
     <!-- TAB PANE: SURVEYS                                        -->
@@ -989,6 +1057,96 @@
     </div>
   </div>
   <!-- /JOB MODAL -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- ASSO MEMBER MODAL                                          -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="asso-member-modal" class="sm-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="asso-modal-title">
+    <div class="sm-modal-box" style="max-width:560px;">
+      <div class="sm-modal-header">
+        <span class="sm-modal-title" id="asso-modal-title">Ajouter membre Asso · 新增協會成員</span>
+        <button id="asso-modal-close" class="sm-modal-close" type="button" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="sm-modal-body" style="max-height:70vh;overflow-y:auto;">
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="am-name">Nom complet · 姓名 *</label>
+          <input id="am-name" class="sm-input" type="text" placeholder="ex: Wei-Chen Liu">
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="am-email">Email · 電子郵件 (optionnel)</label>
+          <input id="am-email" class="sm-input" type="email" placeholder="ex: wei@example.com">
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div class="sm-form-group">
+            <label class="sm-label" for="am-city">Ville · 城市</label>
+            <select id="am-city" class="sm-input">
+              <!-- Built by JS -->
+            </select>
+          </div>
+          <div class="sm-form-group">
+            <label class="sm-label" for="am-joined">Date d'adhésion</label>
+            <input id="am-joined" class="sm-input" type="date">
+          </div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="am-job">Poste / Entreprise · 職位／公司 (optionnel)</label>
+          <input id="am-job" class="sm-input" type="text" placeholder="ex: Software Engineer @ Thales">
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label">Objectifs · 加入目的 (choix multiple)</label>
+          <div id="am-goals-list" style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.3rem;">
+            <!-- Built by JS -->
+          </div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="am-intro">Présentation · 自我介紹 (optionnel)</label>
+          <textarea id="am-intro" class="sm-input" rows="2"
+                    placeholder="ex: Ingénieure Full-Stack à Lyon, 5 ans d'expérience…"
+                    style="resize:vertical;"></textarea>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div class="sm-form-group">
+            <label class="sm-label" for="am-linkedin">LinkedIn (optionnel)</label>
+            <input id="am-linkedin" class="sm-input" type="url" placeholder="https://linkedin.com/in/…">
+          </div>
+          <div class="sm-form-group">
+            <label class="sm-label" for="am-phone">Téléphone · 電話 (optionnel)</label>
+            <input id="am-phone" class="sm-input" type="tel" placeholder="+33 6…">
+          </div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="am-helloasso">Référence HelloAsso (optionnel)</label>
+          <input id="am-helloasso" class="sm-input" type="text" placeholder="N° de commande HelloAsso">
+        </div>
+
+      </div>
+      <div class="sm-modal-footer">
+        <button id="asso-modal-delete" type="button" class="hidden"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #fecdd3;background:#fff1f2;color:#be123c;font-size:0.82rem;font-weight:600;cursor:pointer;margin-right:auto;">
+          <i class="fas fa-trash" style="margin-right:0.3rem;"></i>Supprimer
+        </button>
+        <button id="asso-modal-cancel" type="button"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          Annuler
+        </button>
+        <button id="asso-modal-save" type="button"
+                style="padding:0.5rem 1.25rem;border-radius:7px;border:none;background:#0a2d42;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+          <i class="fas fa-save"></i>Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- /ASSO MEMBER MODAL -->
 
   <script src="assets/js/stastic_member.js" defer></script>
 </body>

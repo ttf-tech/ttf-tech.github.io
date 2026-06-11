@@ -298,6 +298,94 @@
   padding-top: 0.4rem;
 }
 
+/* ── Asso member card ────────────────────────────────────────── */
+.sm-asso-card {
+  border-color: #bfdbfe;
+  background: linear-gradient(160deg, #f0f9ff 0%, #fff 60%);
+}
+.sm-asso-avatar {
+  background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+}
+.sm-asso-card-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+.sm-asso-card-info {
+  flex: 1;
+  min-width: 0;
+}
+.sm-asso-city {
+  font-size: 0.72rem;
+  color: #0369a1;
+  margin-top: 0.15rem;
+}
+.sm-asso-job {
+  font-size: 0.72rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 0.1rem;
+}
+.sm-asso-goals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.1rem;
+}
+.sm-asso-goal-badge {
+  font-size: 0.64rem;
+  font-weight: 600;
+  background: #dbeafe;
+  color: #1e40af;
+  border-radius: 99px;
+  padding: 0.15rem 0.5rem;
+}
+.sm-asso-goal-more {
+  background: #e2e8f0;
+  color: #475569;
+}
+.sm-asso-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.2rem;
+}
+.sm-asso-paid-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #166534;
+  background: #dcfce7;
+  border-radius: 99px;
+  padding: 0.18rem 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.sm-asso-linkedin {
+  color: #0a66c2;
+  font-size: 1rem;
+  line-height: 1;
+  text-decoration: none;
+}
+.sm-asso-linkedin:hover { color: #0847a6; }
+
+.sm-asso-goal-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: #1e293b;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.sm-asso-goal-check em {
+  font-style: normal;
+  color: #64748b;
+  font-size: 0.73rem;
+}
+
 /* ── Surveys tab ─────────────────────────────────────────────── */
 .sm-surveys-wrap {
   max-width: 900px;

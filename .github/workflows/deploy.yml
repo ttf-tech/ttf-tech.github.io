@@ -24,7 +24,12 @@ jobs:
 
       - name: Inject admin config from GitHub Variable
         run: |
-          echo "const ADMIN_EMAILS = ${{ vars.ADMIN_EMAILS }};" > assets/js/admin-config.js
+          EMAILS='${{ vars.ADMIN_EMAILS }}'
+          if [ -z "$EMAILS" ]; then
+            echo "const ADMIN_EMAILS = [];" > assets/js/admin-config.js
+          else
+            echo "const ADMIN_EMAILS = $EMAILS;" > assets/js/admin-config.js
+          fi
 
       - uses: actions/configure-pages@v4
 

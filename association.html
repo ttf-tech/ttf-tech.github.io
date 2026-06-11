@@ -201,6 +201,31 @@
     }
     .cta-btn-secondary:hover { background: rgba(255,255,255,0.22); }
 
+    /* Section separators */
+    .form-sep {
+      max-width: 860px; margin: 2rem auto 0; padding: 0 1.5rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .form-sep-line { flex: 1; height: 1px; background: #cbd5e1; }
+    .form-sep-pill {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 99px;
+      padding: 0.3rem 0.9rem; white-space: nowrap;
+      font-size: 0.68rem; font-weight: 700; color: #475569;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .form-sep-pill i { font-size: 0.7rem; }
+    /* Audience tag on card */
+    .card-audience {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; padding: 0.2rem 0.6rem; border-radius: 99px;
+      margin-bottom: 0.6rem;
+    }
+    .card-audience.team   { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+    .card-audience.orgs   { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+    .card-audience.membres { background: rgba(167,139,250,0.15); color: #a78bfa; border: 1px solid rgba(167,139,250,0.3); }
+
     /* Partner CTA form */
     .partner-cta-wrap {
       max-width: 860px; margin: 1.25rem auto 3rem; padding: 0 1.5rem;
@@ -249,6 +274,45 @@
       .partner-form { grid-template-columns: 1fr; }
       .partner-form .form-full { grid-column: 1; }
       .partner-cta-card { padding: 1.5rem 1.25rem; }
+    }
+
+    /* Member content proposal form */
+    .content-cta-wrap {
+      max-width: 860px; margin: 1.25rem auto 3rem; padding: 0 1.5rem;
+    }
+    .content-cta-card {
+      background: linear-gradient(135deg,#1e1b4b 0%,#312e81 100%);
+      border-radius: 16px; padding: 2rem 2.5rem;
+    }
+    .content-cta-card h2 { font-size: 1.1rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem; }
+    .content-cta-card > p { font-size: 0.78rem; color: rgba(255,255,255,0.6); line-height: 1.5; margin-bottom: 1.4rem; }
+    .content-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .content-form .form-full { grid-column: 1 / -1; }
+    .content-form .form-input,
+    .content-form .form-select,
+    .content-form .form-textarea { background: rgba(255,255,255,0.07); }
+    .content-form .form-input:focus,
+    .content-form .form-select:focus,
+    .content-form .form-textarea:focus { background: rgba(255,255,255,0.12); }
+    .content-form .form-select option { background: #1e1b4b; }
+    .content-submit {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.7rem 1.6rem; border-radius: 99px;
+      background: #7c3aed; color: #fff; font-size: 0.85rem; font-weight: 700;
+      border: none; cursor: pointer; transition: background 0.15s, transform 0.1s;
+      margin-top: 0.25rem;
+    }
+    .content-submit:hover { background: #6d28d9; transform: translateY(-1px); }
+    .content-success {
+      display: none; align-items: center; gap: 0.6rem;
+      background: rgba(124,58,237,0.2); border: 1px solid rgba(124,58,237,0.4);
+      border-radius: 10px; padding: 0.85rem 1rem; margin-top: 1rem;
+      color: #c4b5fd; font-size: 0.82rem; font-weight: 600;
+    }
+    @media (max-width: 540px) {
+      .content-form { grid-template-columns: 1fr; }
+      .content-form .form-full { grid-column: 1; }
+      .content-cta-card { padding: 1.5rem 1.25rem; }
     }
   </style>
 </head>
@@ -590,6 +654,7 @@
     <div class="cta-wrap">
       <div class="cta-card">
         <div class="cta-text">
+          <div class="card-audience team"><i class="fas fa-star"></i> Membres fondateurs · 籌備委員</div>
           <h2>Rejoindre l'équipe fondatrice · 加入籌備委員會</h2>
           <p>
             Nous avons besoin d'une petite équipe motivée pour concrétiser ce projet — juridiquement, organisationnellement et visuellement.
@@ -612,8 +677,16 @@
     </div>
 
     <!-- ── DEVENIR PARTENAIRE ─────────────────────────────────────── -->
+    <!-- Separator: founding team → orgs -->
+    <div class="form-sep">
+      <div class="form-sep-line"></div>
+      <div class="form-sep-pill"><i class="fas fa-building"></i> Vous représentez une organisation ? · 代表機構？</div>
+      <div class="form-sep-line"></div>
+    </div>
+
     <div class="partner-cta-wrap">
       <div class="partner-cta-card">
+        <div class="card-audience orgs"><i class="fas fa-building"></i> Pour les organisations · 給合作機構</div>
         <h2><i class="fas fa-handshake" style="margin-right:0.5rem;color:#4ade80;"></i>Devenir partenaire · 成為合作夥伴</h2>
         <p>
           Votre organisation souhaite s'associer à Taiwan Tech France ? Que vous soyez une institution, une entreprise, une association ou une université, dites-nous comment vous souhaitez collaborer.
@@ -704,6 +777,130 @@
           } catch {
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer · 送出';
+            alert('Erreur réseau. Vérifiez votre connexion.');
+          }
+        });
+      }
+    </script>
+
+    <!-- ── PROPOSER UN CONTENU ───────────────────────────────────── -->
+    <!-- Separator: orgs → members -->
+    <div class="form-sep">
+      <div class="form-sep-line"></div>
+      <div class="form-sep-pill"><i class="fas fa-microphone"></i> Vous souhaitez partager vos connaissances ? · 想分享知識？</div>
+      <div class="form-sep-line"></div>
+    </div>
+
+    <div class="content-cta-wrap">
+      <div class="content-cta-card">
+        <div class="card-audience membres"><i class="fas fa-users"></i> Pour les membres · 給社群成員</div>
+        <h2><i class="fas fa-lightbulb" style="margin-right:0.5rem;color:#a78bfa;"></i>Proposer un contenu · 分享你的知識</h2>
+        <p>
+          Tu as une expertise, une expérience ou une idée à partager avec la communauté ? Propose un talk, un webinaire, un atelier ou un sujet de brainstorming — toute contribution est la bienvenue.
+          <span style="color:rgba(255,255,255,0.35);display:block;margin-top:0.25rem;font-size:0.72rem;">
+            有想分享的知識、經驗或點子嗎？無論是技術分享、線上講座或腦力激盪，我們都歡迎！
+          </span>
+        </p>
+
+        <form id="content-form" action="https://formspree.io/f/mykadnle" method="POST" class="content-form">
+
+          <div>
+            <label class="form-label" for="c_presenter_name">Ton prénom / nom · 你的姓名 *</label>
+            <input class="form-input" id="c_presenter_name" name="presenter_name" type="text" placeholder="Prénom Nom" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="c_email">Email · 電子郵件 *</label>
+            <input class="form-input" id="c_email" name="email" type="email" placeholder="toi@email.com" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="c_share_type">Type de partage · 分享類型 *</label>
+            <select class="form-select" id="c_share_type" name="share_type" required>
+              <option value="" disabled selected>Choisir un type…</option>
+              <option value="talk_tech">🎤 Talk / Présentation technique</option>
+              <option value="webinaire">🌐 Webinaire en ligne</option>
+              <option value="brainstorming">🧠 Brainstorming / Discussion ouverte</option>
+              <option value="experience">📚 Partage d'expérience (carrière, visa, vie en France)</option>
+              <option value="workshop">🎓 Workshop / Atelier pratique</option>
+              <option value="table_ronde">🤝 Table ronde / Panel</option>
+              <option value="co_animateur">💡 Idée d'événement (je cherche un co-animateur)</option>
+              <option value="autre">💬 Autre</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="form-label" for="c_language">Langue de présentation · 語言</label>
+            <select class="form-select" id="c_language" name="language">
+              <option value="fr">🇫🇷 Français</option>
+              <option value="zh">🇹🇼 中文 (Mandarin)</option>
+              <option value="en">🇬🇧 English</option>
+              <option value="fr_zh">🇫🇷🇹🇼 Français + 中文</option>
+              <option value="flexible">🌐 Flexible</option>
+            </select>
+          </div>
+
+          <div class="form-full">
+            <label class="form-label" for="c_topic_title">Titre / Sujet proposé · 主題標題 *</label>
+            <input class="form-input" id="c_topic_title" name="topic_title" type="text" placeholder="ex : Négocier son salaire en ESN, Visa talent passeport, React vs Vue en 2026…" required>
+          </div>
+
+          <div class="form-full">
+            <label class="form-label" for="c_description">Description · 內容描述 *</label>
+            <textarea class="form-textarea" id="c_description" name="description" placeholder="Décris en quelques lignes le contenu, le public cible et ce que les participants repartiront avec…" required></textarea>
+          </div>
+
+          <div class="form-full">
+            <label class="form-label" for="c_availability">Disponibilité · 你的時間 <span style="font-weight:400;opacity:0.6;">(facultatif)</span></label>
+            <input class="form-input" id="c_availability" name="availability" type="text" placeholder="ex : soirs en semaine, week-ends, juillet disponible…">
+          </div>
+
+          <input type="text" name="_gotcha" style="display:none;">
+          <input type="hidden" name="_subject" value="Nouvelle proposition de contenu — Taiwan Tech France">
+          <input type="hidden" name="_cc" value="wallace.lin@midascaretech.com">
+
+          <div class="form-full" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <button type="submit" class="content-submit">
+              <i class="fas fa-paper-plane"></i> Proposer · 送出提案
+            </button>
+            <span style="font-size:0.68rem;color:rgba(255,255,255,0.35);">
+              On te recontacte sous 7 jours · 我們將在7天內與你聯繫
+            </span>
+          </div>
+        </form>
+
+        <div class="content-success" id="content-form-success">
+          <i class="fas fa-check-circle" style="font-size:1.1rem;flex-shrink:0;"></i>
+          <span>Proposition reçue — merci ! On revient vers toi très bientôt. · 提案已收到，謝謝！我們會盡快與你聯繫。</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const cForm = document.getElementById('content-form');
+      if (cForm) {
+        cForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          const btn = cForm.querySelector('.content-submit');
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi…';
+          try {
+            const res = await fetch(cForm.action, {
+              method: 'POST',
+              body: new FormData(cForm),
+              headers: { 'Accept': 'application/json' }
+            });
+            if (res.ok) {
+              cForm.style.display = 'none';
+              document.getElementById('content-form-success').style.display = 'flex';
+            } else {
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fas fa-paper-plane"></i> Proposer · 送出提案';
+              alert('Erreur lors de l\'envoi. Réessayez ou contactez-nous directement.');
+            }
+          } catch {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Proposer · 送出提案';
             alert('Erreur réseau. Vérifiez votre connexion.');
           }
         });

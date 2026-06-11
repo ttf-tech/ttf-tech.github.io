@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZTM2QR5VPV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag("js", new Date());
+    gtag("config", "G-ZTM2QR5VPV");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events &amp; Content Library · Taiwan Tech France</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇹🇼</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="assets/css/stastic_member.css">
+
+  <style>
+    /* Sidebar */
+    #app-sidebar {
+      position: fixed; top: 0; left: 0; height: 100%; width: 4rem;
+      background: #111827; display: flex; flex-direction: column; align-items: center;
+      padding: 1.25rem 0; z-index: 20; box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+    }
+    .sidebar-logo { font-size: 1.6rem; line-height: 1; margin-bottom: 2rem; cursor: default; user-select: none; }
+    .sidebar-nav  { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+    .sidebar-link {
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.15s;
+      padding: 0.5rem; border-radius: 10px; width: 3rem; justify-content: center; font-size: 1.15rem;
+    }
+    .sidebar-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
+    .sidebar-link.active { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .sidebar-link span { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75; }
+    .sidebar-link.active span { opacity: 1; }
+    .sidebar-link-admin { margin-top: auto; }
+
+    /* Page header */
+    .page-header {
+      background: linear-gradient(160deg,#0a2d42 0%,#0f4060 100%);
+      color: #fff; padding: 1.75rem 1.5rem 1.25rem;
+    }
+    .page-header-inner { max-width: 960px; margin: 0 auto; }
+    .page-header h1  { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.2rem; }
+    .page-header p   { font-size: 0.8rem; color: rgba(255,255,255,0.55); }
+
+    /* Coffee Chat banner */
+    .coffee-banner {
+      max-width: 960px; margin: 1.25rem auto 0; padding: 0 1.5rem;
+    }
+    .coffee-card {
+      background: linear-gradient(135deg, #78350f 0%, #92400e 100%);
+      border-radius: 14px; padding: 1.5rem 1.75rem;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem;
+      position: relative; overflow: hidden;
+    }
+    .coffee-card::before {
+      content: '☕'; position: absolute; right: 1.5rem; top: 50%;
+      transform: translateY(-50%); font-size: 5rem; opacity: 0.12; line-height: 1;
+    }
+    .coffee-left { flex: 1; min-width: 260px; color: #fff; position: relative; z-index: 1; }
+    .coffee-pill {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.9); font-size: 0.62rem; font-weight: 700;
+      padding: 0.2rem 0.6rem; border-radius: 99px; margin-bottom: 0.6rem;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .coffee-left h2 { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.25rem; }
+    .coffee-left p  { font-size: 0.78rem; color: rgba(255,255,255,0.7); line-height: 1.5; margin-bottom: 0.75rem; }
+    .coffee-topics  { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .coffee-topic   {
+      font-size: 0.65rem; font-weight: 600; padding: 0.2rem 0.6rem;
+      border-radius: 99px; background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.85);
+    }
+    .coffee-actions { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; position: relative; z-index: 1; }
+    .coffee-book-btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.7rem 1.4rem; border-radius: 99px;
+      background: #fef3c7; color: #78350f;
+      font-size: 0.85rem; font-weight: 700; text-decoration: none;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .coffee-book-btn:hover { background: #fde68a; transform: translateY(-1px); }
+    .coffee-note { font-size: 0.65rem; color: rgba(255,255,255,0.5); text-align: center; }
+
+    /* Topic filter bar */
+    .topic-bar {
+      max-width: 960px; margin: 1rem auto 0; padding: 0 1.5rem;
+      display: flex; gap: 0.4rem; flex-wrap: wrap;
+    }
+    .topic-chip {
+      padding: 0.28rem 0.75rem; border-radius: 99px; font-size: 0.72rem; font-weight: 600;
+      border: 1px solid #e2e8f0; background: #f8fafc; color: #64748b;
+      cursor: pointer; transition: all 0.12s; white-space: nowrap;
+    }
+    .topic-chip:hover { border-color: #cbd5e1; background: #f1f5f9; }
+    .topic-chip.active { background: #0a2d42; border-color: #0a2d42; color: #fff; }
+
+    /* Page sections */
+    .events-section { max-width: 960px; margin: 1.75rem auto 0; padding: 0 1.5rem; }
+    .section-title {
+      font-size: 0.85rem; font-weight: 800; color: #0f172a;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 0.85rem; padding-bottom: 0.5rem;
+      border-bottom: 2px solid #f1f5f9;
+    }
+    .section-count {
+      font-size: 0.65rem; background: #f1f5f9; color: #64748b;
+      padding: 0.15rem 0.5rem; border-radius: 99px; font-weight: 700; margin-left: 0.2rem;
+    }
+    .events-grid { display: flex; flex-direction: column; gap: 0.75rem; }
+
+    /* Event card */
+    .ev-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+      overflow: hidden; transition: box-shadow 0.15s, border-color 0.15s;
+      display: flex;
+    }
+    .ev-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); border-color: #cbd5e1; }
+
+    /* Date column */
+    .ev-date-col {
+      background: #0a2d42; color: #fff; min-width: 52px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 0.75rem 0.6rem; flex-shrink: 0; text-align: center;
+    }
+    .ev-date-day   { font-size: 1.4rem; font-weight: 900; line-height: 1; }
+    .ev-date-month { font-size: 0.58rem; font-weight: 700; text-transform: uppercase; opacity: 0.65; margin-top: 0.1rem; }
+    .ev-date-time  { font-size: 0.55rem; opacity: 0.5; margin-top: 0.2rem; }
+    .ev-date-year  { font-size: 0.5rem; opacity: 0.4; margin-top: 0.1rem; }
+    .ev-card-past .ev-date-col { background: #475569; }
+
+    /* Body */
+    .ev-body { flex: 1; min-width: 0; padding: 0.85rem 1.1rem; }
+
+    /* Top row: type badge + topic tags + status */
+    .ev-top { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; margin-bottom: 0.35rem; }
+    .ev-type-badge {
+      font-size: 0.6rem; font-weight: 700; padding: 0.15rem 0.5rem;
+      border-radius: 99px; background: #ede9fe; color: #7c3aed;
+    }
+    .ev-topic-tag {
+      font-size: 0.58rem; font-weight: 600; padding: 0.12rem 0.45rem;
+      border-radius: 99px; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;
+    }
+    .ev-upcoming-badge {
+      margin-left: auto; font-size: 0.58rem; font-weight: 700; padding: 0.12rem 0.5rem;
+      border-radius: 99px; background: #dcfce7; color: #166534; display: flex; align-items: center; gap: 0.25rem;
+    }
+    .ev-past-badge {
+      margin-left: auto; font-size: 0.58rem; font-weight: 600; color: #94a3b8;
+    }
+
+    /* Title & speaker */
+    .ev-title   { font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem; line-height: 1.3; }
+    .ev-speaker { font-size: 0.73rem; color: #475569; display: flex; align-items: center; gap: 0.35rem; margin-bottom: 0.3rem; }
+    .ev-speaker-title { font-size: 0.68rem; color: #94a3b8; }
+
+    /* Description */
+    .ev-desc { font-size: 0.77rem; color: #475569; line-height: 1.5; white-space: pre-line;
+               word-break: break-word; margin-top: 0.35rem;
+               display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .ev-desc.expanded { display: block; }
+
+    /* Action links row */
+    .ev-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.65rem; align-items: center; }
+    .ev-btn {
+      display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.8rem;
+      border-radius: 99px; font-size: 0.7rem; font-weight: 600;
+      text-decoration: none; transition: background 0.12s; cursor: pointer;
+    }
+    .ev-btn-join    { background: #dcfce7; border: 1px solid #86efac; color: #166534; }
+    .ev-btn-join:hover { background: #bbf7d0; }
+    .ev-btn-replay  { background: #fef3c7; border: 1px solid #fcd34d; color: #92400e; }
+    .ev-btn-replay:hover { background: #fde68a; }
+    .ev-btn-slides  { background: #dbeafe; border: 1px solid #93c5fd; color: #1e40af; }
+    .ev-btn-slides:hover { background: #bfdbfe; }
+    .ev-btn-expand  { background: none; border: 1px solid #e2e8f0; color: #64748b; padding: 0.25rem 0.6rem; font-size: 0.65rem; }
+    .ev-btn-expand:hover { background: #f1f5f9; }
+    .ev-no-media { font-size: 0.65rem; color: #94a3b8; font-style: italic; }
+
+    /* Empty state */
+    .ev-empty { text-align: center; padding: 2rem 1.5rem; color: #94a3b8; font-size: 0.8rem;
+                background: #fff; border: 1px dashed #e2e8f0; border-radius: 12px; }
+    .ev-empty i { display: block; font-size: 1.8rem; opacity: 0.2; margin-bottom: 0.4rem; }
+
+    /* Speaker grid */
+    .speakers-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem;
+    }
+    .speaker-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 1.1rem 1rem; text-align: center; transition: box-shadow 0.15s;
+    }
+    .speaker-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.08); }
+    .speaker-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: linear-gradient(135deg,#0a2d42,#1a4a6e);
+      color: #fff; font-size: 1.25rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 0.6rem;
+    }
+    .speaker-name  { font-size: 0.85rem; font-weight: 700; color: #0f172a; margin-bottom: 0.1rem; }
+    .speaker-role  { font-size: 0.68rem; color: #64748b; margin-bottom: 0.4rem; line-height: 1.35; }
+    .speaker-count { font-size: 0.65rem; color: #94a3b8; margin-bottom: 0.45rem; }
+    .speaker-topics { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.25rem; }
+    .speaker-topic-tag {
+      font-size: 0.58rem; font-weight: 600; padding: 0.1rem 0.4rem;
+      border-radius: 99px; background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;
+    }
+
+    /* Bottom spacing */
+    .page-bottom { height: 2.5rem; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen">
+
+  <aside id="app-sidebar">
+    <div class="sidebar-logo">🇹🇼</div>
+    <nav class="sidebar-nav">
+      <a href="index.html"        class="sidebar-link"        title="Home · 首頁"><i class="fas fa-home"></i><span>Accueil</span></a>
+      <a href="events.html"       class="sidebar-link active" title="Events · 活動"><i class="fas fa-calendar-alt"></i><span>Agenda</span></a>
+      <a href="jobs.html"         class="sidebar-link"        title="Jobs · 職缺"><i class="fas fa-briefcase"></i><span>Offres</span></a>
+      <a href="resources.html"    class="sidebar-link"        title="Resources · 資源"><i class="fas fa-book-open"></i><span>Docs</span></a>
+      <a href="vote.html"         class="sidebar-link"        title="Sondages · 投票"><i class="fas fa-poll"></i><span>Vote</span></a>
+      <a href="association.html"  class="sidebar-link"        title="Association · 協會"><i class="fas fa-landmark"></i><span>Assoc</span></a>
+      <a href="admin.html"        class="sidebar-link sidebar-link-admin" title="Admin"><i class="fas fa-lock"></i><span>Admin</span></a>
+    </nav>
+  </aside>
+
+  <main class="ml-16">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div class="page-header-inner">
+        <h1><i class="fas fa-play-circle" style="margin-right:0.5rem;opacity:0.8;"></i>Events &amp; Content Library · 活動與知識庫</h1>
+        <p>Webinars, coffee chats, replays &amp; community knowledge — 社群活動、錄影與資源整理</p>
+      </div>
+    </div>
+
+    <!-- ── COFFEE CHAT ──────────────────────────────────────────── -->
+    <div class="coffee-banner">
+      <div class="coffee-card">
+        <div class="coffee-left">
+          <div class="coffee-pill"><i class="fas fa-coffee"></i> Community · 社群咖啡聊聊</div>
+          <h2>Coffee Chat — 40 min with the community ☕</h2>
+          <p>
+            Échanges informels en tête-à-tête avec des membres de la communauté.<br>
+            Posez vos questions, partagez votre expérience, obtenez des retours sur votre parcours.
+          </p>
+          <div class="coffee-topics">
+            <span class="coffee-topic">🇫🇷 New arrival in France</span>
+            <span class="coffee-topic">🔍 Tech job search</span>
+            <span class="coffee-topic">📄 CV &amp; Interview review</span>
+            <span class="coffee-topic">🏢 ESN / CDI / Freelance</span>
+            <span class="coffee-topic">🛂 Visa &amp; Titre de séjour</span>
+            <span class="coffee-topic">💰 Salary &amp; Negotiation</span>
+            <span class="coffee-topic">🚀 Startup / Founder chat</span>
+            <span class="coffee-topic">🎓 Student → first job</span>
+          </div>
+        </div>
+        <div class="coffee-actions">
+          <a href="https://calendly.com/tess-hsu/parlon-ton-project-cyber"
+             target="_blank" rel="noopener" class="coffee-book-btn">
+            <i class="fas fa-calendar-check"></i> Réserver un Coffee Chat
+          </a>
+          <span class="coffee-note">Gratuit · 免費 · ~30-40 min via Google Meet</span>
+        </div>
+      </div>
+    </div>
+    <!-- /COFFEE CHAT -->
+
+    <!-- Topic filter bar -->
+    <div class="topic-bar" id="topic-bar">
+      <button class="topic-chip active" data-topic="all">All · 全部</button>
+      <button class="topic-chip" data-topic="Job Search">🔍 Job Search</button>
+      <button class="topic-chip" data-topic="ESN">🏢 ESN / SSII</button>
+      <button class="topic-chip" data-topic="CDI">💼 CDI &amp; Freelance</button>
+      <button class="topic-chip" data-topic="CV">📄 CV &amp; Interview</button>
+      <button class="topic-chip" data-topic="Visa">🛂 Visa &amp; Legal</button>
+      <button class="topic-chip" data-topic="Salary">💰 Salary</button>
+      <button class="topic-chip" data-topic="Startup">🚀 Startup</button>
+      <button class="topic-chip" data-topic="Investment">📈 Investment</button>
+      <button class="topic-chip" data-topic="Tech">💻 Tech</button>
+    </div>
+
+    <!-- À venir events -->
+    <section class="events-section">
+      <div class="section-title">
+        <i class="fas fa-calendar-alt" style="color:#7c3aed;"></i>
+        À venir · 即將到來
+        <span class="section-count" id="upcoming-count">0</span>
+      </div>
+      <div class="events-grid" id="upcoming-list">
+        <div class="ev-empty"><i class="fas fa-calendar-alt"></i>Chargement…</div>
+      </div>
+    </section>
+
+    <!-- Past content library -->
+    <section class="events-section">
+      <div class="section-title">
+        <i class="fas fa-play-circle" style="color:#f59e0b;"></i>
+        Bibliothèque · 過往內容
+        <span class="section-count" id="past-count">0</span>
+      </div>
+      <div class="events-grid" id="past-list">
+        <div class="ev-empty"><i class="fas fa-play-circle"></i>Chargement…</div>
+      </div>
+    </section>
+
+    <!-- Speaker profiles -->
+    <section class="events-section" id="speakers-section">
+      <div class="section-title">
+        <i class="fas fa-microphone" style="color:#0e7490;"></i>
+        Intervenants · 社群講者
+        <span class="section-count" id="speakers-count">0</span>
+      </div>
+      <div class="speakers-grid" id="speakers-grid">
+        <div class="ev-empty" style="grid-column:1/-1;"><i class="fas fa-microphone"></i>Chargement…</div>
+      </div>
+    </section>
+
+    <div class="page-bottom"></div>
+
+  </main>
+
+  <script src="assets/js/firebase-read.js"></script>
+  <script>
+  'use strict';
+
+  const TYPE_COLORS = {
+    'Webinaire':  { bg:'#ede9fe', color:'#7c3aed' },
+    'Coffee Chat':{ bg:'#fef9c3', color:'#854d0e' },
+    'Partage':    { bg:'#dbeafe', color:'#1e40af' },
+    'Workshop':   { bg:'#dcfce7', color:'#166534' },
+    'Networking': { bg:'#fce7f3', color:'#9d174d' },
+    'AMA':        { bg:'#ffedd5', color:'#9a3412' },
+    'Panel':      { bg:'#e0f2fe', color:'#0369a1' },
+    'Autre':      { bg:'#f1f5f9', color:'#475569' }
+  };
+
+  let _activeTopic = 'all';
+  let _allEvents   = [];
+
+  function topicMatch(event, key) {
+    if (key === 'all') return true;
+    const tags = Array.isArray(event.topics) ? event.topics : [];
+    const kl = key.toLowerCase();
+    // Match against stored topics OR title/description (fallback for legacy events without tags)
+    return tags.some(t => t.toLowerCase().includes(kl)) ||
+           (event.title || '').toLowerCase().includes(kl) ||
+           (event.description || '').toLowerCase().includes(kl);
+  }
+
+  function buildEventCard(ev, isPast) {
+    const d     = ev.date ? new Date(ev.date) : null;
+    const day   = d && !isNaN(d) ? d.getDate() : '—';
+    const month = d && !isNaN(d) ? d.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase() : '';
+    const time  = d && !isNaN(d) ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
+    const year  = d && !isNaN(d) ? d.getFullYear() : '';
+    const tc    = TYPE_COLORS[ev.type] || TYPE_COLORS['Autre'];
+
+    const topicTags = Array.isArray(ev.topics) && ev.topics.length
+      ? ev.topics.map(t => `<span class="ev-topic-tag">${escHtmlRead(t)}</span>`).join('')
+      : '';
+
+    const statusBadge = isPast
+      ? `<span class="ev-past-badge">${fmtDateRead(ev.date)}</span>`
+      : `<span class="ev-upcoming-badge"><i class="fas fa-circle" style="font-size:0.4rem;"></i>À venir</span>`;
+
+    const speakerLine = ev.host ? `
+      <div class="ev-speaker">
+        <i class="fas fa-microphone" style="font-size:0.6rem;color:#94a3b8;"></i>
+        <strong>${escHtmlRead(ev.host)}</strong>
+        ${ev.speakerTitle ? `<span class="ev-speaker-title">· ${escHtmlRead(ev.speakerTitle)}</span>` : ''}
+      </div>` : '';
+
+    // Action buttons
+    let actions = '';
+    if (!isPast) {
+      if (ev.link) {
+        actions = `<a class="ev-btn ev-btn-join" href="${escHtmlRead(ev.link)}" target="_blank" rel="noopener">
+                     <i class="fas fa-external-link-alt"></i> Rejoindre · 加入
+                   </a>`;
+      }
+    } else {
+      const replayBtn = ev.replayUrl
+        ? `<a class="ev-btn ev-btn-replay" href="${escHtmlRead(ev.replayUrl)}" target="_blank" rel="noopener">
+             <i class="fas fa-play"></i> Voir l'enregistrement · 觀看錄影
+           </a>` : '';
+      const slidesBtn = ev.slideUrl
+        ? `<a class="ev-btn ev-btn-slides" href="${escHtmlRead(ev.slideUrl)}" target="_blank" rel="noopener">
+             <i class="fas fa-file-powerpoint"></i> Voir les slides · 查看簡報
+           </a>` : '';
+      const noMedia = !ev.replayUrl && !ev.slideUrl
+        ? `<span class="ev-no-media"><i class="fas fa-clock" style="margin-right:0.2rem;"></i>Enregistrement / slides à venir</span>` : '';
+      actions = replayBtn + slidesBtn + noMedia;
+    }
+
+    const hasLongDesc = (ev.description || '').length > 200;
+    const descId = 'desc-' + ev.id;
+
+    return `
+      <div class="ev-card${isPast ? ' ev-card-past' : ''}">
+        <div class="ev-date-col">
+          <div class="ev-date-day">${day}</div>
+          <div class="ev-date-month">${month}</div>
+          ${time ? `<div class="ev-date-time">${time}</div>` : ''}
+          ${isPast && year ? `<div class="ev-date-year">${year}</div>` : ''}
+        </div>
+        <div class="ev-body">
+          <div class="ev-top">
+            <span class="ev-type-badge" style="background:${tc.bg};color:${tc.color};">${escHtmlRead(ev.type || 'Event')}</span>
+            ${topicTags}
+            ${statusBadge}
+          </div>
+          <div class="ev-title">${escHtmlRead(ev.title || '')}</div>
+          ${speakerLine}
+          ${ev.description ? `
+            <div class="ev-desc" id="${descId}">${escHtmlRead(ev.description)}</div>
+            ${hasLongDesc ? `<button class="ev-btn ev-btn-expand" onclick="toggleDesc('${descId}',this)">
+              Read more <i class="fas fa-chevron-down" style="font-size:0.55rem;"></i>
+            </button>` : ''}` : ''}
+          ${actions ? `<div class="ev-actions">${actions}</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function toggleDesc(id, btn) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const expanded = el.classList.toggle('expanded');
+    btn.innerHTML = expanded
+      ? 'Read less <i class="fas fa-chevron-up" style="font-size:0.55rem;"></i>'
+      : 'Read more <i class="fas fa-chevron-down" style="font-size:0.55rem;"></i>';
+  }
+
+  function renderSection(containerEl, countEl, events, isPast) {
+    if (!containerEl) return;
+    const filtered = events.filter(e => topicMatch(e, _activeTopic));
+    if (countEl) countEl.textContent = filtered.length;
+
+    if (filtered.length === 0) {
+      const msg = isPast ? 'Aucun enregistrement pour le moment · 尚無過往錄影' : 'Aucun événement à venir · 目前沒有活動';
+      containerEl.innerHTML = `<div class="ev-empty"><i class="fas fa-calendar-alt"></i>${msg}</div>`;
+      return;
+    }
+    containerEl.innerHTML = filtered.map(e => buildEventCard(e, isPast)).join('');
+  }
+
+  function buildSpeakers(allEvents) {
+    const map = {};
+    for (const e of allEvents) {
+      if (!e.host) continue;
+      const key = e.host.trim();
+      if (!map[key]) map[key] = { name: key, role: '', topics: new Set(), talkCount: 0 };
+      map[key].talkCount++;
+      if (e.speakerTitle) map[key].role = e.speakerTitle;
+      (Array.isArray(e.topics) ? e.topics : []).forEach(t => map[key].topics.add(t));
+    }
+    return Object.values(map).sort((a, b) => b.talkCount - a.talkCount);
+  }
+
+  function renderSpeakers(allEvents) {
+    const grid     = document.getElementById('speakers-grid');
+    const countEl  = document.getElementById('speakers-count');
+    const speakers = buildSpeakers(allEvents);
+    if (countEl) countEl.textContent = speakers.length;
+
+    if (speakers.length === 0) {
+      if (grid) grid.innerHTML = '<div class="ev-empty" style="grid-column:1/-1;"><i class="fas fa-microphone"></i>Aucun intervenant · 尚無講者資料</div>';
+      return;
+    }
+    if (grid) {
+      grid.innerHTML = speakers.map(s => {
+        const initials = s.name.split(' ').map(w => w[0] || '').slice(0, 2).join('').toUpperCase();
+        const topicChips = [...s.topics].slice(0, 4).map(t => `<span class="speaker-topic-tag">${escHtmlRead(t)}</span>`).join('');
+        return `
+          <div class="speaker-card">
+            <div class="speaker-avatar">${initials}</div>
+            <div class="speaker-name">${escHtmlRead(s.name)}</div>
+            ${s.role ? `<div class="speaker-role">${escHtmlRead(s.role)}</div>` : ''}
+            <div class="speaker-count">${s.talkCount} talk${s.talkCount !== 1 ? 's' : ''}</div>
+            ${topicChips ? `<div class="speaker-topics">${topicChips}</div>` : ''}
+          </div>`;
+      }).join('');
+    }
+  }
+
+  function render(data) {
+    const now      = Date.now();
+    const upcoming = data.announcements.filter(e => e.date && new Date(e.date) > now)
+                         .sort((a, b) => new Date(a.date) - new Date(b.date));
+    const past     = data.announcements.filter(e => !e.date || new Date(e.date) <= now)
+                         .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    renderSection(document.getElementById('upcoming-list'), document.getElementById('upcoming-count'), upcoming, false);
+    renderSection(document.getElementById('past-list'),     document.getElementById('past-count'),     past,     true);
+    renderSpeakers(data.announcements);
+  }
+
+  // Topic filter chips
+  document.querySelectorAll('.topic-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.topic-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      _activeTopic = chip.dataset.topic;
+      if (_allEvents.length > 0 || _activeTopic === 'all') render({ announcements: _allEvents });
+    });
+  });
+
+  subscribeFirebaseData(function(data) {
+    _allEvents = data.announcements;
+    render(data);
+  });
+  </script>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-brand">
+        <strong>🇹🇼 Taiwan Tech France</strong>
+        <span>在法臺灣科技社群 · Communauté tech taïwanaise en France</span>
+      </div>
+      <div class="site-footer-copy">
+        &copy; 2026 Taiwan Tech France
+        <em>Association en cours de création · Loi 1901 · Fait avec ❤️ par la communauté · 由社群共同打造</em>
+      </div>
+      <div class="site-footer-links">
+        <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+        <a href="https://github.com/ttf-tech/ttf-tech.github.io" target="_blank" rel="noopener"><i class="fab fa-github"></i> GitHub</a>
+        <a href="association.html"><i class="fas fa-landmark"></i> Association</a>
+        <a href="admin.html"><i class="fas fa-lock"></i> Admin</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

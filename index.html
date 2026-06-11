@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZTM2QR5VPV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag("js", new Date());
+    gtag("config", "G-ZTM2QR5VPV");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taiwan Tech France 🇹🇼🇫🇷</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇹🇼</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="assets/css/stastic_member.css">
+
+  <style>
+    /* ── Sidebar ─────────────────────────────────────────────── */
+    #app-sidebar {
+      position: fixed; top: 0; left: 0; height: 100%; width: 4rem;
+      background: #111827;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 1.25rem 0; z-index: 20;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+    }
+    .sidebar-logo { font-size: 1.6rem; line-height: 1; margin-bottom: 2rem; cursor: default; user-select: none; }
+    .sidebar-nav  { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+    .sidebar-link {
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      color: rgba(255,255,255,0.4); text-decoration: none;
+      transition: color 0.15s; padding: 0.5rem; border-radius: 10px;
+      width: 3rem; justify-content: center; font-size: 1.15rem;
+    }
+    .sidebar-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
+    .sidebar-link.active { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .sidebar-link span   { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75; }
+    .sidebar-link.active span { opacity: 1; }
+    .sidebar-link-admin       { margin-top: auto; }
+    .sidebar-link-admin:hover { color: #fbbf24; }
+
+    /* ── Public sections ─────────────────────────────────────── */
+    .pub-section {
+      max-width: 1280px; margin: 1.5rem auto 0; padding: 0 1.5rem;
+    }
+    .pub-section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 0.85rem;
+    }
+    .pub-section-title {
+      font-size: 1rem; font-weight: 700; color: #0f172a;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .pub-section-viewall {
+      font-size: 0.75rem; font-weight: 600; color: #0a2d42;
+      text-decoration: none; display: flex; align-items: center; gap: 0.3rem;
+      padding: 0.25rem 0.7rem; border-radius: 99px; border: 1px solid #cbd5e1;
+      transition: background 0.12s;
+    }
+    .pub-section-viewall:hover { background: #f1f5f9; }
+
+    /* Event preview cards */
+    .pub-event-list  { display: flex; flex-direction: column; gap: 0.6rem; }
+    .pub-event-card  {
+      display: flex; gap: 1rem; align-items: flex-start;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 0.9rem 1.1rem; transition: box-shadow 0.15s;
+    }
+    .pub-event-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+    .pub-event-date {
+      background: #0a2d42; color: #fff; border-radius: 8px;
+      min-width: 42px; text-align: center; padding: 0.35rem 0.5rem; flex-shrink: 0;
+    }
+    .pub-event-date-day   { font-size: 1.1rem; font-weight: 800; line-height: 1; }
+    .pub-event-date-month { font-size: 0.55rem; font-weight: 700; text-transform: uppercase; opacity: 0.7; margin-top: 0.1rem; }
+    .pub-event-date-time  { font-size: 0.55rem; opacity: 0.6; margin-top: 0.15rem; }
+    .pub-event-body   { flex: 1; min-width: 0; }
+    .pub-event-type   { font-size: 0.62rem; font-weight: 700; color: #7c3aed; background: #ede9fe; padding: 0.1rem 0.45rem; border-radius: 99px; display: inline-block; margin-bottom: 0.2rem; }
+    .pub-event-title  { font-size: 0.88rem; font-weight: 700; color: #0f172a; }
+    .pub-event-host   { font-size: 0.72rem; color: #64748b; margin-top: 0.15rem; }
+    .pub-event-desc   { font-size: 0.75rem; color: #475569; margin-top: 0.25rem; line-height: 1.45; white-space: pre-line; word-break: break-word; }
+
+    /* Job preview cards */
+    .pub-job-list { background: #f1f5f9; border-radius: 10px; display: flex; flex-direction: column; gap: 0.6rem; padding: 0.6rem; }
+    .pub-job-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+      padding: 0.85rem 1rem; transition: box-shadow 0.15s;
+    }
+    .pub-job-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+    .pub-job-meta   { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; margin-bottom: 0.25rem; }
+    .pub-job-badge  { font-size: 0.6rem; font-weight: 700; padding: 0.15rem 0.5rem; border-radius: 99px; }
+    .pub-job-loc    { font-size: 0.68rem; color: #64748b; }
+    .pub-job-title  { font-size: 0.88rem; font-weight: 700; color: #0f172a; }
+    .pub-job-salary { font-size: 0.7rem; color: #059669; font-weight: 600; margin-top: 0.15rem; }
+    .pub-job-desc   { font-size: 0.75rem; color: #475569; margin-top: 0.25rem; line-height: 1.45;
+                      white-space: pre-line; word-break: break-word;
+                      display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* Empty state */
+    .pub-empty { text-align: center; padding: 1.5rem; color: #94a3b8; font-size: 0.8rem;
+                 background: #fff; border: 1px dashed #e2e8f0; border-radius: 10px; }
+
+    /* Social proof / activity strip */
+    .activity-strip {
+      max-width: 1280px; margin: 1.5rem auto 0; padding: 0 1.5rem;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.65rem;
+    }
+    .activity-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 0.85rem 1rem; display: flex; align-items: flex-start; gap: 0.75rem;
+    }
+    .activity-icon {
+      width: 34px; height: 34px; border-radius: 8px; display: flex;
+      align-items: center; justify-content: center; font-size: 0.9rem; flex-shrink: 0;
+    }
+    .activity-label { font-size: 0.62rem; font-weight: 700; color: #94a3b8;
+                      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+    .activity-value { font-size: 0.82rem; font-weight: 600; color: #0f172a; line-height: 1.35; }
+    .activity-sub   { font-size: 0.7rem; color: #64748b; margin-top: 0.1rem; }
+    .city-pills { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; }
+    .city-pill  {
+      font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.5rem;
+      border-radius: 99px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
+    }
+
+    /* Community stats */
+    .pub-stats-wrap { max-width: 1280px; margin: 1.75rem auto 0; padding: 0 1.5rem; }
+    .pub-stats-head {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.85rem;
+    }
+    .pub-stats-title {
+      font-size: 1rem; font-weight: 700; color: #0f172a;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .pub-stats-note { font-size: 0.68rem; color: #94a3b8; }
+    .pub-stats-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 0.75rem;
+    }
+    .pub-stat-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;
+    }
+    .pub-stat-card-head {
+      background: #0a2d42; color: #fff;
+      padding: 0.65rem 1rem; font-size: 0.72rem; font-weight: 700;
+      display: flex; align-items: center; gap: 0.4rem; justify-content: space-between;
+    }
+    .pub-stat-card-count {
+      font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.55);
+      white-space: nowrap; margin-left: 0.5rem; flex-shrink: 0;
+    }
+    .pub-stat-card-body { padding: 0.75rem 1rem 1rem; }
+
+    /* À propos section */
+    .about-section { max-width: 1280px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .about-section-title {
+      font-size: 1rem; font-weight: 800; color: #0f172a;
+      display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;
+    }
+    .about-section-title i { color: #fbbf24; }
+    .about-section-sub  { font-size: 0.78rem; color: #64748b; margin-bottom: 1.25rem; }
+    .about-cards-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 0.85rem;
+      margin-bottom: 2rem;
+    }
+    .about-card {
+      background: #fff; border-radius: 12px; border: 1px solid #e2e8f0;
+      padding: 1.25rem; display: flex; flex-direction: column; gap: 0.6rem;
+      transition: box-shadow 0.15s;
+    }
+    .about-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.07); }
+    .about-card-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, #0a2d42, #1a5f7a);
+      display: flex; align-items: center; justify-content: center;
+      color: #fbbf24; font-size: 1rem; flex-shrink: 0;
+    }
+    .about-card-title { font-size: 0.88rem; font-weight: 700; color: #1e293b; }
+    .about-card-desc  { font-size: 0.75rem; color: #64748b; line-height: 1.6; }
+    .join-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .join-item {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 0.85rem 1.1rem; display: flex; align-items: flex-start; gap: 0.7rem;
+      font-size: 0.83rem; color: #1e293b;
+    }
+    .join-item i { color: #059669; font-size: 0.95rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .about-welcome {
+      margin-top: 1rem; padding: 0.9rem 1.1rem;
+      background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px;
+      font-size: 0.83rem; color: #065f46; font-weight: 600;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .about-spirit {
+      margin-top: 0.85rem; padding: 1.1rem 1.3rem;
+      background: linear-gradient(135deg,#0a2d42 0%,#0f3d5c 100%);
+      border-radius: 12px; color: #fff; line-height: 1.85; font-size: 0.85rem;
+    }
+
+    /* Coffee Chat action strip */
+    .about-coffee-strip {
+      margin-top: 1.25rem; border-radius: 14px; overflow: hidden;
+      background: linear-gradient(135deg,#78350f 0%,#92400e 100%);
+      display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem;
+      padding: 1.4rem 1.75rem; position: relative;
+    }
+    .about-coffee-strip::before {
+      content: '☕'; position: absolute; right: 1.5rem; top: 50%;
+      transform: translateY(-50%); font-size: 5rem; opacity: 0.1; line-height: 1;
+      pointer-events: none;
+    }
+    .about-coffee-strip-left { flex: 1; min-width: 240px; position: relative; z-index: 1; }
+    .about-coffee-strip-eyebrow {
+      font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+      color: #fcd34d; margin-bottom: 0.4rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .about-coffee-strip-title {
+      font-size: 1rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem; line-height: 1.25;
+    }
+    .about-coffee-strip-desc {
+      font-size: 0.75rem; color: rgba(255,255,255,0.65); line-height: 1.5; margin-bottom: 0.75rem;
+    }
+    .about-coffee-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .about-coffee-chip  {
+      font-size: 0.65rem; font-weight: 600; padding: 0.18rem 0.55rem; border-radius: 99px;
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.85);
+    }
+    .about-coffee-strip-cta {
+      display: inline-flex; align-items: center; gap: 0.5rem; position: relative; z-index: 1;
+      padding: 0.7rem 1.4rem; border-radius: 99px;
+      background: #fef3c7; color: #78350f;
+      font-size: 0.85rem; font-weight: 800; text-decoration: none;
+      transition: background 0.15s, transform 0.1s; white-space: nowrap;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .about-coffee-strip-cta:hover { background: #fde68a; transform: translateY(-1px); }
+
+    /* Join section */
+    .pub-join {
+      max-width: 1280px; margin: 2rem auto 2.5rem; padding: 0 1.5rem;
+    }
+    .pub-join-card {
+      background: linear-gradient(135deg,#0a2d42 0%,#1a4a6e 100%);
+      border-radius: 16px; padding: 2rem 2.5rem;
+      display: flex; flex-wrap: wrap; align-items: center; gap: 2rem;
+    }
+    .pub-join-text { flex: 1; min-width: 220px; color: #fff; }
+    .pub-join-text h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 0.35rem; }
+    .pub-join-text p  { font-size: 0.8rem; color: rgba(255,255,255,0.6); line-height: 1.5; }
+    .pub-join-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+    /* Section separators */
+    .form-sep {
+      max-width: 1280px; margin: 2rem auto 0; padding: 0 1.5rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .form-sep-line { flex: 1; height: 1px; background: #cbd5e1; }
+    .form-sep-pill {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      background: #fff; border: 1px solid #cbd5e1; border-radius: 99px;
+      padding: 0.3rem 0.9rem; white-space: nowrap;
+      font-size: 0.68rem; font-weight: 700; color: #475569;
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .form-sep-pill i { font-size: 0.7rem; }
+    /* Audience tag on card */
+    .card-audience {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; padding: 0.2rem 0.6rem; border-radius: 99px;
+      margin-bottom: 0.6rem;
+    }
+    .card-audience.orgs  { background: rgba(74,222,128,0.15); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
+    .card-audience.membres { background: rgba(167,139,250,0.15); color: #a78bfa; border: 1px solid rgba(167,139,250,0.3); }
+
+    /* Partner form block (index) */
+    .index-partner-wrap {
+      max-width: 1280px; margin: 1.5rem auto 0; padding: 0 1.5rem;
+    }
+    .index-partner-card {
+      background: linear-gradient(135deg,#0f2d1a 0%,#1a4a2e 100%);
+      border-radius: 16px; padding: 2rem 2.5rem;
+    }
+    .index-partner-card h2 { font-size: 1.1rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem; }
+    .index-partner-card > p { font-size: 0.78rem; color: rgba(255,255,255,0.6); line-height: 1.5; margin-bottom: 1.4rem; }
+    .idx-partner-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .idx-partner-form .form-full { grid-column: 1 / -1; }
+    .form-label {
+      display: block; font-size: 0.65rem; font-weight: 700;
+      color: rgba(255,255,255,0.55); text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 0.3rem;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 0.6rem 0.85rem; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08); color: #fff;
+      font-size: 0.82rem; outline: none; transition: border-color 0.15s, background 0.15s;
+      font-family: inherit;
+    }
+    .form-input::placeholder, .form-textarea::placeholder { color: rgba(255,255,255,0.3); }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.12);
+    }
+    .form-select option { background: #1a3a28; color: #fff; }
+    .form-textarea { resize: vertical; min-height: 72px; }
+    .form-submit {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.7rem 1.6rem; border-radius: 99px;
+      background: #16a34a; color: #fff; font-size: 0.85rem; font-weight: 700;
+      border: none; cursor: pointer; transition: background 0.15s, transform 0.1s;
+      margin-top: 0.25rem;
+    }
+    .form-submit:hover { background: #15803d; transform: translateY(-1px); }
+    .form-success-msg {
+      display: none; align-items: center; gap: 0.6rem;
+      background: rgba(22,163,74,0.2); border: 1px solid rgba(22,163,74,0.4);
+      border-radius: 10px; padding: 0.85rem 1rem; margin-top: 1rem;
+      color: #86efac; font-size: 0.82rem; font-weight: 600;
+    }
+    @media (max-width: 540px) {
+      .idx-partner-form { grid-template-columns: 1fr; }
+      .idx-partner-form .form-full { grid-column: 1; }
+      .index-partner-card { padding: 1.5rem 1.25rem; }
+    }
+
+    /* Content proposal form block (index) */
+    .index-content-wrap {
+      max-width: 1280px; margin: 1.25rem auto 0; padding: 0 1.5rem;
+    }
+    .index-content-card {
+      background: linear-gradient(135deg,#1e1b4b 0%,#312e81 100%);
+      border-radius: 16px; padding: 2rem 2.5rem;
+    }
+    .index-content-card h2 { font-size: 1.1rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem; }
+    .index-content-card > p { font-size: 0.78rem; color: rgba(255,255,255,0.6); line-height: 1.5; margin-bottom: 1.4rem; }
+    .idx-content-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .idx-content-form .form-full { grid-column: 1 / -1; }
+    .idx-content-form .form-input,
+    .idx-content-form .form-select,
+    .idx-content-form .form-textarea { background: rgba(255,255,255,0.07); }
+    .idx-content-form .form-input:focus,
+    .idx-content-form .form-select:focus,
+    .idx-content-form .form-textarea:focus { background: rgba(255,255,255,0.12); }
+    .idx-content-form .form-select option { background: #1e1b4b; }
+    .content-submit-idx {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.7rem 1.6rem; border-radius: 99px;
+      background: #7c3aed; color: #fff; font-size: 0.85rem; font-weight: 700;
+      border: none; cursor: pointer; transition: background 0.15s, transform 0.1s;
+      margin-top: 0.25rem;
+    }
+    .content-submit-idx:hover { background: #6d28d9; transform: translateY(-1px); }
+    .content-success-idx {
+      display: none; align-items: center; gap: 0.6rem;
+      background: rgba(124,58,237,0.2); border: 1px solid rgba(124,58,237,0.4);
+      border-radius: 10px; padding: 0.85rem 1rem; margin-top: 1rem;
+      color: #c4b5fd; font-size: 0.82rem; font-weight: 600;
+    }
+    @media (max-width: 540px) {
+      .idx-content-form { grid-template-columns: 1fr; }
+      .idx-content-form .form-full { grid-column: 1; }
+      .index-content-card { padding: 1.5rem 1.25rem; }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900 flex flex-col min-h-screen">
+
+  <!-- ── SIDEBAR ──────────────────────────────────────────────── -->
+  <aside id="app-sidebar">
+    <div class="sidebar-logo">🇹🇼</div>
+    <nav class="sidebar-nav">
+      <a href="index.html"        class="sidebar-link active" title="Home · 首頁"><i class="fas fa-home"></i><span>Accueil</span></a>
+      <a href="events.html"       class="sidebar-link"        title="Events · 活動"><i class="fas fa-calendar-alt"></i><span>Agenda</span></a>
+      <a href="jobs.html"         class="sidebar-link"        title="Jobs · 職缺"><i class="fas fa-briefcase"></i><span>Offres</span></a>
+      <a href="resources.html"    class="sidebar-link"        title="Resources · 資源"><i class="fas fa-book-open"></i><span>Docs</span></a>
+      <a href="vote.html"         class="sidebar-link"        title="Sondages · 投票"><i class="fas fa-poll"></i><span>Vote</span></a>
+      <a href="association.html"  class="sidebar-link"        title="Association · 協會"><i class="fas fa-landmark"></i><span>Assoc</span></a>
+      <a href="admin.html"        class="sidebar-link sidebar-link-admin" title="Admin"><i class="fas fa-lock"></i><span>Admin</span></a>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN ────────────────────────────────────────────────── -->
+  <main class="flex-1 ml-16">
+
+    <!-- ── HERO ────────────────────────────────────────────────── -->
+    <div class="text-white" style="background: linear-gradient(160deg,#0a2d42 0%,#0f4060 100%);">
+      <div class="max-w-screen-xl mx-auto px-5 pt-8 pb-6">
+
+        <div class="text-center" style="margin-bottom:1.5rem;">
+          <div style="font-size:2rem;font-weight:900;letter-spacing:-0.02em;line-height:1.1;">
+            Taiwan Tech France 🇹🇼🇫🇷
+          </div>
+          <div style="font-size:0.95rem;color:rgba(255,255,255,0.55);margin-top:0.35rem;">
+            在法臺灣科技社群 · Communauté tech taïwanaise en France
+          </div>
+          <div style="font-size:0.78rem;color:rgba(255,255,255,0.4);max-width:440px;margin:0.5rem auto 0;line-height:1.5;">
+            Pour les ingénieurs et professionnels tech taïwanais en France —
+            partager des opportunités, rencontrer des pairs, évoluer ensemble.
+          </div>
+        </div>
+
+        <div class="sm-kpi-grid" style="margin-bottom:1.4rem;">
+          <div class="sm-kpi-tile">
+            <span class="sm-kpi-value accent" id="kpi-members">68</span>
+            <span class="sm-kpi-label">Membres · 成員</span>
+          </div>
+          <div class="sm-kpi-tile">
+            <span class="sm-kpi-value green" id="kpi-jobs">—</span>
+            <span class="sm-kpi-label">Offres · 職缺</span>
+          </div>
+          <div class="sm-kpi-tile">
+            <span class="sm-kpi-value blue" id="kpi-events">—</span>
+            <span class="sm-kpi-label">Événements · 活動</span>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 justify-center">
+          <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener"
+             class="sm-hero-cta-primary">
+            <i class="fab fa-whatsapp"></i> Join WhatsApp · 加入群組
+          </a>
+          <a href="jobs.html" class="sm-hero-cta-secondary">
+            <i class="fas fa-briefcase"></i> Voir les offres · 職缺
+          </a>
+          <a href="events.html" class="sm-hero-cta-secondary">
+            <i class="fas fa-calendar-alt"></i> Voir les activités · 活動
+          </a>
+        </div>
+
+      </div>
+    </div>
+    <!-- /HERO -->
+
+    <!-- ── EVENTS PREVIEW ──────────────────────────────────────── -->
+    <section class="pub-section">
+      <div class="pub-section-head">
+        <div class="pub-section-title">
+          <i class="fas fa-calendar-alt" style="color:#7c3aed;"></i>
+          Événements à venir · 即將到來的活動
+        </div>
+        <a href="events.html" class="pub-section-viewall">Voir tout <i class="fas fa-arrow-right" style="font-size:0.6rem;"></i></a>
+      </div>
+      <div class="pub-event-list" id="home-events"></div>
+    </section>
+
+    <!-- ── RECENT ACTIVITY (social proof) ────────────────────── -->
+    <div class="activity-strip">
+
+      <div class="activity-card">
+        <div class="activity-icon" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-briefcase"></i></div>
+        <div>
+          <div class="activity-label">Latest job shared · 最新職缺</div>
+          <div class="activity-value" id="act-job-title">—</div>
+          <div class="activity-sub"  id="act-job-meta"></div>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <div class="activity-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fas fa-calendar-alt"></i></div>
+        <div>
+          <div class="activity-label">Next event · 下個活動</div>
+          <div class="activity-value" id="act-event-title">—</div>
+          <div class="activity-sub"  id="act-event-date"></div>
+        </div>
+      </div>
+
+      <div class="activity-card">
+        <div class="activity-icon" style="background:#dbeafe;color:#1d4ed8;"><i class="fas fa-map-marker-alt"></i></div>
+        <div style="flex:1;min-width:0;">
+          <div class="activity-label">Members across France · 全法成員分佈</div>
+          <div class="city-pills">
+            <span class="city-pill">🏙️ Paris 38</span>
+            <span class="city-pill">Lyon 5</span>
+            <span class="city-pill">Nice 2</span>
+            <span class="city-pill">Bordeaux 2</span>
+            <span class="city-pill">🇹🇼 Taiwan 8</span>
+            <span class="city-pill">Others 8</span>
+          </div>
+        </div>
+      </div>
+
+      <a class="activity-card" href="https://calendly.com/tess-hsu/parlon-ton-project-cyber"
+         target="_blank" rel="noopener"
+         style="text-decoration:none;border-color:#fde68a;background:linear-gradient(135deg,#fffbeb,#fef9c3);cursor:pointer;transition:box-shadow 0.15s;">
+        <div class="activity-icon" style="background:#fef3c7;color:#92400e;font-size:1.1rem;">☕</div>
+        <div>
+          <div class="activity-label" style="color:#92400e;">Coffee Chat · 咖啡聊聊</div>
+          <div class="activity-value" style="font-size:0.78rem;color:#78350f;">En tête-à-tête avec la communauté</div>
+          <div class="activity-sub" style="color:#a16207;margin-top:0.3rem;font-size:0.68rem;font-weight:600;">
+            Réserver un créneau →
+          </div>
+        </div>
+      </a>
+
+    </div>
+    <!-- /RECENT ACTIVITY -->
+
+    <!-- ── JOBS PREVIEW ────────────────────────────────────────── -->
+    <section class="pub-section" style="margin-bottom:0;">
+      <div class="pub-section-head">
+        <div class="pub-section-title">
+          <i class="fas fa-briefcase" style="color:#059669;"></i>
+          Dernières offres & Missions · 最新職缺
+        </div>
+        <a href="jobs.html" class="pub-section-viewall">Voir tout <i class="fas fa-arrow-right" style="font-size:0.6rem;"></i></a>
+      </div>
+      <div class="pub-job-list" id="home-jobs"></div>
+    </section>
+
+    <!-- ── USER SURVEYS (dynamic, from admin) ───────────────────── -->
+    <div id="user-surveys-wrap" class="pub-stats-wrap" style="display:none;">
+      <div class="pub-stats-head">
+        <div>
+          <div class="pub-stats-title">
+            <i class="fas fa-poll" style="color:#6366f1;"></i>
+            Nouvelles questions · 最新問卷
+          </div>
+          <div id="user-surveys-threshold" style="font-size:0.65rem;color:#94a3b8;margin-top:0.2rem;"></div>
+        </div>
+        <a href="vote.html" class="pub-section-viewall">
+          Voter · 前往投票 <i class="fas fa-arrow-right" style="font-size:0.6rem;"></i>
+        </a>
+      </div>
+      <div class="pub-stats-grid" id="user-surveys-list"></div>
+    </div>
+    <!-- /USER SURVEYS -->
+
+    <!-- ── COMMUNITY STATS ───────────────────────────────────────── -->
+    <div class="pub-stats-wrap">
+      <div class="pub-stats-head">
+        <div class="pub-stats-title">
+          <i class="fas fa-chart-bar" style="color:#0a2d42;"></i>
+          Statistiques communauté · 社群統計
+        </div>
+        <span class="pub-stats-note"><i class="fab fa-whatsapp" style="margin-right:0.25rem;"></i>Données WhatsApp · 來自 WhatsApp 問卷</span>
+      </div>
+      <div class="pub-stats-grid">
+
+        <div class="pub-stat-card">
+          <div class="pub-stat-card-head">
+            <span><i class="fas fa-code"></i> 你的主要技術領域是？ — Domaines techniques</span>
+            <span class="pub-stat-card-count" id="stat-count-tech">54</span>
+          </div>
+          <div class="pub-stat-card-body">
+            <canvas id="pub-chart-tech" height="260"></canvas>
+          </div>
+        </div>
+
+        <div class="pub-stat-card">
+          <div class="pub-stat-card-head">
+            <span><i class="fas fa-chart-pie"></i> 是否有興趣交流投資？ — Intérêt investissement</span>
+            <span class="pub-stat-card-count" id="stat-count-invest">20</span>
+          </div>
+          <div class="pub-stat-card-body">
+            <canvas id="pub-chart-invest" height="260"></canvas>
+          </div>
+        </div>
+
+        <div class="pub-stat-card">
+          <div class="pub-stat-card-head">
+            <span><i class="fas fa-map-marker-alt"></i> 你目前主要所在城市是？ — Localisation</span>
+            <span class="pub-stat-card-count" id="stat-count-city">63</span>
+          </div>
+          <div class="pub-stat-card-body">
+            <canvas id="pub-chart-city" height="240"></canvas>
+          </div>
+        </div>
+
+        <div class="pub-stat-card">
+          <div class="pub-stat-card-head">
+            <span><i class="fas fa-briefcase"></i> 你目前的狀態是？ — Statut professionnel</span>
+            <span class="pub-stat-card-count" id="stat-count-status">77</span>
+          </div>
+          <div class="pub-stat-card-body">
+            <canvas id="pub-chart-status" height="240"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- /COMMUNITY STATS -->
+
+    <!-- ── JOIN SECTION ─────────────────────────────────────────── -->
+    <div class="pub-join">
+      <div class="pub-join-card">
+        <div class="pub-join-text">
+          <h2>加入我們 · Rejoignez la communauté</h2>
+          <p>
+            專為「在法國或法商工作的臺灣工程師」建立的交流社群。<br>
+            Communauté de professionnels tech taïwanais en France pour se retrouver, partager et s'entraider.
+          </p>
+          <div style="margin-top:0.75rem;font-size:0.75rem;color:rgba(255,255,255,0.45);">
+            <i class="fas fa-check-circle" style="color:#6ee7b7;margin-right:0.3rem;"></i>認識法國各城市的臺灣工程師 &nbsp;
+            <i class="fas fa-check-circle" style="color:#6ee7b7;margin-right:0.3rem;"></i>分享工作機會與 mission 資訊 &nbsp;
+            <i class="fas fa-check-circle" style="color:#6ee7b7;margin-right:0.3rem;"></i>交流技術與法國職場經驗
+          </div>
+        </div>
+        <div class="pub-join-actions">
+          <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener"
+             class="sm-hero-cta-primary" style="font-size:0.95rem;padding:0.75rem 1.75rem;">
+            <i class="fab fa-whatsapp"></i> Join WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── À PROPOS ──────────────────────────────────────────────── -->
+    <section class="about-section" id="a-propos" style="border-top:1px solid #f1f5f9;">
+
+      <div class="about-section-title">
+        <i class="fas fa-bullseye"></i> 群組目標 · Nos Objectifs
+      </div>
+      <div class="about-section-sub">Ce que nous faisons ensemble · 我們一起做的事</div>
+
+      <div class="about-cards-grid">
+
+        <div class="about-card" style="border-top:3px solid #0a2d42;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+            <div class="about-card-icon" style="background:linear-gradient(135deg,#0a2d42,#1a4a6e);"><i class="fas fa-handshake"></i></div>
+            <span style="font-size:0.6rem;font-weight:900;color:#0a2d42;background:#dbeafe;padding:0.15rem 0.5rem;border-radius:99px;letter-spacing:0.06em;">01</span>
+          </div>
+          <div class="about-card-title">Networking &amp; Communauté · 人脈與社群建立</div>
+          <div class="about-card-desc">認識在法國各城市的臺灣工程師，建立長期互相支持的 network，不論你在哪個城市。<br>Connectez-vous avec des ingénieurs taïwanais à travers la France — construisons une communauté solidaire et durable.</div>
+        </div>
+
+        <div class="about-card" style="border-top:3px solid #059669;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+            <div class="about-card-icon" style="background:linear-gradient(135deg,#059669,#047857);"><i class="fas fa-briefcase"></i></div>
+            <span style="font-size:0.6rem;font-weight:900;color:#065f46;background:#dcfce7;padding:0.15rem 0.5rem;border-radius:99px;letter-spacing:0.06em;">02</span>
+          </div>
+          <div class="about-card-title">Opportunités d'emploi · 職缺分享</div>
+          <div class="about-card-desc">分享工作機會與 mission 資訊（CDI / Freelance / ESN），互相推薦與引薦。<br>Partagez et découvrez des offres d'emploi et missions dans la tech.</div>
+        </div>
+
+        <div class="about-card" style="border-top:3px solid #7c3aed;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+            <div class="about-card-icon" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);"><i class="fas fa-lightbulb"></i></div>
+            <span style="font-size:0.6rem;font-weight:900;color:#5b21b6;background:#ede9fe;padding:0.15rem 0.5rem;border-radius:99px;letter-spacing:0.06em;">03</span>
+          </div>
+          <div class="about-card-title">Partage de connaissances · 知識分享</div>
+          <div class="about-card-desc">交流技術、職涯與法國職場經驗，組織 webinaires 和 coffee chats。<br>Échangez sur la tech, la carrière et la vie professionnelle en France.</div>
+        </div>
+
+        <div class="about-card" style="border-top:3px solid #0e7490;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+            <div class="about-card-icon" style="background:linear-gradient(135deg,#0e7490,#0369a1);"><i class="fas fa-home"></i></div>
+            <span style="font-size:0.6rem;font-weight:900;color:#155e75;background:#e0f2fe;padding:0.15rem 0.5rem;border-radius:99px;letter-spacing:0.06em;">04</span>
+          </div>
+          <div class="about-card-title">Long-term Life in France · 在法長期發展</div>
+          <div class="about-card-desc">Fiscalité, investissement, retraite, logement, patrimoine — les sujets pour construire une vie durable en France.<br>稅務、投資、退休、買房、資產規劃：一起討論在法國長期生活與發展。</div>
+        </div>
+
+        <div class="about-card" style="border-top:3px solid #be123c;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+            <div class="about-card-icon" style="background:linear-gradient(135deg,#be123c,#9f1239);"><i class="fas fa-map-marker-alt"></i></div>
+            <span style="font-size:0.6rem;font-weight:900;color:#9f1239;background:#fce7f3;padding:0.15rem 0.5rem;border-radius:99px;letter-spacing:0.06em;">05</span>
+          </div>
+          <div class="about-card-title">Local Chapters · 城市小聚</div>
+          <div class="about-card-desc">Encourager les rencontres locales à Paris, Lyon, Toulouse, Nice/Sophia-Antipolis et autres villes.<br>推動不同城市的在地交流與小型聚會。</div>
+        </div>
+
+        <div class="about-card" style="border-top:3px solid #475569;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+            <div class="about-card-icon" style="background:linear-gradient(135deg,#475569,#334155);"><i class="fas fa-info-circle"></i></div>
+            <span style="font-size:0.6rem;font-weight:900;color:#334155;background:#f1f5f9;padding:0.15rem 0.5rem;border-radius:99px;letter-spacing:0.06em;">06</span>
+          </div>
+          <div class="about-card-title">Ressources pratiques · 實用資訊</div>
+          <div class="about-card-desc">分享關於法國生活、行政、簽證等實用資訊，降低在法生活的門檻。<br>Infos pratiques sur la vie en France : administratif, visa, logement, etc.</div>
+        </div>
+
+        <div class="about-card" style="border-top:3px solid #1d4ed8;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+            <div class="about-card-icon" style="background:linear-gradient(135deg,#1d4ed8,#1e40af);"><i class="fas fa-landmark"></i></div>
+            <span style="font-size:0.6rem;font-weight:900;color:#1e40af;background:#dbeafe;padding:0.15rem 0.5rem;border-radius:99px;letter-spacing:0.06em;">07</span>
+          </div>
+          <div class="about-card-title">Association &amp; Partenariats · 協會合作</div>
+          <div class="about-card-desc">Développer des partenariats avec écoles, entreprises, ESN, startups et organisations franco-taïwanaises.<br>未來以協會形式建立與學校、企業、ESN、新創、台法組織的合作。</div>
+        </div>
+
+        <div class="about-card" style="border-top:3px solid #b45309;border-color:#fde68a;background:linear-gradient(135deg,#fffbeb 0%,#fff 100%);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+            <div class="about-card-icon" style="background:linear-gradient(135deg,#92400e,#b45309);"><i class="fas fa-file-invoice-dollar"></i></div>
+            <span style="font-size:0.6rem;font-weight:900;color:#78350f;background:#fef3c7;padding:0.15rem 0.5rem;border-radius:99px;letter-spacing:0.06em;">08</span>
+          </div>
+          <div class="about-card-title" style="color:#78350f;">Fiscalité française · 法國稅務</div>
+          <div class="about-card-desc">Tu travailles dur en France, mais sais-tu vraiment ce que tu gardes ? Impôt sur le revenu, CSG, investissement à l'étranger, optimisation patrimoniale — on en parle sans tabou.<br>
+            <span style="color:#92400e;font-weight:600;">在法國打拼多年，繳給國稅局的可能比留下的還多？impôt 怎麼算、如何規劃海外投資——這些話題，我們都在聊。</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Coffee Chat action strip -->
+      <div class="about-coffee-strip">
+        <div class="about-coffee-strip-left">
+          <div class="about-coffee-strip-eyebrow">
+            <i class="fas fa-coffee"></i> Par où commencer ? · 從哪裡開始？
+          </div>
+          <div class="about-coffee-strip-title">
+            Réservez un Coffee Chat · 預約一杯咖啡聊聊 ☕
+          </div>
+          <div class="about-coffee-strip-desc">
+            Pour chacun des objectifs ci-dessus — networking, emploi, fiscalité, visa, CV — une conversation de 30 min avec un membre de la communauté peut tout changer.
+            Gratuit, informel, en français ou en mandarin.<br>
+            <span style="color:rgba(255,255,255,0.5);">以上每個目標，都可以透過一次 30 分鐘的 Coffee Chat 開始。免費、輕鬆、中文或法語皆可。</span>
+          </div>
+          <div class="about-coffee-chips">
+            <span class="about-coffee-chip">🔍 Job search</span>
+            <span class="about-coffee-chip">📄 CV & Interview</span>
+            <span class="about-coffee-chip">🏢 ESN / CDI</span>
+            <span class="about-coffee-chip">🛂 Visa & Titre de séjour</span>
+            <span class="about-coffee-chip">💰 Salary & Négociation</span>
+            <span class="about-coffee-chip">🚀 Startup / Founder</span>
+            <span class="about-coffee-chip">🏠 Long-term life in France</span>
+          </div>
+        </div>
+        <a href="https://calendly.com/tess-hsu/parlon-ton-project-cyber"
+           target="_blank" rel="noopener" class="about-coffee-strip-cta">
+          <i class="fas fa-calendar-check"></i> Réserver · 預約
+        </a>
+      </div>
+      <!-- /Coffee Chat strip -->
+
+      <!-- Separator: community → orgs -->
+      <div class="form-sep">
+        <div class="form-sep-line"></div>
+        <div class="form-sep-pill"><i class="fas fa-building"></i> Vous représentez une organisation ? · 代表機構？</div>
+        <div class="form-sep-line"></div>
+      </div>
+
+      <!-- Partner form -->
+      <div class="index-partner-wrap">
+        <div class="index-partner-card">
+          <div class="card-audience orgs"><i class="fas fa-building"></i> Pour les organisations · 給合作機構</div>
+          <h2><i class="fas fa-handshake" style="margin-right:0.5rem;color:#4ade80;"></i>Devenir partenaire · 成為合作夥伴</h2>
+          <p>
+            Votre organisation souhaite s'associer à Taiwan Tech France ? Que vous soyez une institution, une entreprise, une association ou une université, dites-nous comment vous souhaitez collaborer.
+            <span style="color:rgba(255,255,255,0.35);display:block;margin-top:0.25rem;font-size:0.72rem;">
+              歡迎各機構、企業、協會或大學與我們合作，請填寫以下表單。
+            </span>
+          </p>
+
+          <form id="idx-partner-form" action="https://formspree.io/f/xnjybgda" method="POST" class="idx-partner-form">
+            <div>
+              <label class="form-label" for="idx_org_name">Nom de l'organisation · 組織名稱 *</label>
+              <input class="form-input" id="idx_org_name" name="org_name" type="text" placeholder="ex : ATNCA, Capgemini, Université Nice…" required>
+            </div>
+
+            <div>
+              <label class="form-label" for="idx_contact_name">Nom du contact · 聯絡人 *</label>
+              <input class="form-input" id="idx_contact_name" name="contact_name" type="text" placeholder="Prénom Nom" required>
+            </div>
+
+            <div>
+              <label class="form-label" for="idx_email">Email · 電子郵件 *</label>
+              <input class="form-input" id="idx_email" name="email" type="email" placeholder="contact@organisation.fr" required>
+            </div>
+
+            <div>
+              <label class="form-label" for="idx_partner_type">Type de partenariat proposé · 合作類型 *</label>
+              <select class="form-select" id="idx_partner_type" name="partner_type" required>
+                <option value="" disabled selected>Choisir un type…</option>
+                <option value="bureau_taiwan">🇹🇼 Bureau de représentation de Taïwan</option>
+                <option value="association_tw">🤝 Association taïwanaise (France / Europe)</option>
+                <option value="universite">🎓 Université / Grande École</option>
+                <option value="entreprise_tech">🏢 Entreprise tech / ESN / Startup</option>
+                <option value="ville_metropole">🏛️ Ville / Métropole / Institution publique</option>
+                <option value="media_presse">📰 Média / Presse</option>
+                <option value="autre">💬 Autre</option>
+              </select>
+            </div>
+
+            <div class="form-full">
+              <label class="form-label" for="idx_message">Message · 訊息 <span style="font-weight:400;opacity:0.6;">(facultatif)</span></label>
+              <textarea class="form-textarea" id="idx_message" name="message" placeholder="Décrivez brièvement votre proposition ou ce que vous souhaitez explorer ensemble…"></textarea>
+            </div>
+
+            <input type="text" name="_gotcha" style="display:none;">
+            <input type="hidden" name="_subject" value="Nouveau partenariat potentiel — Taiwan Tech France">
+            <input type="hidden" name="_cc" value="wallace.lin@midascaretech.com">
+
+            <div class="form-full" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+              <button type="submit" class="form-submit">
+                <i class="fas fa-paper-plane"></i> Envoyer · 送出
+              </button>
+              <span style="font-size:0.68rem;color:rgba(255,255,255,0.35);">
+                Nous vous répondrons dans les 7 jours · 我們將在7天內回覆您
+              </span>
+            </div>
+          </form>
+
+          <div class="form-success-msg" id="idx-form-success">
+            <i class="fas fa-check-circle" style="font-size:1.1rem;flex-shrink:0;"></i>
+            <span>Message envoyé — merci ! Nous reviendrons vers vous très bientôt. · 訊息已送出，謝謝！我們會盡快與您聯繫。</span>
+          </div>
+        </div>
+      </div>
+      <!-- /Partner form -->
+
+      <!-- Separator: orgs → members -->
+      <div class="form-sep">
+        <div class="form-sep-line"></div>
+        <div class="form-sep-pill"><i class="fas fa-microphone"></i> Vous souhaitez partager vos connaissances ? · 想分享知識？</div>
+        <div class="form-sep-line"></div>
+      </div>
+
+      <!-- Content proposal form -->
+      <div class="index-content-wrap">
+        <div class="index-content-card">
+          <div class="card-audience membres"><i class="fas fa-users"></i> Pour les membres · 給社群成員</div>
+          <h2><i class="fas fa-lightbulb" style="margin-right:0.5rem;color:#a78bfa;"></i>Proposer un contenu · 分享你的知識</h2>
+          <p>
+            Tu as une expertise, une expérience ou une idée à partager avec la communauté ? Propose un talk, un webinaire, un atelier ou un sujet de brainstorming — toute contribution est la bienvenue.
+            <span style="color:rgba(255,255,255,0.35);display:block;margin-top:0.25rem;font-size:0.72rem;">
+              有想分享的知識、經驗或點子嗎？無論是技術分享、線上講座或腦力激盪，我們都歡迎！
+            </span>
+          </p>
+
+          <form id="idx-content-form" action="https://formspree.io/f/mykadnle" method="POST" class="idx-content-form">
+
+            <div>
+              <label class="form-label" for="ic_presenter_name">Ton prénom / nom · 你的姓名 *</label>
+              <input class="form-input" id="ic_presenter_name" name="presenter_name" type="text" placeholder="Prénom Nom" required>
+            </div>
+
+            <div>
+              <label class="form-label" for="ic_email">Email · 電子郵件 *</label>
+              <input class="form-input" id="ic_email" name="email" type="email" placeholder="toi@email.com" required>
+            </div>
+
+            <div>
+              <label class="form-label" for="ic_share_type">Type de partage · 分享類型 *</label>
+              <select class="form-select" id="ic_share_type" name="share_type" required>
+                <option value="" disabled selected>Choisir un type…</option>
+                <option value="talk_tech">🎤 Talk / Présentation technique</option>
+                <option value="webinaire">🌐 Webinaire en ligne</option>
+                <option value="brainstorming">🧠 Brainstorming / Discussion ouverte</option>
+                <option value="experience">📚 Partage d'expérience (carrière, visa, vie en France)</option>
+                <option value="workshop">🎓 Workshop / Atelier pratique</option>
+                <option value="table_ronde">🤝 Table ronde / Panel</option>
+                <option value="co_animateur">💡 Idée d'événement (je cherche un co-animateur)</option>
+                <option value="autre">💬 Autre</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="form-label" for="ic_language">Langue de présentation · 語言</label>
+              <select class="form-select" id="ic_language" name="language">
+                <option value="fr">🇫🇷 Français</option>
+                <option value="zh">🇹🇼 中文 (Mandarin)</option>
+                <option value="en">🇬🇧 English</option>
+                <option value="fr_zh">🇫🇷🇹🇼 Français + 中文</option>
+                <option value="flexible">🌐 Flexible</option>
+              </select>
+            </div>
+
+            <div class="form-full">
+              <label class="form-label" for="ic_topic_title">Titre / Sujet proposé · 主題標題 *</label>
+              <input class="form-input" id="ic_topic_title" name="topic_title" type="text" placeholder="ex : Négocier son salaire en ESN, Visa talent passeport, React vs Vue en 2026…" required>
+            </div>
+
+            <div class="form-full">
+              <label class="form-label" for="ic_description">Description · 內容描述 *</label>
+              <textarea class="form-textarea" id="ic_description" name="description" placeholder="Décris en quelques lignes le contenu, le public cible et ce que les participants repartiront avec…" required></textarea>
+            </div>
+
+            <div class="form-full">
+              <label class="form-label" for="ic_availability">Disponibilité · 你的時間 <span style="font-weight:400;opacity:0.6;">(facultatif)</span></label>
+              <input class="form-input" id="ic_availability" name="availability" type="text" placeholder="ex : soirs en semaine, week-ends, juillet disponible…">
+            </div>
+
+            <input type="text" name="_gotcha" style="display:none;">
+            <input type="hidden" name="_subject" value="Nouvelle proposition de contenu — Taiwan Tech France">
+            <input type="hidden" name="_cc" value="wallace.lin@midascaretech.com">
+
+            <div class="form-full" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+              <button type="submit" class="content-submit-idx">
+                <i class="fas fa-paper-plane"></i> Proposer · 送出提案
+              </button>
+              <span style="font-size:0.68rem;color:rgba(255,255,255,0.35);">
+                On te recontacte sous 7 jours · 我們將在7天內與你聯繫
+              </span>
+            </div>
+          </form>
+
+          <div class="content-success-idx" id="idx-content-success">
+            <i class="fas fa-check-circle" style="font-size:1.1rem;flex-shrink:0;"></i>
+            <span>Proposition reçue — merci ! On revient vers toi très bientôt. · 提案已收到，謝謝！我們會盡快與你聯繫。</span>
+          </div>
+        </div>
+      </div>
+      <!-- /Content proposal form -->
+
+      <div class="about-section-title" style="margin-bottom:0.3rem;margin-top:2rem;">
+        <i class="fas fa-door-open"></i> 誰可以加入 · Qui peut rejoindre ?
+      </div>
+      <div class="about-section-sub">Le groupe est ouvert à · 歡迎加入的對象</div>
+
+      <div class="join-list">
+        <div class="join-item">
+          <i class="fas fa-check-circle"></i>
+          <span><strong>已在法國工作的工程師</strong>，或科技業等 · Ingénieurs taïwanais déjà en poste en France</span>
+        </div>
+        <div class="join-item">
+          <i class="fas fa-check-circle"></i>
+          <span><strong>剛到法國</strong>，正在適應新環境 · Nouveaux arrivants en France</span>
+        </div>
+        <div class="join-item">
+          <i class="fas fa-check-circle"></i>
+          <span><strong>正在找工作或 mission</strong> · En recherche active d'emploi ou de mission</span>
+        </div>
+        <div class="join-item">
+          <i class="fas fa-check-circle"></i>
+          <span><strong>未來計畫來法國發展</strong>（法文能力非必要）· Envisagent de s'installer en France — le français n'est pas obligatoire !</span>
+        </div>
+      </div>
+
+      <div class="about-welcome">
+        <i class="fas fa-smile-beam" style="font-size:1.1rem;"></i>
+        歡迎加入 · Bienvenue ! 🙌 — La communauté vous accueille chaleureusement.
+      </div>
+
+      <div class="about-spirit">
+        <div style="margin-bottom:0.5rem;">
+          📍 分享科技業相關職缺、面試心得<br>
+          📍 分享科技業求職經歷或心事<br>
+          📍 請教前輩職涯規劃
+        </div>
+        <div style="color:rgba(255,255,255,0.85);font-size:0.82rem;">
+          這裡不只是討論工作賣肝，更是一個<strong style="color:#6ee7b7;">相互支持與取暖</strong>的社群，期待看到各位的精彩分享！🔥
+        </div>
+      </div>
+
+    </section>
+    <!-- /À PROPOS -->
+
+  </main>
+
+  <script src="assets/js/firebase-read.js"></script>
+  <script>
+  'use strict';
+
+  const JOB_CONTRACT_COLORS_PUB = {
+    'CDI':       { bg:'#dbeafe', color:'#1e40af' },
+    'CDD':       { bg:'#fef9c3', color:'#854d0e' },
+    'Freelance': { bg:'#dcfce7', color:'#166534' },
+    'Stage':     { bg:'#fce7f3', color:'#9d174d' },
+    'Autre':     { bg:'#f1f5f9', color:'#475569' }
+  };
+
+  function renderEventsPreview(announcements) {
+    const el = document.getElementById('home-events');
+    if (!el) return;
+    const now = Date.now();
+    // Only future events, sorted soonest first
+    const list = announcements
+      .filter(a => a.date && new Date(a.date) > now)
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .slice(0, 3);
+    if (list.length === 0) {
+      el.innerHTML = '<div class="pub-empty"><i class="fas fa-calendar-alt" style="display:block;font-size:1.5rem;opacity:0.2;margin-bottom:0.4rem;"></i>Aucun événement à venir · 目前沒有活動</div>';
+      return;
+    }
+    el.innerHTML = list.map(a => {
+      const d = a.date ? new Date(a.date) : null;
+      const day   = d && !isNaN(d) ? d.getDate() : '—';
+      const month = d && !isNaN(d) ? d.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase() : '';
+      const time  = d && !isNaN(d) ? d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '';
+      const desc  = a.description ? escHtmlRead(a.description).slice(0, 120) + (a.description.length > 120 ? '…' : '') : '';
+      return `
+        <div class="pub-event-card">
+          <div class="pub-event-date">
+            <div class="pub-event-date-day">${day}</div>
+            <div class="pub-event-date-month">${month}</div>
+            ${time ? `<div class="pub-event-date-time">${time}</div>` : ''}
+          </div>
+          <div class="pub-event-body">
+            ${a.type ? `<span class="pub-event-type">${escHtmlRead(a.type)}</span>` : ''}
+            <div class="pub-event-title">${escHtmlRead(a.title || '')}</div>
+            ${a.host ? `<div class="pub-event-host"><i class="fas fa-user" style="font-size:0.6rem;margin-right:0.25rem;"></i>${escHtmlRead(a.host)}</div>` : ''}
+            ${desc    ? `<div class="pub-event-desc">${desc}</div>` : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  function renderJobsPreview(jobs) {
+    const el = document.getElementById('home-jobs');
+    if (!el) return;
+    const list = jobs.slice(0, 3);
+    if (list.length === 0) {
+      el.innerHTML = '<div class="pub-empty"><i class="fas fa-briefcase" style="display:block;font-size:1.5rem;opacity:0.2;margin-bottom:0.4rem;"></i>Aucune offre · 目前沒有職缺</div>';
+      return;
+    }
+    el.innerHTML = list.map(j => {
+      const cs = JOB_CONTRACT_COLORS_PUB[j.contract] || JOB_CONTRACT_COLORS_PUB['Autre'];
+      return `
+        <div class="pub-job-card">
+          <div class="pub-job-meta">
+            <span class="pub-job-badge" style="background:${cs.bg};color:${cs.color};">${escHtmlRead(j.contract || '')}</span>
+            <span class="pub-job-loc"><i class="fas fa-map-marker-alt" style="font-size:0.6rem;margin-right:0.2rem;"></i>${escHtmlRead(j.location || '')}</span>
+          </div>
+          <div class="pub-job-title">${escHtmlRead(j.title || '')}</div>
+          ${j.salary ? `<div class="pub-job-salary"><i class="fas fa-coins" style="margin-right:0.2rem;"></i>${escHtmlRead(j.salary)}</div>` : ''}
+          ${j.description ? `<div class="pub-job-desc">${escHtmlRead(j.description)}</div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  function updateActivityStrip(data) {
+    // Latest job
+    const job = data.jobs[0];
+    const jobTitle = document.getElementById('act-job-title');
+    const jobMeta  = document.getElementById('act-job-meta');
+    if (job) {
+      if (jobTitle) jobTitle.textContent = job.title || '—';
+      if (jobMeta)  jobMeta.textContent  = [job.contract, job.location].filter(Boolean).join(' · ');
+    } else {
+      if (jobTitle) jobTitle.textContent = 'Aucune offre pour le moment · 尚無職缺';
+    }
+
+    // Next upcoming event (soonest in the future, or last one if all past)
+    const now = Date.now();
+    const upcoming = data.announcements
+      .slice()
+      .filter(a => a.date && new Date(a.date) >= now)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+    const event = upcoming[0] || data.announcements[0];
+    const evTitle = document.getElementById('act-event-title');
+    const evDate  = document.getElementById('act-event-date');
+    if (event) {
+      if (evTitle) evTitle.textContent = event.title || '—';
+      if (evDate)  evDate.textContent  = event.date ? fmtDateRead(event.date) : '';
+    } else {
+      if (evTitle) evTitle.textContent = 'Aucun événement · 尚無活動';
+    }
+  }
+
+  subscribeFirebaseData(function(data) {
+    const now = Date.now();
+    const upcomingCount = data.announcements.filter(a => a.date && new Date(a.date) > now).length;
+    document.getElementById('kpi-members').textContent = data.memberCount;
+    document.getElementById('kpi-jobs').textContent    = data.jobs.length;
+    document.getElementById('kpi-events').textContent  = upcomingCount;
+    renderEventsPreview(data.announcements);
+    renderJobsPreview(data.jobs);
+    updateActivityStrip(data);
+  });
+  </script>
+
+  <script>
+  /* ── Community stats charts — live-synced with Firebase votes ── */
+  'use strict';
+
+  const CHART_PALETTE = [
+    '#1d4ed8','#059669','#d97706','#7c3aed','#be123c',
+    '#0e7490','#15803d','#b45309','#1a5f7a','#64748b',
+    '#9333ea','#c2410c','#0284c7'
+  ];
+
+  // Seed baseline (WhatsApp legacy counts) + option key mapping for each survey
+  const SURVEY_META = {
+    'seed_s1_tech': {
+      keys:   ['Backend Dev','Frontend Dev','Full Stack','DevOps/SRE/Cloud','Data/AI/ML','Mobile','QA/Test','Security/Cybersec','Architect/Tech Lead','PM','Designer','Biz Manager','Others'],
+      labels: ['Backend Dev','Frontend Dev','Full Stack','DevOps/SRE/Cloud','Data / AI / ML','Mobile','QA / Test','Security','Architect/Tech Lead','PM','Designer','Biz Manager','Others'],
+      legacy: [3,2,2,2,11,1,1,1,2,10,1,4,14]
+    },
+    'seed_s2_invest': {
+      keys:   ['不感興趣','有興趣但無額外資金','有興趣且已在投資','很有興趣願增加','有興趣但不方便GMeet','有興趣可參加GMeet'],
+      labels: ['Pas intéressé(e)','Intéressé mais sans fonds','Intéressé et déjà investi','Très intéressé','Pas dispo GMeet','Intéressé et dispo GMeet'],
+      legacy: [0,5,4,0,0,11]
+    },
+    'seed_s3_city': {
+      keys:   ['Paris','Lyon','Toulouse','Bordeaux','Lille','Strasbourg','Nice','Taiwan','Autres'],
+      labels: ['Paris / Île-de-France','Lyon','Toulouse','Bordeaux','Lille','Strasbourg','Nice / Sophia','🇹🇼 Taiwan','Autres'],
+      legacy: [38,5,0,2,0,0,2,8,8]
+    },
+    'seed_s4_status': {
+      keys:   ['CDI','Freelance','Searching','Stable','Hiring','NewArrival'],
+      labels: ['CDI (Stable)','Freelance','En recherche active','Stable, ouvert aux opps','Recrute','Nouvel arrivant'],
+      legacy: [17,4,37,7,2,10]
+    }
+  };
+
+  function mergeCounts(surveyId, surveyVotes) {
+    const meta   = SURVEY_META[surveyId];
+    const counts = [...meta.legacy]; // copy seed baseline
+    const votes  = (surveyVotes || {})[surveyId] || {};
+    for (const optArray of Object.values(votes)) {
+      for (const optId of (Array.isArray(optArray) ? optArray : [])) {
+        const idx = meta.keys.indexOf(optId);
+        if (idx >= 0) counts[idx]++;
+      }
+    }
+    return counts;
+  }
+
+  function makeChart(id, type, labels, data, options = {}) {
+    const ctx = document.getElementById(id);
+    if (!ctx) return null;
+    const total   = data.reduce((a, b) => a + b, 0);
+    const palette = options.palette || CHART_PALETTE;
+    return new Chart(ctx, {
+      type,
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: palette.slice(0, data.length),
+          borderWidth: 0,
+          borderRadius: type === 'bar' ? 4 : 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: options.horizontal ? 'y' : 'x',
+        plugins: {
+          legend: options.showLegend
+            ? { position: 'bottom', labels: { font: { size: 10 }, padding: 8, boxWidth: 10 } }
+            : { display: false },
+          tooltip: {
+            callbacks: {
+              label: c => {
+                const val = c.parsed[options.horizontal ? 'x' : 'y'] ?? c.parsed;
+                const pct = total > 0 ? (val / total * 100).toFixed(1) : '0.0';
+                return ` ${val} (${pct}%)`;
+              }
+            }
+          }
+        },
+        scales: type === 'doughnut' ? {} : {
+          x: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 9 } } },
+          y: { grid: { color: '#f1f5f9' }, ticks: { font: { size: 9 } } }
+        }
+      }
+    });
+  }
+
+  // Init charts immediately with seed baseline (no Firebase wait)
+  const m = SURVEY_META;
+  let _chartTech   = makeChart('pub-chart-tech',    'bar',      m['seed_s1_tech'].labels,   m['seed_s1_tech'].legacy,   { horizontal: true });
+  let _chartInvest = makeChart('pub-chart-invest',  'doughnut', m['seed_s2_invest'].labels, m['seed_s2_invest'].legacy, { showLegend: true });
+  let _chartCity   = makeChart('pub-chart-city',    'bar',      m['seed_s3_city'].labels,   m['seed_s3_city'].legacy,   { horizontal: true });
+  let _chartStatus = makeChart('pub-chart-status',  'doughnut', m['seed_s4_status'].labels, m['seed_s4_status'].legacy, { showLegend: true });
+
+  const _COUNT_EL_MAP = {
+    'seed_s1_tech':   'stat-count-tech',
+    'seed_s2_invest': 'stat-count-invest',
+    'seed_s3_city':   'stat-count-city',
+    'seed_s4_status': 'stat-count-status'
+  };
+
+  // Called every time Firebase updates — merges live votes on top of seed baseline
+  function updateCharts(surveyVotes) {
+    if (!surveyVotes) return;
+    const pairs = [
+      [_chartTech,   'seed_s1_tech'],
+      [_chartInvest, 'seed_s2_invest'],
+      [_chartCity,   'seed_s3_city'],
+      [_chartStatus, 'seed_s4_status']
+    ];
+    for (const [chart, id] of pairs) {
+      if (!chart) continue;
+      const counts = mergeCounts(id, surveyVotes);
+      chart.data.datasets[0].data = counts;
+      chart.update('none');
+      const el = document.getElementById(_COUNT_EL_MAP[id]);
+      if (el) el.textContent = counts.reduce((a, b) => a + b, 0);
+    }
+  }
+
+  // Hook into the existing Firebase subscription
+  subscribeFirebaseData(function(data) {
+    updateCharts(data.surveyVotes);
+    renderUserSurveySection(data.userSurveys, data.surveyVotes, data.memberCount);
+  });
+
+  /* ── User-created survey section — Chart.js + 10% threshold ─── */
+  const INDIGO_PALETTE = ['#6366f1','#818cf8','#4f46e5','#a5b4fc','#4338ca','#c7d2fe','#3730a3','#e0e7ff'];
+  let _userCharts = {}; // track instances for destroy-before-rerender
+
+  function renderUserSurveySection(surveys, surveyVotes, memberCount) {
+    const wrap      = document.getElementById('user-surveys-wrap');
+    const threshEl  = document.getElementById('user-surveys-threshold');
+    if (!wrap) return;
+
+    const THRESHOLD = 10; // show when votes exceed 10
+    const eligible  = (surveys || []).filter(s => {
+      if (s.status !== 'open') return false;
+      return Object.keys(surveyVotes[s.id] || {}).length >= THRESHOLD;
+    });
+
+    // Show threshold hint even when hidden
+    if (threshEl) threshEl.textContent = `Affiché à partir de ${THRESHOLD} réponses · 達 ${THRESHOLD} 票後顯示`;
+
+    if (eligible.length === 0) { wrap.style.display = 'none'; return; }
+    wrap.style.display = '';
+
+    // Destroy old chart instances before re-render
+    for (const c of Object.values(_userCharts)) { try { c.destroy(); } catch(_) {} }
+    _userCharts = {};
+
+    const container = document.getElementById('user-surveys-list');
+    if (!container) return;
+
+    // Build HTML shells — same structure as seed chart cards
+    container.innerHTML = eligible.map(survey => {
+      const voters    = Object.keys(surveyVotes[survey.id] || {}).length;
+      const chartType = survey.type === 'single' ? 'doughnut' : 'bar';
+      const height    = chartType === 'bar' ? Math.max(180, (survey.options || []).length * 22) : 240;
+      const icon      = chartType === 'bar' ? 'fa-poll-h' : 'fa-chart-pie';
+      return `
+        <div class="pub-stat-card">
+          <div class="pub-stat-card-head">
+            <span><i class="fas ${icon}"></i> ${escHtmlRead(survey.title || '')}</span>
+            <span class="pub-stat-card-count">${voters}</span>
+          </div>
+          <div class="pub-stat-card-body">
+            <canvas id="uchart-${survey.id}" height="${height}"></canvas>
+          </div>
+        </div>`;
+    }).join('');
+
+    // Render charts into the canvases
+    eligible.forEach(survey => {
+      const votes  = surveyVotes[survey.id] || {};
+      const counts = {};
+      for (const optArray of Object.values(votes)) {
+        for (const oid of (Array.isArray(optArray) ? optArray : [])) {
+          counts[oid] = (counts[oid] || 0) + 1;
+        }
+      }
+      const labels    = (survey.options || []).map(o => o.label || o.id);
+      const data      = (survey.options || []).map(o => counts[o.id] || 0);
+      const chartType = survey.type === 'single' ? 'doughnut' : 'bar';
+
+      const chart = makeChart(
+        `uchart-${survey.id}`, chartType, labels, data,
+        chartType === 'bar' ? { horizontal: true }
+                            : { showLegend: true }
+      );
+      if (chart) _userCharts[survey.id] = chart;
+    });
+  }
+  </script>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-brand">
+        <strong>🇹🇼 Taiwan Tech France</strong>
+        <span>在法臺灣科技社群 · Communauté tech taïwanaise en France</span>
+      </div>
+      <div class="site-footer-copy">
+        &copy; 2026 Taiwan Tech France
+        <em>Association en cours de création · Loi 1901 · Fait avec ❤️ par la communauté · 由社群共同打造</em>
+      </div>
+      <div class="site-footer-links">
+        <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+        <a href="https://github.com/ttf-tech/ttf-tech.github.io" target="_blank" rel="noopener"><i class="fab fa-github"></i> GitHub</a>
+        <a href="association.html"><i class="fas fa-landmark"></i> Association</a>
+        <a href="admin.html"><i class="fas fa-lock"></i> Admin</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const idxForm = document.getElementById('idx-partner-form');
+    const idxContentForm = document.getElementById('idx-content-form');
+    if (idxContentForm) {
+      idxContentForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = idxContentForm.querySelector('.content-submit-idx');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi…';
+        try {
+          const res = await fetch(idxContentForm.action, {
+            method: 'POST',
+            body: new FormData(idxContentForm),
+            headers: { 'Accept': 'application/json' }
+          });
+          if (res.ok) {
+            idxContentForm.style.display = 'none';
+            document.getElementById('idx-content-success').style.display = 'flex';
+          } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Proposer · 送出提案';
+            alert('Erreur lors de l\'envoi. Réessayez ou contactez-nous directement.');
+          }
+        } catch {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-paper-plane"></i> Proposer · 送出提案';
+          alert('Erreur réseau. Vérifiez votre connexion.');
+        }
+      });
+    }
+
+    if (idxForm) {
+      idxForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = idxForm.querySelector('.form-submit');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi…';
+        try {
+          const res = await fetch(idxForm.action, {
+            method: 'POST',
+            body: new FormData(idxForm),
+            headers: { 'Accept': 'application/json' }
+          });
+          if (res.ok) {
+            idxForm.style.display = 'none';
+            document.getElementById('idx-form-success').style.display = 'flex';
+          } else {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer · 送出';
+            alert('Erreur lors de l\'envoi. Réessayez ou contactez-nous directement.');
+          }
+        } catch {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer · 送出';
+          alert('Erreur réseau. Vérifiez votre connexion.');
+        }
+      });
+    }
+  </script>
+</body>
+</html>

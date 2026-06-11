@@ -812,6 +812,7 @@ function openAssoMemberModal(id = null) {
     if (title) title.textContent = 'Modifier membre Asso';
     _setVal('am-name',     m.name);
     _setVal('am-city',     m.city || '');
+    _setVal('am-email',    m.email || '');
     _setVal('am-job',      m.job  || '');
     _setVal('am-intro',    m.intro || '');
     _setVal('am-linkedin', m.linkedin || '');
@@ -825,7 +826,7 @@ function openAssoMemberModal(id = null) {
     if (delBtn) delBtn.classList.remove('hidden');
   } else {
     if (title) title.textContent = 'Ajouter membre Asso · 新增協會成員';
-    ['am-name','am-city','am-job','am-intro','am-linkedin','am-phone','am-helloasso'].forEach(id => _setVal(id, ''));
+    ['am-name','am-email','am-city','am-job','am-intro','am-linkedin','am-phone','am-helloasso'].forEach(id => _setVal(id, ''));
     _setVal('am-joined', new Date().toISOString().slice(0, 10));
     overlay?.querySelectorAll('input[name="am-goal"]').forEach(cb => { cb.checked = false; });
     if (delBtn) delBtn.classList.add('hidden');
@@ -851,6 +852,7 @@ function saveAssoMember() {
   const goals = [...document.querySelectorAll('input[name="am-goal"]:checked')].map(cb => cb.value);
   const member = {
     name,
+    email:        document.getElementById('am-email')?.value.trim() || '',
     city:         document.getElementById('am-city')?.value      || '',
     job:          document.getElementById('am-job')?.value.trim() || '',
     intro:        document.getElementById('am-intro')?.value.trim() || '',
@@ -893,6 +895,41 @@ function deleteAssoMember() {
   closeAssoMemberModal();
   renderAssoMembers();
   showToast('Membre supprimé · 已刪除');
+}
+
+function exportAssoCSV() {
+  if (!state.assoMembers.length) { showToast('Aucun membre officiel à exporter.'); return; }
+
+  const goalMap = Object.fromEntries(ASSO_GOALS.map(g => [g.id, g.fr]));
+  const cols = ['Nom','Email','Ville','Poste / Entreprise','Téléphone','LinkedIn','Objectifs','Intro','Réf HelloAsso','Date adhésion'];
+
+  const escape = v => `"${String(v || '').replace(/"/g, '""')}"`;
+
+  const rows = state.assoMembers.map(m => [
+    m.name,
+    m.email        || '',
+    m.city         || '',
+    m.job          || '',
+    m.phone        || '',
+    m.linkedin     || '',
+    (m.goals || []).map(g => goalMap[g] || g).join(' | '),
+    m.intro        || '',
+    m.helloassoRef || '',
+    m.joinedAt ? m.joinedAt.slice(0, 10) : ''
+  ].map(escape).join(','));
+
+  const csv  = [cols.map(escape).join(','), ...rows].join('\r\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'), {
+    href: url,
+    download: `ttf-asso-membres-${new Date().toISOString().slice(0,10)}.csv`
+  });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`Export CSV · ${state.assoMembers.length} membre(s)`);
 }
 
 // ── Surveys tab ────────────────────────────────────────────────
@@ -2290,8 +2327,10 @@ function init() {
   }
 
   // Asso members tab
-  const addAssoBtn = document.getElementById('add-asso-member-btn');
-  if (addAssoBtn) addAssoBtn.addEventListener('click', () => openAssoMemberModal());
+  const addAssoBtn    = document.getElementById('add-asso-member-btn');
+  const exportAssoBtn = document.getElementById('export-asso-csv-btn');
+  if (addAssoBtn)    addAssoBtn.addEventListener('click', () => openAssoMemberModal());
+  if (exportAssoBtn) exportAssoBtn.addEventListener('click', exportAssoCSV);
 
   const assoSearch     = document.getElementById('asso-search');
   const assoCityFilter = document.getElementById('asso-city-filter');

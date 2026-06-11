@@ -174,7 +174,7 @@
 
     /* CTA section */
     .cta-wrap {
-      max-width: 860px; margin: 2rem auto 3rem; padding: 0 1.5rem;
+      max-width: 860px; margin: 2rem auto 0; padding: 0 1.5rem;
     }
     .cta-card {
       background: linear-gradient(135deg,#0a2d42 0%,#1a4a6e 100%);
@@ -200,6 +200,56 @@
       transition: background 0.15s;
     }
     .cta-btn-secondary:hover { background: rgba(255,255,255,0.22); }
+
+    /* Partner CTA form */
+    .partner-cta-wrap {
+      max-width: 860px; margin: 1.25rem auto 3rem; padding: 0 1.5rem;
+    }
+    .partner-cta-card {
+      background: linear-gradient(135deg,#0f2d1a 0%,#1a4a2e 100%);
+      border-radius: 16px; padding: 2rem 2.5rem;
+    }
+    .partner-cta-card h2 { font-size: 1.1rem; font-weight: 800; color: #fff; margin-bottom: 0.3rem; }
+    .partner-cta-card > p { font-size: 0.78rem; color: rgba(255,255,255,0.6); line-height: 1.5; margin-bottom: 1.4rem; }
+    .partner-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .partner-form .form-full { grid-column: 1 / -1; }
+    .form-label {
+      display: block; font-size: 0.65rem; font-weight: 700;
+      color: rgba(255,255,255,0.55); text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 0.3rem;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 0.6rem 0.85rem; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08); color: #fff;
+      font-size: 0.82rem; outline: none; transition: border-color 0.15s, background 0.15s;
+      font-family: inherit;
+    }
+    .form-input::placeholder, .form-textarea::placeholder { color: rgba(255,255,255,0.3); }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.12);
+    }
+    .form-select option { background: #1a3a28; color: #fff; }
+    .form-textarea { resize: vertical; min-height: 72px; }
+    .form-submit {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.7rem 1.6rem; border-radius: 99px;
+      background: #16a34a; color: #fff; font-size: 0.85rem; font-weight: 700;
+      border: none; cursor: pointer; transition: background 0.15s, transform 0.1s;
+      margin-top: 0.25rem;
+    }
+    .form-submit:hover { background: #15803d; transform: translateY(-1px); }
+    .form-success {
+      display: none; align-items: center; gap: 0.6rem;
+      background: rgba(22,163,74,0.2); border: 1px solid rgba(22,163,74,0.4);
+      border-radius: 10px; padding: 0.85rem 1rem; margin-top: 1rem;
+      color: #86efac; font-size: 0.82rem; font-weight: 600;
+    }
+    @media (max-width: 540px) {
+      .partner-form { grid-template-columns: 1fr; }
+      .partner-form .form-full { grid-column: 1; }
+      .partner-cta-card { padding: 1.5rem 1.25rem; }
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen">
@@ -560,6 +610,105 @@
         </div>
       </div>
     </div>
+
+    <!-- ── DEVENIR PARTENAIRE ─────────────────────────────────────── -->
+    <div class="partner-cta-wrap">
+      <div class="partner-cta-card">
+        <h2><i class="fas fa-handshake" style="margin-right:0.5rem;color:#4ade80;"></i>Devenir partenaire · 成為合作夥伴</h2>
+        <p>
+          Votre organisation souhaite s'associer à Taiwan Tech France ? Que vous soyez une institution, une entreprise, une association ou une université, dites-nous comment vous souhaitez collaborer.
+          <span style="color:rgba(255,255,255,0.35);display:block;margin-top:0.25rem;font-size:0.72rem;">
+            歡迎各機構、企業、協會或大學與我們合作，請填寫以下表單。
+          </span>
+        </p>
+
+        <form id="partner-form" action="https://formspree.io/f/xnjybgda" method="POST" class="partner-form">
+          <div>
+            <label class="form-label" for="org_name">Nom de l'organisation · 組織名稱 *</label>
+            <input class="form-input" id="org_name" name="org_name" type="text" placeholder="ex : ATNCA, Capgemini, Université Nice…" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="contact_name">Nom du contact · 聯絡人 *</label>
+            <input class="form-input" id="contact_name" name="contact_name" type="text" placeholder="Prénom Nom" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="email">Email · 電子郵件 *</label>
+            <input class="form-input" id="email" name="email" type="email" placeholder="contact@organisation.fr" required>
+          </div>
+
+          <div>
+            <label class="form-label" for="partner_type">Type de partenariat proposé · 合作類型 *</label>
+            <select class="form-select" id="partner_type" name="partner_type" required>
+              <option value="" disabled selected>Choisir un type…</option>
+              <option value="bureau_taiwan">🇹🇼 Bureau de représentation de Taïwan</option>
+              <option value="association_tw">🤝 Association taïwanaise (France / Europe)</option>
+              <option value="universite">🎓 Université / Grande École</option>
+              <option value="entreprise_tech">🏢 Entreprise tech / ESN / Startup</option>
+              <option value="ville_metropole">🏛️ Ville / Métropole / Institution publique</option>
+              <option value="media_presse">📰 Média / Presse</option>
+              <option value="autre">💬 Autre</option>
+            </select>
+          </div>
+
+          <div class="form-full">
+            <label class="form-label" for="message">Message · 訊息 <span style="font-weight:400;opacity:0.6;">(facultatif)</span></label>
+            <textarea class="form-textarea" id="message" name="message" placeholder="Décrivez brièvement votre proposition ou ce que vous souhaitez explorer ensemble…"></textarea>
+          </div>
+
+          <!-- honeypot anti-spam -->
+          <input type="text" name="_gotcha" style="display:none;">
+          <input type="hidden" name="_subject" value="Nouveau partenariat potentiel — Taiwan Tech France">
+          <input type="hidden" name="_cc" value="wallace.lin@midascaretech.com">
+
+          <div class="form-full" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+            <button type="submit" class="form-submit">
+              <i class="fas fa-paper-plane"></i> Envoyer · 送出
+            </button>
+            <span style="font-size:0.68rem;color:rgba(255,255,255,0.35);">
+              Nous vous répondrons dans les 7 jours · 我們將在7天內回覆您
+            </span>
+          </div>
+        </form>
+
+        <div class="form-success" id="form-success">
+          <i class="fas fa-check-circle" style="font-size:1.1rem;flex-shrink:0;"></i>
+          <span>Message envoyé — merci ! Nous reviendrons vers vous très bientôt. · 訊息已送出，謝謝！我們會盡快與您聯繫。</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const pForm = document.getElementById('partner-form');
+      if (pForm) {
+        pForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          const btn = pForm.querySelector('.form-submit');
+          btn.disabled = true;
+          btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi…';
+          try {
+            const res = await fetch(pForm.action, {
+              method: 'POST',
+              body: new FormData(pForm),
+              headers: { 'Accept': 'application/json' }
+            });
+            if (res.ok) {
+              pForm.style.display = 'none';
+              document.getElementById('form-success').style.display = 'flex';
+            } else {
+              btn.disabled = false;
+              btn.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer · 送出';
+              alert('Erreur lors de l\'envoi. Réessayez ou contactez-nous directement.');
+            }
+          } catch {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-paper-plane"></i> Envoyer · 送出';
+            alert('Erreur réseau. Vérifiez votre connexion.');
+          }
+        });
+      }
+    </script>
 
   </main>
 

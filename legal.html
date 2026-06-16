@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZTM2QR5VPV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag("js", new Date());
+    gtag("config", "G-ZTM2QR5VPV");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mentions légales — Taiwan Tech France</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇹🇼</text></svg>">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="assets/css/stastic_member.css">
+
+  <style>
+    #app-sidebar {
+      position: fixed; top: 0; left: 0; height: 100%; width: 4rem;
+      background: #111827; display: flex; flex-direction: column; align-items: center;
+      padding: 1.25rem 0; z-index: 20; box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+    }
+    .sidebar-logo { font-size: 1.6rem; line-height: 1; margin-bottom: 2rem; cursor: default; user-select: none; }
+    .sidebar-nav  { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
+    .sidebar-link {
+      display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+      color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.15s;
+      padding: 0.5rem; border-radius: 10px; width: 3rem; justify-content: center; font-size: 1.15rem;
+    }
+    .sidebar-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
+    .sidebar-link.active { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .sidebar-link span { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75; }
+    .sidebar-link.active span { opacity: 1; }
+    .sidebar-link-admin { margin-top: auto; }
+
+    .page-header {
+      background: linear-gradient(160deg,#0a2d42 0%,#0f4060 100%);
+      color: #fff; padding: 1.75rem 1.5rem 1.5rem;
+    }
+    .page-header-inner { max-width: 720px; margin: 0 auto; }
+    .page-header h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.2rem; }
+    .page-header p  { font-size: 0.8rem; color: rgba(255,255,255,0.55); }
+
+    .legal-wrap { max-width: 720px; margin: 1.75rem auto 3rem; padding: 0 1.5rem; }
+
+    /* RNA hero card */
+    .rna-hero {
+      background: linear-gradient(135deg,#f0fdf4,#ecfdf5);
+      border: 1.5px solid #86efac; border-radius: 16px;
+      padding: 1.5rem 1.75rem; margin-bottom: 1.75rem;
+      display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;
+    }
+    .rna-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: #16a34a; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; flex-shrink: 0;
+    }
+    .rna-label { font-size: 0.68rem; font-weight: 700; color: #4d7c60;
+                 text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.2rem; }
+    .rna-number { font-size: 1.5rem; font-weight: 900; color: #064e3b; letter-spacing: 0.03em; }
+    .rna-sub { font-size: 0.72rem; color: #4d7c60; margin-top: 0.2rem; }
+    .rna-verify {
+      margin-left: auto; display: inline-flex; align-items: center; gap: 0.45rem;
+      background: #16a34a; color: #fff; padding: 0.55rem 1.1rem;
+      border-radius: 99px; font-size: 0.75rem; font-weight: 700;
+      text-decoration: none; transition: background 0.15s;
+    }
+    .rna-verify:hover { background: #15803d; }
+
+    /* Legal sections */
+    .legal-section { margin-bottom: 1.5rem; }
+    .legal-section-title {
+      font-size: 0.72rem; font-weight: 800; color: #0f172a;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      margin-bottom: 0.75rem; padding-bottom: 0.4rem;
+      border-bottom: 2px solid #f1f5f9;
+      display: flex; align-items: center; gap: 0.45rem;
+    }
+    .legal-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 1.1rem 1.25rem;
+    }
+    .legal-row {
+      display: flex; gap: 1rem; padding: 0.5rem 0;
+      border-bottom: 1px solid #f1f5f9; align-items: flex-start;
+    }
+    .legal-row:last-child { border-bottom: none; padding-bottom: 0; }
+    .legal-key {
+      font-size: 0.68rem; font-weight: 700; color: #94a3b8;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      min-width: 130px; flex-shrink: 0; padding-top: 0.05rem;
+    }
+    .legal-val { font-size: 0.82rem; color: #0f172a; line-height: 1.5; }
+    .legal-val a { color: #0369a1; text-decoration: none; }
+    .legal-val a:hover { text-decoration: underline; }
+
+    /* Why RNA section */
+    .why-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 0.65rem; }
+    .why-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 0.9rem 1rem; display: flex; align-items: flex-start; gap: 0.65rem;
+    }
+    .why-icon {
+      width: 32px; height: 32px; border-radius: 8px; display: flex;
+      align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0;
+    }
+    .why-title { font-size: 0.78rem; font-weight: 700; color: #0f172a; margin-bottom: 0.15rem; }
+    .why-desc  { font-size: 0.68rem; color: #64748b; line-height: 1.4; }
+
+    /* Hosting notice */
+    .hosting-note {
+      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 1rem 1.25rem; font-size: 0.75rem; color: #64748b; line-height: 1.6;
+    }
+    .hosting-note strong { color: #0f172a; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen">
+
+  <aside id="app-sidebar">
+    <div class="sidebar-logo">🇹🇼</div>
+    <nav class="sidebar-nav">
+      <a href="index.html"        class="sidebar-link"        title="Home · 首頁"><i class="fas fa-home"></i><span>Accueil</span></a>
+      <a href="events.html"       class="sidebar-link"        title="Events · 活動"><i class="fas fa-calendar-alt"></i><span>Agenda</span></a>
+      <a href="jobs.html"         class="sidebar-link"        title="Jobs · 職缺"><i class="fas fa-briefcase"></i><span>Offres</span></a>
+      <a href="resources.html"    class="sidebar-link"        title="Resources · 資源"><i class="fas fa-book-open"></i><span>Docs</span></a>
+      <a href="vote.html"         class="sidebar-link"        title="Sondages · 投票"><i class="fas fa-poll"></i><span>Vote</span></a>
+      <a href="association.html"  class="sidebar-link"        title="Association · 協會"><i class="fas fa-landmark"></i><span>Assoc</span></a>
+      <a href="admin.html"        class="sidebar-link sidebar-link-admin" title="Admin"><i class="fas fa-lock"></i><span>Admin</span></a>
+    </nav>
+  </aside>
+
+  <main class="ml-16">
+    <div class="page-header">
+      <div class="page-header-inner">
+        <h1><i class="fas fa-balance-scale" style="margin-right:0.5rem;opacity:0.8;"></i>Mentions légales · 法律聲明</h1>
+        <p>Informations légales de Taiwan Tech France Association · 協會法律資訊</p>
+      </div>
+    </div>
+
+    <div class="legal-wrap">
+
+      <!-- RNA Hero -->
+      <div class="rna-hero">
+        <div class="rna-icon"><i class="fas fa-certificate"></i></div>
+        <div>
+          <div class="rna-label">Numéro RNA · 協會登記號碼</div>
+          <div class="rna-number">W061018695</div>
+          <div class="rna-sub">Association déclarée en préfecture · 已向縣政府申報登記 · Loi du 1<sup>er</sup> juillet 1901</div>
+        </div>
+        <a class="rna-verify" href="https://www.journal-officiel.gouv.fr/pages/associations-recherche/" target="_blank" rel="noopener">
+          <i class="fas fa-external-link-alt"></i> Vérifier au JOAFE
+        </a>
+      </div>
+
+      <!-- Identité -->
+      <div class="legal-section">
+        <div class="legal-section-title">
+          <i class="fas fa-building" style="color:#0e7490;"></i>
+          Identité de l'association · 協會基本資料
+        </div>
+        <div class="legal-card">
+          <div class="legal-row">
+            <div class="legal-key">Dénomination</div>
+            <div class="legal-val"><strong>Taiwan Tech France Association</strong> (TTF)</div>
+          </div>
+          <div class="legal-row">
+            <div class="legal-key">Forme juridique</div>
+            <div class="legal-val">Association à but non lucratif — Loi du 1<sup>er</sup> juillet 1901</div>
+          </div>
+          <div class="legal-row">
+            <div class="legal-key">Numéro RNA</div>
+            <div class="legal-val"><strong style="color:#059669;">W061018695</strong></div>
+          </div>
+          <div class="legal-row">
+            <div class="legal-key">Siège social</div>
+            <div class="legal-val">13 Allée Bellevue, 06460 Saint-Vallier-de-Thiey, France</div>
+          </div>
+          <div class="legal-row">
+            <div class="legal-key">Objet</div>
+            <div class="legal-val">Fédérer la communauté technologique taïwanaise en France, organiser des événements, ateliers et conférences, promouvoir les échanges entre professionnels tech taïwanais et français, faciliter les partenariats franco-taïwanais, soutenir l'innovation et l'entrepreneuriat tech, représenter les intérêts professionnels de la communauté.</div>
+          </div>
+          <div class="legal-row">
+            <div class="legal-key">Date de déclaration</div>
+            <div class="legal-val">15 juin 2026</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Direction -->
+      <div class="legal-section">
+        <div class="legal-section-title">
+          <i class="fas fa-users" style="color:#7c3aed;"></i>
+          Direction · 管理委員會
+        </div>
+        <div class="legal-card">
+          <div class="legal-row">
+            <div class="legal-key">Présidente</div>
+            <div class="legal-val">Mme Yating Chatiron (Hsu)</div>
+          </div>
+          <div class="legal-row">
+            <div class="legal-key">Trésorier</div>
+            <div class="legal-val">M. Hsucheng Huang</div>
+          </div>
+          <div class="legal-row">
+            <div class="legal-key">Secrétaire</div>
+            <div class="legal-val">Mme Jia-Yun Lin</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <div class="legal-section">
+        <div class="legal-section-title">
+          <i class="fas fa-envelope" style="color:#059669;"></i>
+          Contact · 聯絡方式
+        </div>
+        <div class="legal-card">
+          <div class="legal-row">
+            <div class="legal-key">Email</div>
+            <div class="legal-val"><a href="mailto:tess.hsu@gmail.com">tess.hsu@gmail.com</a></div>
+          </div>
+          <div class="legal-row">
+            <div class="legal-key">Site web</div>
+            <div class="legal-val"><a href="https://ttf-tech.github.io" target="_blank" rel="noopener">https://ttf-tech.github.io</a></div>
+          </div>
+          <div class="legal-row">
+            <div class="legal-key">Communauté</div>
+            <div class="legal-val">
+              <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener">Groupe WhatsApp</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Hébergement -->
+      <div class="legal-section">
+        <div class="legal-section-title">
+          <i class="fas fa-server" style="color:#0369a1;"></i>
+          Hébergement · 網站託管
+        </div>
+        <div class="hosting-note">
+          <strong>Hébergeur :</strong> GitHub Pages — GitHub, Inc. · 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA<br>
+          <strong>Code source :</strong> <a href="https://github.com/ttf-tech/ttf-tech.github.io" target="_blank" rel="noopener" style="color:#0369a1;">github.com/ttf-tech/ttf-tech.github.io</a> (open source · 開源)
+        </div>
+      </div>
+
+      <!-- Pourquoi RNA -->
+      <div class="legal-section">
+        <div class="legal-section-title">
+          <i class="fas fa-shield-alt" style="color:#f59e0b;"></i>
+          Pourquoi afficher le numéro RNA ? · 為什麼顯示 RNA 號碼？
+        </div>
+        <div class="why-grid">
+          <div class="why-card">
+            <div class="why-icon" style="background:#dcfce7;color:#16a34a;"><i class="fas fa-check-circle"></i></div>
+            <div>
+              <div class="why-title">Crédibilité · 公信力</div>
+              <div class="why-desc">Le numéro RNA prouve immédiatement aux visiteurs que l'association existe légalement aux yeux de l'État français. 正式向法國政府申報的協會。</div>
+            </div>
+          </div>
+          <div class="why-card">
+            <div class="why-icon" style="background:#dbeafe;color:#1d4ed8;"><i class="fas fa-gavel"></i></div>
+            <div>
+              <div class="why-title">Conformité · 合規</div>
+              <div class="why-desc">Toute structure ayant une activité en ligne est fortement encouragée à afficher clairement son identité juridique. 符合線上組織的法律透明要求。</div>
+            </div>
+          </div>
+          <div class="why-card">
+            <div class="why-icon" style="background:#fef9c3;color:#854d0e;"><i class="fas fa-handshake"></i></div>
+            <div>
+              <div class="why-title">Partenariats · 合作</div>
+              <div class="why-desc">Facilite les démarches avec des institutions, entreprises tech et partenaires potentiels. 簡化與機構和企業的合作流程。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Données personnelles -->
+      <div class="legal-section">
+        <div class="legal-section-title">
+          <i class="fas fa-lock" style="color:#7c3aed;"></i>
+          Données personnelles · 個人資料
+        </div>
+        <div class="legal-card">
+          <div class="legal-row">
+            <div class="legal-key">Responsable</div>
+            <div class="legal-val">Taiwan Tech France Association — <a href="mailto:tess.hsu@gmail.com">tess.hsu@gmail.com</a></div>
+          </div>
+          <div class="legal-row">
+            <div class="legal-key">Finalités</div>
+            <div class="legal-val">Animation de la communauté, organisation d'événements, envoi d'informations aux membres · 社群管理、活動組織、成員通訊</div>
+          </div>
+          <div class="legal-row">
+            <div class="legal-key">Droits</div>
+            <div class="legal-val">Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Contactez-nous à <a href="mailto:tess.hsu@gmail.com">tess.hsu@gmail.com</a>.</div>
+          </div>
+          <div class="legal-row">
+            <div class="legal-key">Analytics</div>
+            <div class="legal-val">Ce site utilise Google Analytics (GA4) pour mesurer l'audience — données anonymisées. · 本站使用 Google Analytics 匿名統計訪問量。</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer-inner">
+      <div class="site-footer-brand">
+        <strong>🇹🇼 Taiwan Tech France</strong>
+        <span>在法臺灣科技社群 · Communauté tech taïwanaise en France</span>
+      </div>
+      <div class="site-footer-copy">
+        &copy; 2026 Taiwan Tech France
+        <em>Association Loi 1901 · RNA W061018695 · Fait avec ❤️ par la communauté · 由社群共同打造</em>
+      </div>
+      <div class="site-footer-links">
+        <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+        <a href="https://github.com/ttf-tech/ttf-tech.github.io" target="_blank" rel="noopener"><i class="fab fa-github"></i> GitHub</a>
+        <a href="association.html"><i class="fas fa-landmark"></i> Association</a>
+        <a href="legal.html" style="color:#fbbf24;"><i class="fas fa-balance-scale"></i> Mentions légales</a>
+        <a href="admin.html"><i class="fas fa-lock"></i> Admin</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

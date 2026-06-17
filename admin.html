@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard — Taiwan Tech France</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🇹🇼</text></svg>">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="assets/css/stastic_member.css">
@@ -26,8 +26,8 @@
       box-shadow: 2px 0 12px rgba(0,0,0,0.3);
     }
     .sidebar-logo {
-      font-size: 1.6rem; line-height: 1; margin-bottom: 2rem;
-      cursor: default; user-select: none;
+      width: 2.5rem; height: auto; margin-bottom: 2rem;
+      display: block;
     }
     .sidebar-nav { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
     .sidebar-link {
@@ -138,7 +138,7 @@
 
   <!-- ── SIDEBAR ───────────────────────────────────────────────── -->
   <aside id="app-sidebar">
-    <div class="sidebar-logo">🇹🇼</div>
+    <img class="sidebar-logo" src="logo.png" alt="TTF">
     <nav class="sidebar-nav">
       <a href="index.html"       class="sidebar-link"                      title="Accueil · 首頁"><i class="fas fa-home"></i><span>Accueil</span></a>
       <a href="events.html"      class="sidebar-link"                      title="Agenda · 活動"><i class="fas fa-calendar-alt"></i><span>Agenda</span></a>

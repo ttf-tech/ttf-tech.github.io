@@ -18,6 +18,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <link rel="stylesheet" href="assets/css/stastic_member.css">
 
   <style>
@@ -427,6 +428,9 @@
           <a href="events.html" class="sm-hero-cta-secondary">
             <i class="fas fa-calendar-alt"></i> Voir les activités · 活動
           </a>
+          <button type="button" id="qr-open-btn" class="sm-hero-cta-secondary">
+            <i class="fas fa-qrcode"></i> QR · 分享
+          </button>
         </div>
 
       </div>
@@ -1306,6 +1310,57 @@
         }
       });
     }
+  </script>
+
+  <!-- ── QR Code Modal ─────────────────────────────────────────── -->
+  <div id="qr-modal" style="
+    display:none;position:fixed;inset:0;z-index:9999;
+    background:rgba(0,0,0,0.6);
+    align-items:center;justify-content:center;
+    backdrop-filter:blur(4px);
+  ">
+    <div style="
+      background:#fff;border-radius:20px;padding:2rem 2.5rem;
+      text-align:center;max-width:320px;width:90%;
+      box-shadow:0 20px 60px rgba(0,0,0,0.3);
+      position:relative;
+    ">
+      <button type="button" id="qr-close-btn" style="
+        position:absolute;top:0.75rem;right:0.75rem;
+        background:none;border:none;cursor:pointer;
+        font-size:1.1rem;color:#94a3b8;line-height:1;
+      "><i class="fas fa-times"></i></button>
+      <div style="font-size:1rem;font-weight:800;color:#0a2d42;margin-bottom:0.25rem;">
+        Partager · 分享網站
+      </div>
+      <div style="font-size:0.75rem;color:#64748b;margin-bottom:1.25rem;">
+        Scannez pour visiter · 掃描開啟網站
+      </div>
+      <div id="qr-canvas" style="display:inline-block;border:1px solid #e2e8f0;border-radius:12px;padding:0.75rem;"></div>
+      <div style="font-size:0.7rem;color:#94a3b8;margin-top:0.85rem;">ttf-tech.github.io</div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      var modal = document.getElementById('qr-modal');
+
+      function openQR()  { modal.style.display = 'flex'; }
+      function closeQR() { modal.style.display = 'none'; }
+
+      document.getElementById('qr-open-btn').addEventListener('click', openQR);
+      document.getElementById('qr-close-btn').addEventListener('click', closeQR);
+      modal.addEventListener('click', function(e) { if (e.target === modal) closeQR(); });
+
+      new QRCode(document.getElementById('qr-canvas'), {
+        text: 'https://ttf-tech.github.io',
+        width: 200,
+        height: 200,
+        colorDark: '#0a2d42',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    })();
   </script>
 </body>
 </html>

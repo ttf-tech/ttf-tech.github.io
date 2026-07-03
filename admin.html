@@ -247,6 +247,9 @@
         <button class="sm-tab" data-tab="sharing">
           <i class="fas fa-lightbulb"></i>Partage
         </button>
+        <button class="sm-tab" data-tab="meetings">
+          <i class="fas fa-clipboard-list"></i>Réunions
+        </button>
         <button class="sm-tab create-tab" data-tab="create">
           <i class="fas fa-plus-circle"></i>+ Créer sondage
         </button>
@@ -648,6 +651,53 @@
     <!-- /SHARING -->
 
     <!-- ════════════════════════════════════════════════════════ -->
+    <!-- TAB PANE: MEETINGS                                       -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="tab-pane" data-tab="meetings">
+
+      <div class="sm-survey-banner-wrap">
+        <div class="sm-survey-banner">
+          <div class="sm-survey-banner-header">
+            <span class="sm-survey-banner-title">
+              <i class="fas fa-clipboard-list"></i>
+              會議記錄 · Comptes-rendus de réunion
+            </span>
+            <span class="sm-survey-banner-badges">
+              <span class="sm-badge sm-badge-open"><i class="fas fa-lock"></i> Secrétaire</span>
+            </span>
+          </div>
+          <div class="sm-survey-banner-rules">
+            <div class="sm-survey-rule">
+              <i class="fas fa-pen-alt"></i>
+              <div>
+                <strong>Enregistrement hebdomadaire · 每週會議紀錄</strong>
+                <span>Le secrétaire saisit ici les points abordés, les présents et les liens de documents après chaque réunion. · 由秘書每次會後填寫出席成員、議題與相關文件連結。</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sm-sharing-toolbar">
+        <div>
+          <div class="sm-sharing-toolbar-title">
+            <i class="fas fa-clipboard-list"></i>Points de réunion · 會議要點
+          </div>
+          <div class="sm-sharing-toolbar-sub">
+            Historique des réunions hebdomadaires, présents, agenda…
+          </div>
+        </div>
+        <button id="add-meeting-btn" class="sm-btn sm-btn-emerald">
+          <i class="fas fa-plus"></i>+ Nouvelle réunion
+        </button>
+      </div>
+      <div class="sm-sharing-list" id="meeting-list">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+    <!-- /MEETINGS -->
+
+    <!-- ════════════════════════════════════════════════════════ -->
     <!-- TAB PANE: CREATE SURVEY                                  -->
     <!-- ════════════════════════════════════════════════════════ -->
     <div class="tab-pane" data-tab="create">
@@ -1026,6 +1076,84 @@
   <!-- /SHARING MODAL -->
 
   <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- MEETING MODAL                                              -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="meeting-modal" class="sm-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="meeting-modal-title">
+    <div class="sm-modal-box" style="max-width:600px;">
+      <div class="sm-modal-header">
+        <span class="sm-modal-title" id="meeting-modal-title">Nouvelle réunion · 新增會議記錄</span>
+        <button id="meeting-modal-close" class="sm-modal-close" type="button" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="sm-modal-body">
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="mt-title">Sujet de la réunion · 會議主題 *</label>
+          <input id="mt-title" class="sm-input" type="text"
+                 placeholder="ex: 協會章程具體運作方式討論">
+        </div>
+
+        <div class="sm-input-grid">
+          <div class="sm-form-group">
+            <label class="sm-label" for="mt-date">Date &amp; heure *</label>
+            <input id="mt-date" class="sm-input" type="datetime-local">
+          </div>
+          <div class="sm-form-group">
+            <label class="sm-label" for="mt-secretary">Secrétaire / Animateur · 記錄人 *</label>
+            <input id="mt-secretary" class="sm-input" type="text"
+                   list="mt-secretary-datalist"
+                   placeholder="ex: Tess"
+                   autocomplete="off">
+            <datalist id="mt-secretary-datalist"></datalist>
+          </div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="mt-attendees">Présents · 出席成員</label>
+          <input id="mt-attendees" class="sm-input" type="text"
+                 placeholder="ex: Tess, Aloma, Wallace">
+          <div style="font-size:0.68rem;color:#94a3b8;margin-top:0.2rem;">
+            Séparés par des virgules · 以逗號分隔
+          </div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="mt-points">Points de réunion · 會議要點</label>
+          <textarea id="mt-points" class="sm-input" rows="7"
+                    placeholder="1. 章程修正討論&#10;2. 會員組成類別定義與申請方式&#10;3. 會員收取會費 &amp; Event calendar 討論&#10;4. 會員權益…"
+                    style="resize:vertical;font-family:inherit;"></textarea>
+          <div style="font-size:0.68rem;color:#94a3b8;margin-top:0.2rem;">
+            Un point par ligne · 每行一個議題
+          </div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="mt-doc">URL du document (optionnel) · 會議文件連結</label>
+          <input id="mt-doc" class="sm-input" type="url"
+                 placeholder="ex: https://docs.google.com/…">
+        </div>
+
+      </div>
+      <div class="sm-modal-footer">
+        <button id="meeting-modal-delete" type="button" class="hidden"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #fecdd3;background:#fff1f2;color:#be123c;font-size:0.82rem;font-weight:600;cursor:pointer;margin-right:auto;">
+          <i class="fas fa-trash" style="margin-right:0.3rem;"></i>Supprimer
+        </button>
+        <button id="meeting-modal-cancel" type="button"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          Annuler
+        </button>
+        <button id="meeting-modal-save" type="button"
+                style="padding:0.5rem 1.25rem;border-radius:7px;border:none;background:#0a2d42;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+          <i class="fas fa-save"></i>Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- /MEETING MODAL -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
   <!-- JOB MODAL                                                   -->
   <!-- ══════════════════════════════════════════════════════════ -->
   <div id="job-modal" class="sm-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="job-modal-title">
@@ -1221,6 +1349,6 @@
   </div>
   <!-- /ASSO MEMBER MODAL -->
 
-  <script src="assets/js/stastic_member.js" defer></script>
+  <script src="assets/js/stastic_member.js?v=3" defer></script>
 </body>
 </html>

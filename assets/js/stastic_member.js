@@ -230,7 +230,7 @@ const ASSO_CITIES = ['Paris', 'Lyon', 'Toulouse', 'Bordeaux', 'Grenoble',
 const _DYN_KEY = STORE_KEY + '_dyn';
 
 function _emptyDynamic() {
-  return { addedMembers: [], announcements: [], jobs: [], sharings: [], surveyVotes: {}, userSurveys: [], assoMembers: [] };
+  return { addedMembers: [], announcements: [], jobs: [], sharings: [], meetings: [], surveyVotes: {}, userSurveys: [], assoMembers: [] };
 }
 
 // Load dynamic data from localStorage cache (fast, instant)
@@ -247,6 +247,7 @@ function loadDynamic() {
         announcements: Array.isArray(p.announcements) ? p.announcements : [],
         jobs:          Array.isArray(p.jobs)           ? p.jobs          : [],
         sharings:      Array.isArray(p.sharings)       ? p.sharings      : [],
+        meetings:      Array.isArray(p.meetings)       ? p.meetings      : [],
         surveyVotes:   (p.surveyVotes && typeof p.surveyVotes === 'object') ? p.surveyVotes : {},
         userSurveys:   Array.isArray(p.userSurveys)   ? p.userSurveys   : [],
         assoMembers:   Array.isArray(p.assoMembers)    ? p.assoMembers   : []
@@ -273,6 +274,7 @@ function rebuildState(dyn) {
   state.announcements = dyn.announcements || [];
   state.jobs          = dyn.jobs          || [];
   state.sharings      = dyn.sharings      || [];
+  state.meetings      = dyn.meetings      || [];
   state.assoMembers   = dyn.assoMembers   || [];
 }
 
@@ -283,6 +285,7 @@ function extractDynamic() {
     announcements: state.announcements,
     jobs:          state.jobs,
     sharings:      state.sharings,
+    meetings:      state.meetings,
     surveyVotes:   Object.fromEntries(
                      state.surveys.map(s => [s.id, s.votesByMember || {}])
                    ),
@@ -299,7 +302,7 @@ function saveState() {
 }
 
 // ── Shared state object (always has seeds, dynamic parts filled immediately from cache)
-const state = { members: [], surveys: [], sharings: [], announcements: [], jobs: [] };
+const state = { members: [], surveys: [], sharings: [], meetings: [], announcements: [], jobs: [] };
 rebuildState(loadDynamic().dyn); // instant render from localStorage cache
 
 // ensureSeed is now a no-op — seeds are always applied via rebuildState()
@@ -359,6 +362,7 @@ function setTab(name) {
   if (name === 'asso')      renderAssoMembers();
   if (name === 'surveys')   renderSurveys();
   if (name === 'sharing')   renderSharings();
+  if (name === 'meetings')  renderMeetings();
 }
 
 // ── Dashboard ─────────────────────────────────────────────────
@@ -2109,6 +2113,131 @@ function deleteSharing() {
   showToast('Partage supprimé.');
 }
 
+// ── Meeting Points ─────────────────────────────────────────────
+function renderMeetings() {
+  const container = document.getElementById('meeting-list');
+  if (!container) return;
+  if (state.meetings.length === 0) {
+    container.innerHTML = '<div style="padding:1.5rem;text-align:center;color:#94a3b8;font-size:0.82rem;">Aucune réunion enregistrée · 尚無會議記錄</div>';
+    return;
+  }
+  const sorted = [...state.meetings].sort((a, b) => new Date(b.date) - new Date(a.date));
+  container.innerHTML = sorted.map(mt => {
+    const d = new Date(mt.date);
+    const dateStr = d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+    const timeStr = d.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    const pointsHtml = mt.points
+      ? mt.points.split('\n').filter(l => l.trim()).map(l =>
+          `<li style="margin-bottom:0.25rem;">${escHtml(l.trim())}</li>`).join('')
+      : '';
+    return `
+    <div class="sm-sharing-card" style="margin-bottom:0.65rem;">
+      <div class="sm-sharing-head">
+        <div class="sm-sharing-meta">
+          <span class="sm-sharing-date"><i class="fas fa-calendar-alt"></i>${dateStr} ${timeStr}</span>
+          <span class="sm-sharing-host"><i class="fas fa-user-edit"></i>${escHtml(mt.secretary)}</span>
+          ${mt.attendees ? `<span class="sm-sharing-host" style="color:#0e7490;"><i class="fas fa-users"></i>${escHtml(mt.attendees)}</span>` : ''}
+        </div>
+        <button class="sm-btn-sm" data-action="edit-meeting" data-mid="${mt.id}" style="margin-left:auto;">
+          <i class="fas fa-pen"></i> Modifier
+        </button>
+      </div>
+      <div class="sm-sharing-title" style="text-align:center;font-size:1.05rem;padding:0.5rem 0 0.25rem;">${escHtml(mt.title)}</div>
+      ${mt.points ? `
+      <div class="sm-sharing-section" style="margin-top:0.6rem;">
+        <div class="sm-sharing-section-label"><i class="fas fa-list-ul"></i> Points de réunion</div>
+        <ul style="margin:0.4rem 0 0 1rem;padding:0;font-size:0.78rem;color:#334155;line-height:1.6;">${pointsHtml}</ul>
+      </div>` : ''}
+      ${mt.docUrl ? `
+      <div class="sm-sharing-section" style="margin-top:0.5rem;">
+        <div class="sm-sharing-section-label"><i class="fas fa-file-alt"></i> Document</div>
+        <div class="sm-sharing-doc-row">
+          <a class="sm-sharing-doc-btn" href="${escHtml(mt.docUrl)}" target="_blank" rel="noopener">
+            <i class="fas fa-external-link-alt"></i> Ouvrir le document
+          </a>
+        </div>
+      </div>` : ''}
+      <div class="sm-sharing-footer">
+        <span class="sm-sharing-created">Ajouté le ${fmtDate(mt.createdAt)}</span>
+      </div>
+    </div>`;
+  }).join('');
+  container.querySelectorAll('[data-action="edit-meeting"]').forEach(btn => {
+    btn.addEventListener('click', () => openMeetingModal(btn.dataset.mid));
+  });
+}
+
+let _meetingModalId = null;
+function openMeetingModal(id = null) {
+  _meetingModalId = id;
+  const overlay = document.getElementById('meeting-modal');
+  const titleEl = document.getElementById('meeting-modal-title');
+  const delBtn  = document.getElementById('meeting-modal-delete');
+  if (!overlay) return;
+  if (id) {
+    const mt = state.meetings.find(m => m.id === id);
+    if (!mt) return;
+    titleEl.textContent = 'Modifier la réunion';
+    document.getElementById('mt-title').value     = mt.title      || '';
+    document.getElementById('mt-date').value      = mt.date ? mt.date.slice(0,16) : '';
+    document.getElementById('mt-secretary').value = mt.secretary  || '';
+    document.getElementById('mt-attendees').value = mt.attendees  || '';
+    document.getElementById('mt-points').value    = mt.points     || '';
+    document.getElementById('mt-doc').value       = mt.docUrl     || '';
+    delBtn.classList.remove('hidden');
+  } else {
+    titleEl.textContent = 'Nouvelle réunion · 新增會議記錄';
+    document.getElementById('mt-title').value     = '';
+    document.getElementById('mt-date').value      = new Date().toISOString().slice(0,16);
+    document.getElementById('mt-secretary').value = '';
+    document.getElementById('mt-attendees').value = '';
+    document.getElementById('mt-points').value    = '';
+    document.getElementById('mt-doc').value       = '';
+    delBtn.classList.add('hidden');
+  }
+  // populate secretary datalist
+  const dl = document.getElementById('mt-secretary-datalist');
+  if (dl) { dl.innerHTML = ''; state.members.forEach(m => { const o = document.createElement('option'); o.value = m.name; dl.appendChild(o); }); }
+  overlay.classList.remove('hidden');
+}
+function closeMeetingModal() {
+  document.getElementById('meeting-modal')?.classList.add('hidden');
+  _meetingModalId = null;
+}
+function saveMeeting() {
+  const get = id => document.getElementById(id)?.value.trim() || '';
+  const title     = get('mt-title');
+  const date      = get('mt-date');
+  const secretary = get('mt-secretary');
+  if (!title)     { showToast('Veuillez saisir un titre.'); return; }
+  if (!date)      { showToast('Veuillez saisir une date.'); return; }
+  if (!secretary) { showToast('Veuillez saisir le nom du secrétaire.'); return; }
+  const attendees = get('mt-attendees');
+  const points    = document.getElementById('mt-points')?.value.trim() || '';
+  const docUrl    = get('mt-doc');
+  if (_meetingModalId) {
+    const mt = state.meetings.find(m => m.id === _meetingModalId);
+    if (mt) { mt.title = title; mt.date = new Date(date).toISOString(); mt.secretary = secretary; mt.attendees = attendees; mt.points = points; mt.docUrl = docUrl; }
+    showToast('Réunion mise à jour.');
+  } else {
+    state.meetings.unshift({ id: uid(), title, date: new Date(date).toISOString(), secretary, attendees, points, docUrl, createdAt: new Date().toISOString() });
+    showToast('Réunion ajoutée !');
+  }
+  saveState();
+  closeMeetingModal();
+  renderMeetings();
+}
+function deleteMeeting() {
+  if (!_meetingModalId) return;
+  if (!confirm('Supprimer cette réunion ?')) return;
+  const idx = state.meetings.findIndex(m => m.id === _meetingModalId);
+  if (idx >= 0) state.meetings.splice(idx, 1);
+  saveState();
+  closeMeetingModal();
+  renderMeetings();
+  showToast('Réunion supprimée.');
+}
+
 // ── Import / Export JSON ───────────────────────────────────────
 function exportJSON() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
@@ -2220,12 +2349,10 @@ function initFirebase() {
     _fbSyncDone = true; // first Firebase reply received — local state is now considered synced
     const raw = snapshot.val();
     let dyn = null;
-    console.log('[Firebase] onValue raw keys:', raw ? Object.keys(raw) : null, '| raw.ts:', raw?.ts, '| data type:', typeof raw?.data);
 
     if (raw && typeof raw.data === 'string') {
       const localSavedAt = loadDynamic().savedAt;
       const fbTs = raw.ts || 0;
-      console.log('[Firebase] localSavedAt:', localSavedAt, '| fbTs:', fbTs, '| will skip:', localSavedAt > 0 && fbTs <= localSavedAt);
       if (localSavedAt > 0 && fbTs <= localSavedAt) return; // our local data is same or newer, skip (fresh browsers always apply Firebase data)
       try { dyn = JSON.parse(raw.data); } catch (_) { console.warn('[Firebase] parse error'); }
     } else if (raw && typeof raw === 'object' && Array.isArray(raw.members)) {
@@ -2438,6 +2565,24 @@ function init() {
     });
   }
 
+  // Meeting buttons
+  const addMeetingBtn = document.getElementById('add-meeting-btn');
+  if (addMeetingBtn) addMeetingBtn.addEventListener('click', () => openMeetingModal());
+  const meetingClose  = document.getElementById('meeting-modal-close');
+  const meetingCancel = document.getElementById('meeting-modal-cancel');
+  const meetingSave   = document.getElementById('meeting-modal-save');
+  const meetingDelete = document.getElementById('meeting-modal-delete');
+  if (meetingClose)  meetingClose.addEventListener('click', closeMeetingModal);
+  if (meetingCancel) meetingCancel.addEventListener('click', closeMeetingModal);
+  if (meetingSave)   meetingSave.addEventListener('click', saveMeeting);
+  if (meetingDelete) meetingDelete.addEventListener('click', deleteMeeting);
+  const meetingOverlay = document.getElementById('meeting-modal');
+  if (meetingOverlay) {
+    meetingOverlay.addEventListener('click', e => {
+      if (e.target === meetingOverlay) closeMeetingModal();
+    });
+  }
+
   // Close modals on Escape
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
@@ -2446,6 +2591,7 @@ function init() {
       closeSharingModal();
       closeAnncModal();
       closeJobModal();
+      closeMeetingModal();
     }
   });
 

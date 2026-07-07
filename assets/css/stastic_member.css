@@ -1534,3 +1534,122 @@ select.sm-input { cursor: pointer; }
   color: #64748b;
   margin-bottom: 0.6rem;
 }
+
+/* ── Comptable tab ───────────────────────────────────────────── */
+.comptable-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.comptable-kpi {
+  background: #fff;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+}
+.comptable-kpi-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.comptable-kpi-val {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.comptable-month-group { margin-bottom: 1rem; }
+.comptable-month-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.5rem 0.75rem;
+  background: #f1f5f9;
+  border-radius: 8px 8px 0 0;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+}
+.comptable-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  transition: background 0.1s;
+}
+.comptable-row:last-child { border-radius: 0 0 8px 8px; }
+.comptable-row:hover { background: #f8fafc; }
+.comptable-row-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 260px;
+  flex-shrink: 0;
+}
+.comptable-row-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.comptable-row-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.comptable-type-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+.badge-rec { background: #dcfce7; color: #166534; }
+.badge-dep { background: #fee2e2; color: #991b1b; }
+.comptable-date { font-size: 0.75rem; color: #64748b; white-space: nowrap; }
+.comptable-cat  { font-size: 0.72rem; color: #94a3b8; font-style: italic; }
+.comptable-desc { font-size: 0.8rem; color: #1e293b; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.comptable-doc-link {
+  font-size: 0.7rem;
+  color: #0369a1;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.comptable-doc-link:hover { text-decoration: underline; }
+.comptable-amount { font-size: 0.9rem; font-weight: 800; white-space: nowrap; }
+.amount-rec { color: #16a34a; }
+.amount-dep { color: #dc2626; }
+
+/* ── Export CSV dropdown ─────────────────────────────────────── */
+.export-period-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.export-period-item:hover { background: #f0fdf4; color: #059669; }
+.export-period-item i { color: #059669; width: 14px; }

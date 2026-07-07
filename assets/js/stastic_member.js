@@ -230,7 +230,7 @@ const ASSO_CITIES = ['Paris', 'Lyon', 'Toulouse', 'Bordeaux', 'Grenoble',
 const _DYN_KEY = STORE_KEY + '_dyn';
 
 function _emptyDynamic() {
-  return { addedMembers: [], announcements: [], jobs: [], sharings: [], meetings: [], surveyVotes: {}, userSurveys: [], assoMembers: [] };
+  return { addedMembers: [], announcements: [], jobs: [], sharings: [], meetings: [], expenses: [], surveyVotes: {}, userSurveys: [], assoMembers: [] };
 }
 
 // Load dynamic data from localStorage cache (fast, instant)
@@ -248,6 +248,7 @@ function loadDynamic() {
         jobs:          Array.isArray(p.jobs)           ? p.jobs          : [],
         sharings:      Array.isArray(p.sharings)       ? p.sharings      : [],
         meetings:      Array.isArray(p.meetings)       ? p.meetings      : [],
+        expenses:      Array.isArray(p.expenses)       ? p.expenses      : [],
         surveyVotes:   (p.surveyVotes && typeof p.surveyVotes === 'object') ? p.surveyVotes : {},
         userSurveys:   Array.isArray(p.userSurveys)   ? p.userSurveys   : [],
         assoMembers:   Array.isArray(p.assoMembers)    ? p.assoMembers   : []
@@ -275,6 +276,7 @@ function rebuildState(dyn) {
   state.jobs          = dyn.jobs          || [];
   state.sharings      = dyn.sharings      || [];
   state.meetings      = dyn.meetings      || [];
+  state.expenses      = dyn.expenses      || [];
   state.assoMembers   = dyn.assoMembers   || [];
 }
 
@@ -286,6 +288,7 @@ function extractDynamic() {
     jobs:          state.jobs,
     sharings:      state.sharings,
     meetings:      state.meetings,
+    expenses:      state.expenses,
     surveyVotes:   Object.fromEntries(
                      state.surveys.map(s => [s.id, s.votesByMember || {}])
                    ),
@@ -302,7 +305,7 @@ function saveState() {
 }
 
 // ── Shared state object (always has seeds, dynamic parts filled immediately from cache)
-const state = { members: [], surveys: [], sharings: [], meetings: [], announcements: [], jobs: [] };
+const state = { members: [], surveys: [], sharings: [], meetings: [], expenses: [], announcements: [], jobs: [] };
 rebuildState(loadDynamic().dyn); // instant render from localStorage cache
 
 // ensureSeed is now a no-op — seeds are always applied via rebuildState()
@@ -363,6 +366,7 @@ function setTab(name) {
   if (name === 'surveys')   renderSurveys();
   if (name === 'sharing')   renderSharings();
   if (name === 'meetings')  renderMeetings();
+  if (name === 'comptable') renderComptable();
 }
 
 // ── Dashboard ─────────────────────────────────────────────────
@@ -2238,6 +2242,267 @@ function deleteMeeting() {
   showToast('Réunion supprimée.');
 }
 
+// ── Comptable ──────────────────────────────────────────────────
+const EXPENSE_CATS = ['Frais bancaires','Cotisation membre','Matériel / Fournitures','Communication','Hébergement / Domaine','Événement','Remboursement','Autre'];
+const MONTH_NAMES  = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+function renderComptable() {
+  const list = document.getElementById('expense-list');
+  const summary = document.getElementById('comptable-summary');
+  if (!list || !summary) return;
+
+  const recettes  = state.expenses.filter(e => e.type === 'recette');
+  const depenses  = state.expenses.filter(e => e.type === 'depense');
+  const totalRec  = recettes.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const totalDep  = depenses.reduce((s,e) => s + (parseFloat(e.amount)||0), 0);
+  const solde     = totalRec - totalDep;
+
+  summary.innerHTML = `
+    <div class="comptable-kpi-row">
+      <div class="comptable-kpi" style="border-color:#10b981;">
+        <div class="comptable-kpi-label"><i class="fas fa-arrow-down" style="color:#10b981;"></i> Total recettes</div>
+        <div class="comptable-kpi-val" style="color:#10b981;">+${totalRec.toFixed(2)} €</div>
+      </div>
+      <div class="comptable-kpi" style="border-color:#ef4444;">
+        <div class="comptable-kpi-label"><i class="fas fa-arrow-up" style="color:#ef4444;"></i> Total dépenses</div>
+        <div class="comptable-kpi-val" style="color:#ef4444;">−${totalDep.toFixed(2)} €</div>
+      </div>
+      <div class="comptable-kpi" style="border-color:#6366f1;background:linear-gradient(135deg,#eef2ff,#fff);">
+        <div class="comptable-kpi-label"><i class="fas fa-balance-scale" style="color:#6366f1;"></i> Solde actuel</div>
+        <div class="comptable-kpi-val" style="color:${solde>=0?'#0f172a':'#dc2626'};">${solde>=0?'+':''}${solde.toFixed(2)} €</div>
+      </div>
+      <div class="comptable-kpi" style="border-color:#0e7490;">
+        <div class="comptable-kpi-label"><i class="fas fa-receipt" style="color:#0e7490;"></i> Nb transactions</div>
+        <div class="comptable-kpi-val" style="color:#0e7490;">${state.expenses.length}</div>
+      </div>
+    </div>`;
+
+  // Build export period dropdown
+  const periodsEl = document.getElementById('export-csv-periods');
+  if (periodsEl) {
+    if (state.expenses.length === 0) {
+      periodsEl.innerHTML = '<div style="padding:0.6rem 0.75rem;font-size:0.78rem;color:#94a3b8;">Aucune transaction</div>';
+    } else {
+      const years  = [...new Set(state.expenses.map(e => new Date(e.date).getFullYear()))].sort((a,b)=>b-a);
+      const months = [...new Set(state.expenses.map(e => {
+        const d = new Date(e.date); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      }))].sort().reverse();
+      let html = `<button class="export-period-item" data-period="all" onclick="exportCSV('all')">
+        <i class="fas fa-database"></i> Toutes les transactions
+      </button>`;
+      html += `<div style="padding:0.3rem 0.75rem;font-size:0.65rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-top:0.25rem;">Par année</div>`;
+      years.forEach(yr => { html += `<button class="export-period-item" data-period="${yr}" onclick="exportCSV('${yr}')"><i class="fas fa-calendar-alt"></i> ${yr}</button>`; });
+      html += `<div style="padding:0.3rem 0.75rem;font-size:0.65rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-top:0.25rem;">Par mois</div>`;
+      months.forEach(mk => {
+        const [yr, mo] = mk.split('-');
+        html += `<button class="export-period-item" data-period="${mk}" onclick="exportCSV('${mk}')"><i class="fas fa-calendar-day"></i> ${MONTH_NAMES[parseInt(mo)-1]} ${yr}</button>`;
+      });
+      periodsEl.innerHTML = html;
+    }
+  }
+
+  if (state.expenses.length === 0) {
+    list.innerHTML = '<div style="padding:1.5rem;text-align:center;color:#94a3b8;font-size:0.82rem;">Aucune transaction enregistrée · 尚無交易記錄</div>';
+    return;
+  }
+
+  // Group by month
+  const byMonth = {};
+  [...state.expenses].sort((a,b) => new Date(b.date)-new Date(a.date)).forEach(e => {
+    const d = new Date(e.date);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    if (!byMonth[key]) byMonth[key] = [];
+    byMonth[key].push(e);
+  });
+
+  list.innerHTML = Object.entries(byMonth).map(([monthKey, entries]) => {
+    const [yr, mo] = monthKey.split('-');
+    const monthLabel = `${MONTH_NAMES[parseInt(mo)-1]} ${yr}`;
+    const monthRec = entries.filter(e=>e.type==='recette').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+    const monthDep = entries.filter(e=>e.type==='depense').reduce((s,e)=>s+(parseFloat(e.amount)||0),0);
+    const rows = entries.map(e => {
+      const isRec = e.type === 'recette';
+      const d = new Date(e.date);
+      const dateStr = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'});
+      return `
+      <div class="comptable-row" data-eid="${e.id}">
+        <div class="comptable-row-left">
+          <span class="comptable-type-badge ${isRec?'badge-rec':'badge-dep'}">${isRec?'+ Recette':'− Dépense'}</span>
+          <span class="comptable-date">${dateStr}</span>
+          <span class="comptable-cat">${escHtml(e.category||'')}</span>
+        </div>
+        <div class="comptable-row-center">
+          <span class="comptable-desc">${escHtml(e.description||'')}</span>
+          ${e.fileUrl ? `<a href="${escHtml(e.fileUrl)}" target="_blank" rel="noopener" class="comptable-doc-link"><i class="fas fa-paperclip"></i> ${escHtml(e.fileName||'Document')}</a>` : ''}
+        </div>
+        <div class="comptable-row-right">
+          <span class="comptable-amount ${isRec?'amount-rec':'amount-dep'}">${isRec?'+':'−'}${parseFloat(e.amount||0).toFixed(2)} €</span>
+          <button class="sm-btn-sm" data-action="edit-expense" data-eid="${e.id}"><i class="fas fa-pen"></i></button>
+        </div>
+      </div>`;
+    }).join('');
+    return `
+    <div class="comptable-month-group">
+      <div class="comptable-month-header">
+        <span><i class="fas fa-calendar-alt"></i> ${monthLabel}</span>
+        <span style="font-size:0.72rem;gap:0.75rem;display:flex;">
+          <span style="color:#10b981;">+${monthRec.toFixed(2)} €</span>
+          <span style="color:#ef4444;">−${monthDep.toFixed(2)} €</span>
+        </span>
+      </div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-action="edit-expense"]').forEach(btn => {
+    btn.addEventListener('click', () => openExpenseModal(btn.dataset.eid));
+  });
+}
+
+let _expenseModalId = null;
+function openExpenseModal(id = null) {
+  _expenseModalId = id;
+  const overlay = document.getElementById('expense-modal');
+  const titleEl = document.getElementById('expense-modal-title');
+  const delBtn  = document.getElementById('expense-modal-delete');
+  if (!overlay) return;
+  if (id) {
+    const e = state.expenses.find(x => x.id === id);
+    if (!e) return;
+    titleEl.textContent = 'Modifier la transaction';
+    document.getElementById('exp-type').value        = e.type        || 'depense';
+    document.getElementById('exp-date').value        = e.date ? e.date.slice(0,10) : '';
+    document.getElementById('exp-amount').value      = e.amount      || '';
+    document.getElementById('exp-category').value    = e.category    || '';
+    document.getElementById('exp-description').value = e.description || '';
+    document.getElementById('exp-fileurl').value     = e.fileUrl     || '';
+    document.getElementById('exp-filename').value    = e.fileName    || '';
+    delBtn.classList.remove('hidden');
+  } else {
+    titleEl.textContent = 'Nouvelle transaction · 新增交易';
+    document.getElementById('exp-type').value        = 'depense';
+    document.getElementById('exp-date').value        = new Date().toISOString().slice(0,10);
+    document.getElementById('exp-amount').value      = '';
+    document.getElementById('exp-category').value    = '';
+    document.getElementById('exp-description').value = '';
+    document.getElementById('exp-fileurl').value     = '';
+    document.getElementById('exp-filename').value    = '';
+    delBtn.classList.add('hidden');
+  }
+  _updateExpenseCategoryHint();
+  overlay.classList.remove('hidden');
+  document.getElementById('exp-amount')?.focus();
+}
+function _updateExpenseCategoryHint() {
+  const type = document.getElementById('exp-type')?.value;
+  const catSel = document.getElementById('exp-category');
+  if (!catSel) return;
+  const depCats = ['Frais bancaires','Matériel / Fournitures','Communication','Hébergement / Domaine','Événement','Remboursement','Autre'];
+  const recCats = ['Cotisation membre','Adhésion (Allo Asso)','Subvention','Donation / Don','Parrainage','Remboursement reçu','Autre'];
+  const cats = type === 'recette' ? recCats : depCats;
+  const current = catSel.value;
+  catSel.innerHTML = `<option value="">— Catégorie —</option>` + cats.map(c => `<option value="${c}" ${c===current?'selected':''}>${c}</option>`).join('');
+}
+function closeExpenseModal() {
+  document.getElementById('expense-modal')?.classList.add('hidden');
+  _expenseModalId = null;
+}
+function saveExpense() {
+  const get = id => document.getElementById(id)?.value.trim() || '';
+  const type   = get('exp-type');
+  const date   = get('exp-date');
+  const amount = get('exp-amount');
+  if (!date)   { showToast('Veuillez saisir une date.'); return; }
+  if (!amount || isNaN(parseFloat(amount))) { showToast('Montant invalide.'); return; }
+  const category    = get('exp-category');
+  const description = get('exp-description');
+  const fileUrl     = get('exp-fileurl');
+  const fileName    = get('exp-filename') || (fileUrl ? 'Document' : '');
+  if (_expenseModalId) {
+    const e = state.expenses.find(x => x.id === _expenseModalId);
+    if (e) { e.type=type; e.date=new Date(date).toISOString(); e.amount=parseFloat(amount); e.category=category; e.description=description; e.fileUrl=fileUrl; e.fileName=fileName; }
+    showToast('Transaction mise à jour.');
+  } else {
+    state.expenses.unshift({ id:uid(), type, date:new Date(date).toISOString(), amount:parseFloat(amount), category, description, fileUrl, fileName, createdAt:new Date().toISOString() });
+    showToast('Transaction ajoutée !');
+  }
+  saveState();
+  closeExpenseModal();
+  renderComptable();
+}
+function exportCSV(period) {
+  // Close dropdown
+  document.getElementById('export-csv-dropdown')?.style && (document.getElementById('export-csv-dropdown').style.display = 'none');
+
+  let rows = [...state.expenses].sort((a,b) => new Date(a.date)-new Date(b.date));
+  let label = 'toutes';
+
+  if (period !== 'all') {
+    if (period.includes('-')) {
+      // month filter: "2026-07"
+      rows = rows.filter(e => new Date(e.date).toISOString().slice(0,7) === period);
+      const [yr, mo] = period.split('-');
+      label = `${MONTH_NAMES[parseInt(mo)-1]}-${yr}`;
+    } else {
+      // year filter: "2026"
+      rows = rows.filter(e => String(new Date(e.date).getFullYear()) === String(period));
+      label = period;
+    }
+  }
+
+  if (rows.length === 0) { showToast('Aucune transaction pour cette période.'); return; }
+
+  const totalRec = rows.filter(r=>r.type==='recette').reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const totalDep = rows.filter(r=>r.type==='depense').reduce((s,r)=>s+(parseFloat(r.amount)||0),0);
+  const solde    = totalRec - totalDep;
+
+  const fmt = n => parseFloat(n||0).toFixed(2).replace('.',',');  // French decimal
+  const esc = v => `"${String(v||'').replace(/"/g,'""')}"`;
+
+  const header = ['Date','Type','Catégorie','Description','Montant (€)','Justificatif','Date ajout'];
+  const dataRows = rows.map(r => [
+    new Date(r.date).toLocaleDateString('fr-FR'),
+    r.type === 'recette' ? 'Recette' : 'Dépense',
+    r.category || '',
+    r.description || '',
+    (r.type === 'recette' ? '+' : '-') + fmt(r.amount),
+    r.fileUrl || '',
+    new Date(r.createdAt).toLocaleDateString('fr-FR')
+  ].map(esc).join(';'));
+
+  const sep  = ';;;;;;';
+  const summary = [
+    sep,
+    `${esc('TOTAL RECETTES')};;;;;${esc('+'+fmt(totalRec)+' €')}`,
+    `${esc('TOTAL DÉPENSES')};;;;;${esc('-'+fmt(totalDep)+' €')}`,
+    `${esc('SOLDE')};;;;;${esc((solde>=0?'+':'')+fmt(solde)+' €')}`
+  ];
+
+  const BOM = '﻿'; // UTF-8 BOM for Excel
+  const csv = BOM + [header.map(esc).join(';'), ...dataRows, ...summary].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `TTF-comptabilite-${label}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showToast(`CSV exporté — ${rows.length} transaction(s) · ${label}`);
+}
+
+function deleteExpense() {
+  if (!_expenseModalId) return;
+  if (!confirm('Supprimer cette transaction ?')) return;
+  const idx = state.expenses.findIndex(x => x.id === _expenseModalId);
+  if (idx >= 0) state.expenses.splice(idx, 1);
+  saveState();
+  closeExpenseModal();
+  renderComptable();
+  showToast('Transaction supprimée.');
+}
+
 // ── Import / Export JSON ───────────────────────────────────────
 function exportJSON() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
@@ -2583,6 +2848,34 @@ function init() {
     });
   }
 
+  // Comptable buttons
+  const addExpenseBtn = document.getElementById('add-expense-btn');
+  if (addExpenseBtn) addExpenseBtn.addEventListener('click', () => openExpenseModal());
+  const expClose  = document.getElementById('expense-modal-close');
+  const expCancel = document.getElementById('expense-modal-cancel');
+  const expSave   = document.getElementById('expense-modal-save');
+  const expDelete = document.getElementById('expense-modal-delete');
+  if (expClose)  expClose.addEventListener('click', closeExpenseModal);
+  if (expCancel) expCancel.addEventListener('click', closeExpenseModal);
+  if (expSave)   expSave.addEventListener('click', saveExpense);
+  if (expDelete) expDelete.addEventListener('click', deleteExpense);
+  const expOverlay = document.getElementById('expense-modal');
+  if (expOverlay) {
+    expOverlay.addEventListener('click', e => { if (e.target === expOverlay) closeExpenseModal(); });
+    expOverlay.addEventListener('change', e => { if (e.target.id === 'exp-type') _updateExpenseCategoryHint(); });
+  }
+
+  // Export CSV dropdown toggle
+  const exportCsvBtn  = document.getElementById('export-csv-btn');
+  const exportCsvDrop = document.getElementById('export-csv-dropdown');
+  if (exportCsvBtn && exportCsvDrop) {
+    exportCsvBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      exportCsvDrop.style.display = exportCsvDrop.style.display === 'none' ? 'block' : 'none';
+    });
+    document.addEventListener('click', () => { if (exportCsvDrop) exportCsvDrop.style.display = 'none'; });
+  }
+
   // Close modals on Escape
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
@@ -2592,6 +2885,7 @@ function init() {
       closeAnncModal();
       closeJobModal();
       closeMeetingModal();
+      closeExpenseModal();
     }
   });
 

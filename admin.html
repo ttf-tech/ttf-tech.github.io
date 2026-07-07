@@ -250,6 +250,9 @@
         <button class="sm-tab" data-tab="meetings">
           <i class="fas fa-clipboard-list"></i>Réunions
         </button>
+        <button class="sm-tab" data-tab="comptable">
+          <i class="fas fa-calculator"></i>Comptable
+        </button>
         <button class="sm-tab create-tab" data-tab="create">
           <i class="fas fa-plus-circle"></i>+ Créer sondage
         </button>
@@ -696,6 +699,76 @@
       </div>
     </div>
     <!-- /MEETINGS -->
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <!-- TAB PANE: COMPTABLE                                      -->
+    <!-- ════════════════════════════════════════════════════════ -->
+    <div class="tab-pane" data-tab="comptable">
+
+      <div class="sm-survey-banner-wrap">
+        <div class="sm-survey-banner">
+          <div class="sm-survey-banner-header">
+            <span class="sm-survey-banner-title">
+              <i class="fas fa-calculator"></i>
+              Comptabilité · 財務管理 — ASSOC. TAIWAN TECH FRANCE
+            </span>
+            <span class="sm-survey-banner-badges">
+              <span class="sm-badge sm-badge-open"><i class="fas fa-university"></i> CA Provence Côte d'Azur</span>
+              <span class="sm-badge sm-badge-anon"><i class="fas fa-lock"></i> Comptable</span>
+            </span>
+          </div>
+          <div class="sm-survey-banner-rules">
+            <div class="sm-survey-rule">
+              <i class="fas fa-info-circle"></i>
+              <div>
+                <strong>Notes de frais &amp; recettes · 費用記錄與收入</strong>
+                <span>Enregistrez chaque dépense ou recette avec date, montant, catégorie et lien justificatif (Google Drive). Les fichiers sont stockés dans votre Drive privé. · 每筆支出或收入請附上日期、金額、類別與 Google Drive 佐證連結，文件存放於私人 Drive 資料夾。</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI summary injected by JS -->
+      <div id="comptable-summary" style="max-width:960px;margin:0 auto;padding:0 1.5rem 0.5rem;"></div>
+
+      <div class="sm-sharing-toolbar" style="max-width:960px;">
+        <div>
+          <div class="sm-sharing-toolbar-title">
+            <i class="fas fa-list-alt"></i>Transactions · 交易記錄
+          </div>
+          <div class="sm-sharing-toolbar-sub">
+            Dépenses &amp; recettes, triées par mois · 按月份排列的支出與收入
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center;position:relative;">
+          <!-- Export dropdown -->
+          <div id="export-csv-wrap" style="position:relative;">
+            <button id="export-csv-btn" class="sm-btn"
+                    style="background:#fff;border:1.5px solid #cbd5e1;color:#334155;font-weight:700;font-size:0.8rem;padding:0.5rem 0.9rem;border-radius:8px;display:flex;align-items:center;gap:0.4rem;cursor:pointer;">
+              <i class="fas fa-file-csv" style="color:#059669;"></i> Exporter CSV
+              <i class="fas fa-chevron-down" style="font-size:0.6rem;opacity:0.6;"></i>
+            </button>
+            <div id="export-csv-dropdown"
+                 style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.1);min-width:230px;z-index:100;overflow:hidden;">
+              <div style="padding:0.5rem 0.75rem;font-size:0.68rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #f1f5f9;">
+                Exporter pour déclaration fiscale
+              </div>
+              <div id="export-csv-periods"><!-- injected by renderComptable --></div>
+            </div>
+          </div>
+          <button id="add-expense-btn" class="sm-btn sm-btn-emerald">
+            <i class="fas fa-plus"></i>+ Nouvelle transaction
+          </button>
+        </div>
+      </div>
+
+      <div style="max-width:960px;margin:0 auto;padding:0 1.5rem 2rem;">
+        <div id="expense-list"><!-- Injected by JS --></div>
+      </div>
+
+    </div>
+    <!-- /COMPTABLE -->
 
     <!-- ════════════════════════════════════════════════════════ -->
     <!-- TAB PANE: CREATE SURVEY                                  -->
@@ -1154,6 +1227,119 @@
   <!-- /MEETING MODAL -->
 
   <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- EXPENSE MODAL                                              -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div id="expense-modal" class="sm-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="expense-modal-title">
+    <div class="sm-modal-box" style="max-width:560px;">
+      <div class="sm-modal-header">
+        <span class="sm-modal-title" id="expense-modal-title">Nouvelle transaction · 新增交易</span>
+        <button id="expense-modal-close" class="sm-modal-close" type="button" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="sm-modal-body">
+
+        <!-- Type toggle -->
+        <div class="sm-form-group">
+          <label class="sm-label">Type *</label>
+          <div style="display:flex;gap:0.5rem;">
+            <label style="flex:1;cursor:pointer;">
+              <input type="radio" id="exp-type" name="exp-type" value="depense" style="display:none;">
+              <div class="exp-type-btn" data-for="depense"
+                   onclick="document.getElementById('exp-type').value='depense';document.querySelectorAll('.exp-type-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');_updateExpenseCategoryHint();"
+                   style="text-align:center;padding:0.55rem;border-radius:8px;border:2px solid #e2e8f0;font-size:0.82rem;font-weight:700;color:#dc2626;transition:all 0.15s;">
+                <i class="fas fa-arrow-up"></i> Dépense
+              </div>
+            </label>
+            <label style="flex:1;cursor:pointer;">
+              <div class="exp-type-btn" data-for="recette"
+                   onclick="document.getElementById('exp-type').value='recette';document.querySelectorAll('.exp-type-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');_updateExpenseCategoryHint();"
+                   style="text-align:center;padding:0.55rem;border-radius:8px;border:2px solid #e2e8f0;font-size:0.82rem;font-weight:700;color:#16a34a;transition:all 0.15s;">
+                <i class="fas fa-arrow-down"></i> Recette
+              </div>
+            </label>
+          </div>
+          <style>
+            .exp-type-btn.active[data-for="depense"]{ background:#fee2e2;border-color:#ef4444!important; }
+            .exp-type-btn.active[data-for="recette"]{ background:#dcfce7;border-color:#22c55e!important; }
+          </style>
+          <script>
+            document.addEventListener('DOMContentLoaded', () => {
+              document.querySelector('.exp-type-btn[data-for="depense"]')?.classList.add('active');
+            });
+          </script>
+        </div>
+
+        <div class="sm-input-grid">
+          <div class="sm-form-group">
+            <label class="sm-label" for="exp-date">Date *</label>
+            <input id="exp-date" class="sm-input" type="date">
+          </div>
+          <div class="sm-form-group">
+            <label class="sm-label" for="exp-amount">Montant (€) *</label>
+            <input id="exp-amount" class="sm-input" type="number" min="0" step="0.01"
+                   placeholder="ex: 15.00">
+          </div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="exp-category">Catégorie</label>
+          <select id="exp-category" class="sm-input">
+            <option value="">— Catégorie —</option>
+            <option>Frais bancaires</option>
+            <option>Matériel / Fournitures</option>
+            <option>Communication</option>
+            <option>Hébergement / Domaine</option>
+            <option>Événement</option>
+            <option>Remboursement</option>
+            <option>Autre</option>
+          </select>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="exp-description">Description · 說明</label>
+          <input id="exp-description" class="sm-input" type="text"
+                 placeholder="ex: Souscription 15 parts sociales CA · 認購社會股份">
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="exp-fileurl">
+            <i class="fas fa-paperclip" style="margin-right:0.25rem;"></i>
+            Lien justificatif · 佐證文件連結
+          </label>
+          <input id="exp-fileurl" class="sm-input" type="url"
+                 placeholder="https://drive.google.com/file/…">
+          <div style="font-size:0.68rem;color:#94a3b8;margin-top:0.2rem;">
+            Uploadez d'abord sur Google Drive → copiez le lien de partage · 先上傳至 Google Drive，再貼入分享連結
+          </div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="exp-filename">Nom du fichier (optionnel)</label>
+          <input id="exp-filename" class="sm-input" type="text"
+                 placeholder="ex: CA-parts-sociales-2026-07.pdf">
+        </div>
+
+      </div>
+      <div class="sm-modal-footer">
+        <button id="expense-modal-delete" type="button" class="hidden"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #fecdd3;background:#fff1f2;color:#be123c;font-size:0.82rem;font-weight:600;cursor:pointer;margin-right:auto;">
+          <i class="fas fa-trash" style="margin-right:0.3rem;"></i>Supprimer
+        </button>
+        <button id="expense-modal-cancel" type="button"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          Annuler
+        </button>
+        <button id="expense-modal-save" type="button"
+                style="padding:0.5rem 1.25rem;border-radius:7px;border:none;background:#0a2d42;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+          <i class="fas fa-save"></i>Enregistrer
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- /EXPENSE MODAL -->
+
+  <!-- ══════════════════════════════════════════════════════════ -->
   <!-- JOB MODAL                                                   -->
   <!-- ══════════════════════════════════════════════════════════ -->
   <div id="job-modal" class="sm-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="job-modal-title">
@@ -1349,6 +1535,6 @@
   </div>
   <!-- /ASSO MEMBER MODAL -->
 
-  <script src="assets/js/stastic_member.js?v=3" defer></script>
+  <script src="assets/js/stastic_member.js?v=7" defer></script>
 </body>
 </html>

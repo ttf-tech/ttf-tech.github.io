@@ -340,6 +340,12 @@
         (j.poster      || '').toLowerCase().includes(text);
       return matchContract && matchLoc && matchText;
     });
+    filtered.sort((a, b) => {
+      const aOpen = !isExpired(a.expiresAt) && a.status !== 'closed';
+      const bOpen = !isExpired(b.expiresAt) && b.status !== 'closed';
+      if (bOpen !== aOpen) return bOpen ? 1 : -1;
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    });
     renderJobs(filtered);
   }
 

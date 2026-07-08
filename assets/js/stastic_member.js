@@ -1625,7 +1625,13 @@ function renderJobs() {
   const container = document.getElementById('job-list');
   if (!container) return;
 
-  const list = [...(state.jobs || [])].reverse();
+  const list = [...(state.jobs || [])].sort((a, b) => {
+    // Open jobs always before closed
+    const statusDiff = (b.status === 'open' ? 1 : 0) - (a.status === 'open' ? 1 : 0);
+    if (statusDiff !== 0) return statusDiff;
+    // Within same status: most recent first
+    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+  });
 
   if (list.length === 0) {
     container.innerHTML = `

@@ -89,7 +89,8 @@
   justify-content: center;
 }
 .sm-kpi-tile {
-  background: rgba(255,255,255,0.12);
+  background: rgba(7,57,129,0.06);
+  border: 1px solid rgba(7,57,129,0.12);
   border-radius: 10px;
   padding: 0.6rem 1rem;
   text-align: center;
@@ -100,19 +101,19 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: rgba(255,255,255,0.55);
+  color: rgba(7,57,129,0.55);
   display: block;
 }
 .sm-kpi-value {
   font-size: 1.75rem;
   font-weight: 900;
-  color: #fff;
+  color: #073981;
   line-height: 1.1;
   display: block;
 }
-.sm-kpi-value.accent { color: #fbbf24; }
-.sm-kpi-value.green  { color: #6ee7b7; }
-.sm-kpi-value.blue   { color: #93c5fd; }
+.sm-kpi-value.accent { color: #b45309; }
+.sm-kpi-value.green  { color: #059669; }
+.sm-kpi-value.blue   { color: #0369a1; }
 
 /* ── Hero CTA buttons ────────────────────────────────────────── */
 .sm-hero-cta-primary {
@@ -139,15 +140,15 @@
   gap: 0.4rem;
   padding: 0.65rem 1.25rem;
   border-radius: 99px;
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.28);
-  color: #fff;
+  background: rgba(7,57,129,0.06);
+  border: 1px solid rgba(7,57,129,0.25);
+  color: #073981;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s;
 }
-.sm-hero-cta-secondary:hover { background: rgba(255,255,255,0.22); transform: translateY(-1px); }
+.sm-hero-cta-secondary:hover { background: rgba(7,57,129,0.12); transform: translateY(-1px); }
 
 /* ── Header action buttons ───────────────────────────────────── */
 .sm-btn {

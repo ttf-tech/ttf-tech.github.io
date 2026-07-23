@@ -21,10 +21,10 @@
     /* ── Sidebar ────────────────────────────────────────────── */
     #app-sidebar {
       position: fixed; top: 0; left: 0; height: 100%; width: 4rem;
-      background: #111827;
+      background: #ffffff;
       display: flex; flex-direction: column; align-items: center;
       padding: 1.25rem 0; z-index: 20;
-      box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+      box-shadow: 2px 0 12px rgba(15,23,42,0.08); border-right: 1px solid #e2e8f0;
     }
     .sidebar-logo {
       width: 2.5rem; height: auto; margin-bottom: 2rem;
@@ -33,7 +33,7 @@
     .sidebar-nav { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
     .sidebar-link {
       display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
-      color: rgba(255,255,255,0.4);
+      color: rgba(7,57,129,0.45);
       text-decoration: none;
       transition: color 0.15s;
       padding: 0.5rem;
@@ -42,8 +42,8 @@
       justify-content: center;
       font-size: 1.15rem;
     }
-    .sidebar-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
-    .sidebar-link.active { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .sidebar-link:hover { color: #073981; background: rgba(7,57,129,0.06); }
+    .sidebar-link.active { color: #b45309; background: rgba(180,83,9,0.12); }
     .sidebar-link span {
       font-size: 0.55rem; font-weight: 700;
       letter-spacing: 0.04em; text-transform: uppercase;
@@ -53,14 +53,15 @@
 
     /* ── Hero ───────────────────────────────────────────────── */
     .hero {
-      background: linear-gradient(160deg, #071d2b 0%, #0a2d42 60%, #0f3d5a 100%);
-      color: #fff;
+      background: linear-gradient(160deg, #eef4fb 0%, #ffffff 60%);
+      color: #073981;
       padding: 4rem 2rem 3rem;
+      border-bottom: 1px solid #e2e8f0;
     }
     .hero-flag { font-size: 4rem; margin-bottom: 1rem; display: block; }
     .hero-title { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.5rem; }
-    .hero-sub { font-size: 1rem; color: rgba(255,255,255,0.6); margin-bottom: 1.5rem; }
-    .hero-desc { font-size: 0.92rem; color: rgba(255,255,255,0.82); line-height: 1.7; max-width: 600px; margin-bottom: 2rem; }
+    .hero-sub { font-size: 1rem; color: rgba(7,57,129,0.65); margin-bottom: 1.5rem; }
+    .hero-desc { font-size: 0.92rem; color: rgba(7,57,129,0.85); line-height: 1.7; max-width: 600px; margin-bottom: 2rem; }
 
     .hero-cta {
       display: inline-flex; align-items: center; gap: 0.5rem;
@@ -73,31 +74,31 @@
     .hero-cta:hover { opacity: 0.9; }
     .hero-cta-stats {
       display: inline-flex; align-items: center; gap: 0.5rem;
-      background: rgba(255,255,255,0.12); color: #fff;
-      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(7,57,129,0.06); color: #073981;
+      border: 1px solid rgba(7,57,129,0.25);
       font-size: 0.9rem; font-weight: 600;
       padding: 0.75rem 1.5rem; border-radius: 10px;
       text-decoration: none;
       transition: background 0.15s;
       margin-left: 0.75rem;
     }
-    .hero-cta-stats:hover { background: rgba(255,255,255,0.2); }
+    .hero-cta-stats:hover { background: rgba(7,57,129,0.12); }
 
     /* ── Stats bar ──────────────────────────────────────────── */
     .stats-bar {
-      background: rgba(255,255,255,0.06);
-      border-top: 1px solid rgba(255,255,255,0.1);
+      background: rgba(7,57,129,0.04);
+      border-top: 1px solid rgba(7,57,129,0.12);
       display: flex; gap: 0; flex-wrap: wrap;
     }
     .stat-item {
       flex: 1; min-width: 120px;
       padding: 1.25rem 1.5rem;
       text-align: center;
-      border-right: 1px solid rgba(255,255,255,0.08);
+      border-right: 1px solid rgba(7,57,129,0.1);
     }
     .stat-item:last-child { border-right: none; }
-    .stat-value { font-size: 1.8rem; font-weight: 800; color: #fbbf24; display: block; }
-    .stat-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.45); margin-top: 0.2rem; }
+    .stat-value { font-size: 1.8rem; font-weight: 800; color: #b45309; display: block; }
+    .stat-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(7,57,129,0.55); margin-top: 0.2rem; }
 
     /* ── Content sections ───────────────────────────────────── */
     .section { max-width: 960px; margin: 0 auto; padding: 3rem 2rem; }

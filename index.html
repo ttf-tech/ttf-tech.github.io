@@ -25,25 +25,25 @@
     /* ── Sidebar ─────────────────────────────────────────────── */
     #app-sidebar {
       position: fixed; top: 0; left: 0; height: 100%; width: 4rem;
-      background: #111827;
+      background: #ffffff;
       display: flex; flex-direction: column; align-items: center;
       padding: 1.25rem 0; z-index: 20;
-      box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+      box-shadow: 2px 0 12px rgba(15,23,42,0.08); border-right: 1px solid #e2e8f0;
     }
     .sidebar-logo { width: 2.5rem; height: auto; margin-bottom: 2rem; display: block; }
     .sidebar-nav  { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; }
     .sidebar-link {
       display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
-      color: rgba(255,255,255,0.4); text-decoration: none;
+      color: rgba(7,57,129,0.45); text-decoration: none;
       transition: color 0.15s; padding: 0.5rem; border-radius: 10px;
       width: 3rem; justify-content: center; font-size: 1.15rem;
     }
-    .sidebar-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
-    .sidebar-link.active { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .sidebar-link:hover { color: #073981; background: rgba(7,57,129,0.06); }
+    .sidebar-link.active { color: #b45309; background: rgba(180,83,9,0.12); }
     .sidebar-link span   { font-size: 0.55rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75; }
     .sidebar-link.active span { opacity: 1; }
     .sidebar-link-admin       { margin-top: auto; }
-    .sidebar-link-admin:hover { color: #fbbf24; }
+    .sidebar-link-admin:hover { color: #b45309; }
 
     /* ── Public sections ─────────────────────────────────────── */
     .pub-section {
@@ -379,15 +379,15 @@
   <main class="flex-1 ml-16">
 
     <!-- ── HERO ────────────────────────────────────────────────── -->
-    <div class="text-white" style="background: linear-gradient(160deg,#0a2d42 0%,#0f4060 100%);">
+    <div style="background: linear-gradient(160deg, #eef4fb 0%, #ffffff 60%); border-bottom: 1px solid #e2e8f0;">
       <div class="max-w-screen-xl mx-auto px-5 pt-8 pb-6">
 
         <div class="text-center" style="margin-bottom:1.5rem;">
-          <img src="logo.png" alt="Taiwan Tech France" style="height:120px;width:auto;margin:0 auto 0.5rem;display:block;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.4));">
-          <div style="font-size:0.95rem;color:rgba(255,255,255,0.55);margin-top:0.35rem;">
+          <img src="logo.png" alt="Taiwan Tech France" style="height:120px;width:auto;margin:0 auto 0.5rem;display:block;filter:drop-shadow(0 2px 8px rgba(15,23,42,0.12));">
+          <div style="font-size:0.95rem;color:rgba(7,57,129,0.65);margin-top:0.35rem;">
             在法臺灣科技社群 · Communauté tech taïwanaise en France
           </div>
-          <div style="font-size:0.78rem;color:rgba(255,255,255,0.4);max-width:440px;margin:0.5rem auto 0;line-height:1.5;">
+          <div style="font-size:0.78rem;color:rgba(7,57,129,0.5);max-width:440px;margin:0.5rem auto 0;line-height:1.5;">
             Pour les ingénieurs et professionnels tech taïwanais en France —
             partager des opportunités, rencontrer des pairs, évoluer ensemble.
           </div>

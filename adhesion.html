@@ -22,18 +22,18 @@
     /* ── Sidebar (identical across all pages) ── */
     #app-sidebar {
       position: fixed; top: 0; left: 0; height: 100%; width: 4rem;
-      background: #111827; display: flex; flex-direction: column; align-items: center;
-      padding: 1.25rem 0; z-index: 20; box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+      background: #ffffff; display: flex; flex-direction: column; align-items: center;
+      padding: 1.25rem 0; z-index: 20; box-shadow: 2px 0 12px rgba(15,23,42,0.08); border-right: 1px solid #e2e8f0;
     }
     .sidebar-logo { width: 2.5rem; height: auto; margin-bottom: 2rem; display: block; }
     .sidebar-nav  { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; }
     .sidebar-link {
       display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
-      color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.15s;
+      color: rgba(7,57,129,0.45); text-decoration: none; transition: color 0.15s;
       padding: 0.5rem; border-radius: 10px; width: 3rem; justify-content: center; font-size: 1.1rem;
     }
-    .sidebar-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
-    .sidebar-link.active { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .sidebar-link:hover { color: #073981; background: rgba(7,57,129,0.06); }
+    .sidebar-link.active { color: #b45309; background: rgba(180,83,9,0.12); }
     .sidebar-link span { font-size: 0.5rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75; }
     .sidebar-link.active span { opacity: 1; }
     .sidebar-link-admin { margin-top: auto; }
@@ -43,24 +43,25 @@
 
     /* ── Hero ── */
     .page-hero {
-      background: linear-gradient(160deg, #1a0a42 0%, #2d1060 50%, #1a0a42 100%);
-      color: #fff; padding: 2.25rem 1.5rem 2rem; position: relative; overflow: hidden;
+      background: linear-gradient(160deg, #faf5ff 0%, #ffffff 60%);
+      color: #4c1d95; padding: 2.25rem 1.5rem 2rem; position: relative; overflow: hidden;
+      border-bottom: 1px solid #e2e8f0;
     }
     .page-hero::before {
       content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 70% 50%, rgba(167,139,250,0.15) 0%, transparent 60%);
+      background: radial-gradient(ellipse at 70% 50%, rgba(124,58,237,0.06) 0%, transparent 60%);
       pointer-events: none;
     }
     .hero-pill {
       display: inline-flex; align-items: center; gap: 0.4rem;
-      background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.4);
-      color: #c4b5fd; font-size: 0.68rem; font-weight: 700;
+      background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.3);
+      color: #6d28d9; font-size: 0.68rem; font-weight: 700;
       padding: 0.25rem 0.75rem; border-radius: 99px; margin-bottom: 0.9rem;
       text-transform: uppercase; letter-spacing: 0.06em;
     }
     .page-hero h1 { font-size: 1.9rem; font-weight: 900; line-height: 1.1; margin-bottom: 0.4rem; }
-    .page-hero h1 span { color: #c4b5fd; }
-    .page-hero p  { font-size: 0.85rem; color: rgba(255,255,255,0.6); max-width: 540px; line-height: 1.6; }
+    .page-hero h1 span { color: #7c3aed; }
+    .page-hero p  { font-size: 0.85rem; color: rgba(76,29,149,0.7); max-width: 540px; line-height: 1.6; }
 
     /* ── Section wrapper ── */
     .adh-section { margin: 2rem auto 0; max-width: 860px; padding: 0 1.5rem; }
@@ -373,7 +374,7 @@
         <p style="margin-top:0.6rem;">
           Taiwan Tech France est une association officielle (Loi 1901). Rejoignez-nous officiellement et participez activement à la vie de la communauté.
         </p>
-        <p style="margin-top:0.35rem; font-size:0.75rem; color:rgba(255,255,255,0.4);">
+        <p style="margin-top:0.35rem; font-size:0.75rem; color:rgba(76,29,149,0.55);">
           台法科技協會是正式依法成立的法國非營利協會（Loi 1901），歡迎加入正式會員，一同參與協會的運作與發展。
         </p>
       </div>

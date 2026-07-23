@@ -21,18 +21,18 @@
     /* Sidebar */
     #app-sidebar {
       position: fixed; top: 0; left: 0; height: 100%; width: 4rem;
-      background: #111827; display: flex; flex-direction: column; align-items: center;
-      padding: 1.25rem 0; z-index: 20; box-shadow: 2px 0 12px rgba(0,0,0,0.3);
+      background: #ffffff; display: flex; flex-direction: column; align-items: center;
+      padding: 1.25rem 0; z-index: 20; box-shadow: 2px 0 12px rgba(15,23,42,0.08); border-right: 1px solid #e2e8f0;
     }
     .sidebar-logo { width: 2.5rem; height: auto; margin-bottom: 2rem; display: block; }
     .sidebar-nav  { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; }
     .sidebar-link {
       display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
-      color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.15s;
+      color: rgba(7,57,129,0.45); text-decoration: none; transition: color 0.15s;
       padding: 0.5rem; border-radius: 10px; width: 3rem; justify-content: center; font-size: 1.1rem;
     }
-    .sidebar-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); }
-    .sidebar-link.active { color: #fbbf24; background: rgba(251,191,36,0.1); }
+    .sidebar-link:hover { color: #073981; background: rgba(7,57,129,0.06); }
+    .sidebar-link.active { color: #b45309; background: rgba(180,83,9,0.12); }
     .sidebar-link span { font-size: 0.5rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; opacity: 0.75; }
     .sidebar-link.active span { opacity: 1; }
     .sidebar-link-admin { margin-top: auto; }
@@ -42,18 +42,18 @@
 
     /* Hero header */
     .page-hero {
-      background: linear-gradient(160deg,#0a2d42 0%,#0f4060 100%);
-      color: #fff; padding: 2rem 1.5rem 1.75rem;
+      background: linear-gradient(160deg, #eef4fb 0%, #ffffff 60%);
+      color: #073981; padding: 2rem 1.5rem 1.75rem; border-bottom: 1px solid #e2e8f0;
     }
     .founding-pill {
       display: inline-flex; align-items: center; gap: 0.4rem;
-      background: rgba(251,191,36,0.2); border: 1px solid rgba(251,191,36,0.4);
-      color: #fbbf24; font-size: 0.68rem; font-weight: 700;
+      background: rgba(180,83,9,0.1); border: 1px solid rgba(180,83,9,0.3);
+      color: #b45309; font-size: 0.68rem; font-weight: 700;
       padding: 0.25rem 0.75rem; border-radius: 99px; margin-bottom: 0.9rem;
       text-transform: uppercase; letter-spacing: 0.06em;
     }
     .page-hero h1 { font-size: 1.75rem; font-weight: 900; line-height: 1.15; margin-bottom: 0.5rem; }
-    .page-hero p  { font-size: 0.85rem; color: rgba(255,255,255,0.6); max-width: 520px; line-height: 1.55; }
+    .page-hero p  { font-size: 0.85rem; color: rgba(7,57,129,0.65); max-width: 520px; line-height: 1.55; }
 
     /* Section wrapper */
     .assoc-section { margin: 2rem auto 0; max-width: 860px; padding: 0 1.5rem; }
@@ -326,12 +326,12 @@
     <!-- ── HERO ──────────────────────────────────────────────────── -->
     <div class="page-hero">
       <div class="page-inner">
-        <div class="founding-pill" style="background:rgba(34,197,94,0.2);border-color:rgba(34,197,94,0.4);color:#86efac;"><i class="fas fa-certificate" style="font-size:0.6rem;"></i> Association officielle · 正式成立</div>
+        <div class="founding-pill" style="background:rgba(21,128,61,0.12);border-color:rgba(21,128,61,0.35);color:#15803d;"><i class="fas fa-certificate" style="font-size:0.6rem;"></i> Association officielle · 正式成立</div>
         <h1>Taiwan Tech France<br><span style="font-weight:400;font-size:1.2rem;opacity:0.75;">Association Loi 1901 · RNA W061018695</span></h1>
         <p style="margin-top:0.75rem;">
           Association à but non lucratif déclarée en préfecture, reconnue légalement en France — pour fédérer la communauté tech taïwanaise et représenter ses intérêts.
         </p>
-        <p style="margin-top:0.4rem;font-size:0.75rem;color:rgba(255,255,255,0.45);">
+        <p style="margin-top:0.4rem;font-size:0.75rem;color:rgba(7,57,129,0.5);">
           已正式向法國縣政府申報登記的非營利協會，RNA 號碼：W061018695。
         </p>
       </div>

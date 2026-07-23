@@ -492,6 +492,10 @@
         <button id="export-asso-csv-btn" class="sm-btn" style="background:#fff;border:1px solid #e2e8f0;color:#475569;">
           <i class="fas fa-file-csv"></i>Export CSV
         </button>
+        <button id="import-asso-csv-btn" class="sm-btn" style="background:#fff;border:1px solid #e2e8f0;color:#475569;">
+          <i class="fas fa-file-import"></i>Importer CSV HelloAsso
+        </button>
+        <input id="import-asso-csv-file" type="file" accept=".csv" class="hidden">
         <button id="add-asso-member-btn" class="sm-btn sm-btn-emerald">
           <i class="fas fa-user-plus"></i>+ Ajouter membre Asso
         </button>
@@ -1487,6 +1491,37 @@
   </div>
   <!-- /ASSO MEMBER MODAL -->
 
-  <script src="assets/js/stastic_member.js?v=7" defer></script>
+  <!-- ── CSV IMPORT (HelloAsso) MODAL ─────────────────────────── -->
+  <div id="csv-import-modal" class="sm-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="csv-import-title">
+    <div class="sm-modal-box" style="max-width:560px;">
+      <div class="sm-modal-header">
+        <span class="sm-modal-title" id="csv-import-title">Importer CSV HelloAsso · 匯入 HelloAsso 名單</span>
+        <button id="csv-import-close" class="sm-modal-close" type="button" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="sm-modal-body" style="max-height:70vh;overflow-y:auto;">
+        <div style="font-size:0.75rem;color:#64748b;margin-bottom:0.75rem;line-height:1.5;">
+          Associez chaque colonne du fichier exporté depuis HelloAsso à un champ · 請將 CSV 欄位對應到下方欄位。
+          Un membre existant (même email) sera mis à jour · 若 email 已存在，資料會更新而非重複新增。
+        </div>
+        <div id="csv-import-count" style="font-size:0.78rem;font-weight:700;color:#0a2d42;margin-bottom:0.5rem;"></div>
+        <div id="csv-import-mapping"><!-- Built by JS --></div>
+      </div>
+      <div class="sm-modal-footer">
+        <button id="csv-import-cancel" type="button"
+                style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          Annuler
+        </button>
+        <button id="csv-import-confirm" type="button"
+                style="padding:0.5rem 1.25rem;border-radius:7px;border:none;background:#059669;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+          <i class="fas fa-file-import"></i>Importer
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- /CSV IMPORT MODAL -->
+
+  <script src="assets/js/stastic_member.js?v=8" defer></script>
 </body>
 </html>

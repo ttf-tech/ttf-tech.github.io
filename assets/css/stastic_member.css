@@ -45,8 +45,8 @@
   display: flex;
   align-items: center;
   gap: 0;
-  background: rgba(255,255,255,0.08);
-  border-bottom: 1px solid rgba(255,255,255,0.12);
+  background: rgba(7,57,129,0.04);
+  border-bottom: 1px solid rgba(7,57,129,0.12);
   padding: 0 1.5rem;
   overflow-x: auto;
 }
@@ -54,7 +54,7 @@
   padding: 0.75rem 1.25rem;
   font-size: 0.82rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.55);
+  color: rgba(7,57,129,0.55);
   border: none;
   background: none;
   cursor: pointer;
@@ -65,17 +65,17 @@
   align-items: center;
   gap: 0.4rem;
 }
-.sm-tab:hover { color: rgba(255,255,255,0.85); }
+.sm-tab:hover { color: #073981; }
 .sm-tab.active {
-  color: #fff;
-  border-bottom-color: #fbbf24;
+  color: #073981;
+  border-bottom-color: #b45309;
 }
 .sm-tab.create-tab {
-  color: #6ee7b7;
+  color: #059669;
   margin-left: auto;
 }
-.sm-tab.create-tab:hover { color: #a7f3d0; }
-.sm-tab.create-tab.active { border-bottom-color: #6ee7b7; }
+.sm-tab.create-tab:hover { color: #047857; }
+.sm-tab.create-tab.active { border-bottom-color: #059669; }
 
 /* ── Tab panes ───────────────────────────────────────────────── */
 .tab-pane { display: none; }
@@ -166,9 +166,9 @@
 .sm-btn:hover { opacity: 0.88; }
 .sm-btn:active { transform: scale(0.97); }
 .sm-btn-ghost {
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.2);
-  color: #fff;
+  background: rgba(7,57,129,0.06);
+  border: 1px solid rgba(7,57,129,0.25);
+  color: #073981;
 }
 .sm-btn-primary {
   background: #0a2d42;

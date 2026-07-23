@@ -17,6 +17,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="assets/js/admin-config.js"></script>
   <link rel="stylesheet" href="assets/css/stastic_member.css">
   <link rel="stylesheet" href="assets/css/layout.css">
 
@@ -138,39 +140,63 @@
       </div>
     </div>
 
-    <!-- Filter bar -->
-    <div class="filter-bar">
-      <div class="filter-search-wrap">
-        <i class="fas fa-search"></i>
-        <input type="text" id="job-search" placeholder="Rechercher poste, entreprise, compétences… · 搜尋職位、公司或技能">
-        <span id="jobs-count" class="jobs-count"></span>
+    <div class="restricted-asso-content" style="display:none;">
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <div class="filter-search-wrap">
+          <i class="fas fa-search"></i>
+          <input type="text" id="job-search" placeholder="Rechercher poste, entreprise, compétences… · 搜尋職位、公司或技能">
+          <span id="jobs-count" class="jobs-count"></span>
+        </div>
+        <div class="filter-row">
+          <span class="filter-row-label">Type</span>
+          <button class="fchip active" data-contract="all">All</button>
+          <button class="fchip" data-contract="CDI">CDI</button>
+          <button class="fchip" data-contract="Freelance">Freelance</button>
+          <button class="fchip" data-contract="CDD">CDD</button>
+          <button class="fchip" data-contract="Stage">Stage</button>
+          <button class="fchip" data-contract="Alternance">Alternance</button>
+        </div>
+        <div class="filter-row">
+          <span class="filter-row-label">Lieu</span>
+          <button class="fchip loc active" data-loc="all">Toutes les villes</button>
+          <button class="fchip loc" data-loc="remote">Remote</button>
+          <button class="fchip loc" data-loc="paris">Paris</button>
+          <button class="fchip loc" data-loc="sophia">Sophia-Antipolis</button>
+          <button class="fchip loc" data-loc="lyon">Lyon</button>
+          <button class="fchip loc" data-loc="nice">Nice</button>
+        </div>
       </div>
-      <div class="filter-row">
-        <span class="filter-row-label">Type</span>
-        <button class="fchip active" data-contract="all">All</button>
-        <button class="fchip" data-contract="CDI">CDI</button>
-        <button class="fchip" data-contract="Freelance">Freelance</button>
-        <button class="fchip" data-contract="CDD">CDD</button>
-        <button class="fchip" data-contract="Stage">Stage</button>
-        <button class="fchip" data-contract="Alternance">Alternance</button>
-      </div>
-      <div class="filter-row">
-        <span class="filter-row-label">Lieu</span>
-        <button class="fchip loc active" data-loc="all">Toutes les villes</button>
-        <button class="fchip loc" data-loc="remote">Remote</button>
-        <button class="fchip loc" data-loc="paris">Paris</button>
-        <button class="fchip loc" data-loc="sophia">Sophia-Antipolis</button>
-        <button class="fchip loc" data-loc="lyon">Lyon</button>
-        <button class="fchip loc" data-loc="nice">Nice</button>
+
+      <div class="jobs-wrap" id="jobs-list">
+        <div class="jobs-empty"><i class="fas fa-briefcase"></i>Chargement…</div>
       </div>
     </div>
 
-    <div class="jobs-wrap" id="jobs-list">
-      <div class="jobs-empty"><i class="fas fa-briefcase"></i>Chargement…</div>
+    <div class="upgrade-to-asso-banner" style="max-width:900px;margin:1rem auto 0;">
+      <div class="upgrade-to-asso-banner-text">
+        <div class="upgrade-to-asso-banner-title">
+          <i class="fas fa-lock"></i> Réservé aux membres Adhésion · 僅限 Adhésion 會員
+        </div>
+        <div class="upgrade-to-asso-banner-desc">
+          Le tableau d'offres et les missions ESN sont réservés aux membres officiels (cotisation HelloAsso).<br>
+          職缺與 ESN 職缺看板僅限已繳費的正式會員查看。
+        </div>
+      </div>
+      <div class="upgrade-to-asso-banner-actions">
+        <button type="button" class="upgrade-to-asso-signin-btn signed-out-only" onclick="ttfMemberSignIn()">
+          <i class="fab fa-google"></i> Se connecter · 登入驗證
+        </button>
+        <span class="signed-in-only" style="font-size:0.72rem;color:#92400e;">Connecté(e) mais pas encore Adhésion —</span>
+        <a href="adhesion.html" class="upgrade-to-asso-join-btn">
+          <i class="fas fa-id-card"></i> Adhérer · 成為會員
+        </a>
+      </div>
     </div>
   </main>
 
   <script src="assets/js/firebase-read.js"></script>
+  <script src="assets/js/member-gate.js"></script>
   <script>
   'use strict';
 

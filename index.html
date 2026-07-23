@@ -17,6 +17,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="assets/js/admin-config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <link rel="stylesheet" href="assets/css/stastic_member.css">
@@ -393,8 +395,13 @@
              class="sm-hero-cta-primary">
             <i class="fab fa-whatsapp"></i> Join WhatsApp · 加入群組
           </a>
-          <a href="jobs.html" class="sm-hero-cta-secondary">
-            <i class="fas fa-briefcase"></i> Voir les offres · 職缺
+          <span class="restricted-asso-content" style="display:none;">
+            <a href="jobs.html" class="sm-hero-cta-secondary">
+              <i class="fas fa-briefcase"></i> Voir les offres · 職缺
+            </a>
+          </span>
+          <a href="adhesion.html" class="upgrade-to-asso-banner inline-btn">
+            <i class="fas fa-lock"></i> Adhérer pour voir les offres · 需入會查看
           </a>
           <a href="events.html" class="sm-hero-cta-secondary">
             <i class="fas fa-calendar-alt"></i> Voir les activités · 活動
@@ -456,24 +463,39 @@
         </div>
       </div>
 
-      <a class="activity-card" href="https://calendly.com/tess-hsu/parlon-ton-project-cyber"
-         target="_blank" rel="noopener"
-         style="text-decoration:none;border-color:#fde68a;background:linear-gradient(135deg,#fffbeb,#fef9c3);cursor:pointer;transition:box-shadow 0.15s;">
-        <div class="activity-icon" style="background:#fef3c7;color:#92400e;font-size:1.1rem;">☕</div>
-        <div>
-          <div class="activity-label" style="color:#92400e;">Coffee Chat · 咖啡聊聊</div>
-          <div class="activity-value" style="font-size:0.78rem;color:#78350f;">En tête-à-tête avec la communauté</div>
-          <div class="activity-sub" style="color:#a16207;margin-top:0.3rem;font-size:0.68rem;font-weight:600;">
-            Réserver un créneau →
+      <div class="restricted-asso-content" style="display:none;">
+        <a class="activity-card" href="https://calendly.com/tess-hsu/parlon-ton-project-cyber"
+           target="_blank" rel="noopener"
+           style="text-decoration:none;border-color:#fde68a;background:linear-gradient(135deg,#fffbeb,#fef9c3);cursor:pointer;transition:box-shadow 0.15s;">
+          <div class="activity-icon" style="background:#fef3c7;color:#92400e;font-size:1.1rem;">☕</div>
+          <div>
+            <div class="activity-label" style="color:#92400e;">Coffee Chat · 咖啡聊聊</div>
+            <div class="activity-value" style="font-size:0.78rem;color:#78350f;">En tête-à-tête avec la communauté</div>
+            <div class="activity-sub" style="color:#a16207;margin-top:0.3rem;font-size:0.68rem;font-weight:600;">
+              Réserver un créneau →
+            </div>
           </div>
-        </div>
-      </a>
+        </a>
+      </div>
+      <div class="upgrade-to-asso-banner inline-dark">
+        <a class="activity-card" href="adhesion.html"
+           style="text-decoration:none;border-color:#fde68a;background:linear-gradient(135deg,#fffbeb,#fef9c3);cursor:pointer;">
+          <div class="activity-icon" style="background:#fef3c7;color:#92400e;font-size:1.1rem;"><i class="fas fa-lock"></i></div>
+          <div>
+            <div class="activity-label" style="color:#92400e;">Coffee Chat · 咖啡聊聊</div>
+            <div class="activity-value" style="font-size:0.78rem;color:#78350f;">Réservé aux membres Adhésion · 僅限會員</div>
+            <div class="activity-sub" style="color:#a16207;margin-top:0.3rem;font-size:0.68rem;font-weight:600;">
+              Adhérer pour réserver →
+            </div>
+          </div>
+        </a>
+      </div>
 
     </div>
     <!-- /RECENT ACTIVITY -->
 
     <!-- ── JOBS PREVIEW ────────────────────────────────────────── -->
-    <section class="pub-section" style="margin-bottom:0;">
+    <section class="pub-section restricted-asso-content" style="margin-bottom:0;display:none;">
       <div class="pub-section-head">
         <div class="pub-section-title">
           <i class="fas fa-briefcase" style="color:#059669;"></i>
@@ -482,6 +504,26 @@
         <a href="jobs.html" class="pub-section-viewall">Voir tout <i class="fas fa-arrow-right" style="font-size:0.6rem;"></i></a>
       </div>
       <div class="pub-job-list" id="home-jobs"></div>
+    </section>
+
+    <section class="pub-section upgrade-to-asso-banner" style="margin-bottom:0;">
+      <div class="upgrade-to-asso-banner-text">
+        <div class="upgrade-to-asso-banner-title">
+          <i class="fas fa-lock"></i> Dernières offres & Missions · 最新職缺
+        </div>
+        <div class="upgrade-to-asso-banner-desc">
+          Réservé aux membres Adhésion (cotisation HelloAsso) · 僅限已繳費的正式會員查看
+        </div>
+      </div>
+      <div class="upgrade-to-asso-banner-actions">
+        <button type="button" class="upgrade-to-asso-signin-btn signed-out-only" onclick="ttfMemberSignIn()">
+          <i class="fab fa-google"></i> Se connecter · 登入驗證
+        </button>
+        <span class="signed-in-only" style="font-size:0.72rem;color:#92400e;">Connecté(e) mais pas encore Adhésion —</span>
+        <a href="adhesion.html" class="upgrade-to-asso-join-btn">
+          <i class="fas fa-id-card"></i> Adhérer · 成為會員
+        </a>
+      </div>
     </section>
 
     <!-- ── USER SURVEYS (dynamic, from admin) ───────────────────── -->
@@ -690,15 +732,26 @@
             <span class="about-coffee-chip">🚀 Startup / Founder</span>
             <span class="about-coffee-chip">🏠 Long-term life in France</span>
           </div>
-          <div style="margin-top:0.75rem;font-size:0.72rem;font-weight:700;color:#fff;opacity:0.9;">
-            <i class="fas fa-lock" style="margin-right:0.3rem;color:#fde68a;"></i>
-            <span style="color:#fde68a;">Accès réservé aux membres Adhésion · 僅限 Adhésion 會員</span>
+        </div>
+        <div class="restricted-asso-content" style="display:none;">
+          <a href="https://calendly.com/tess-hsu/parlon-ton-project-cyber"
+             target="_blank" rel="noopener" class="about-coffee-strip-cta">
+            <i class="fas fa-calendar-check"></i> Réserver · 預約
+          </a>
+        </div>
+        <div class="upgrade-to-asso-banner inline-dark" style="max-width:220px;">
+          <div style="font-size:0.72rem;font-weight:700;color:#fde68a;">
+            <i class="fas fa-lock" style="margin-right:0.3rem;"></i>Accès réservé aux membres Adhésion · 僅限 Adhésion 會員
+          </div>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <button type="button" class="upgrade-to-asso-signin-btn signed-out-only" onclick="ttfMemberSignIn()">
+              <i class="fab fa-google"></i> Se connecter
+            </button>
+            <a href="adhesion.html" class="upgrade-to-asso-join-btn">
+              <i class="fas fa-id-card"></i> Adhérer
+            </a>
           </div>
         </div>
-        <a href="https://calendly.com/tess-hsu/parlon-ton-project-cyber"
-           target="_blank" rel="noopener" class="about-coffee-strip-cta">
-          <i class="fas fa-calendar-check"></i> Réserver · 預約
-        </a>
       </div>
       <!-- /Coffee Chat strip -->
 
@@ -918,6 +971,7 @@
   </main>
 
   <script src="assets/js/firebase-read.js"></script>
+  <script src="assets/js/member-gate.js"></script>
   <script>
   'use strict';
 

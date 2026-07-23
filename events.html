@@ -17,6 +17,8 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="assets/js/admin-config.js"></script>
   <link rel="stylesheet" href="assets/css/stastic_member.css">
   <link rel="stylesheet" href="assets/css/layout.css">
 
@@ -237,14 +239,34 @@
           </div>
         </div>
         <div class="coffee-actions">
-          <a href="https://calendly.com/tess-hsu/parlon-ton-project-cyber"
-             target="_blank" rel="noopener" class="coffee-book-btn">
-            <i class="fas fa-calendar-check"></i> Réserver un Coffee Chat
-          </a>
-          <span class="coffee-note">Gratuit · 免費 · ~30-40 min via Google Meet</span>
-          <span class="coffee-note" style="color:#fde68a;font-weight:700;">
-            <i class="fas fa-lock" style="margin-right:0.3rem;"></i>Accès réservé aux membres Adhésion · 僅限 Adhésion 會員
-          </span>
+          <div class="restricted-asso-content" style="display:none;">
+            <a href="https://calendly.com/tess-hsu/parlon-ton-project-cyber"
+               target="_blank" rel="noopener" class="coffee-book-btn">
+              <i class="fas fa-calendar-check"></i> Réserver un Coffee Chat
+            </a>
+            <span class="coffee-note">Gratuit · 免費 · ~30-40 min via Google Meet</span>
+            <span class="coffee-note" style="opacity:0.8;">
+              <i class="fas fa-check-circle" style="color:#6ee7b7;margin-right:0.3rem;"></i>
+              Accès Adhésion vérifié · <span data-member-gate-email></span> ·
+              <a href="#" onclick="ttfMemberSignOut();return false;" style="color:#fde68a;text-decoration:underline;">Se déconnecter</a>
+            </span>
+          </div>
+          <div class="upgrade-to-asso-banner inline-dark">
+            <span class="coffee-note" style="color:#fde68a;font-weight:700;">
+              <i class="fas fa-lock" style="margin-right:0.3rem;"></i>Accès réservé aux membres Adhésion · 僅限 Adhésion 會員
+            </span>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+              <button type="button" class="upgrade-to-asso-signin-btn signed-out-only" onclick="ttfMemberSignIn()">
+                <i class="fab fa-google"></i> Se connecter · 需入會查看
+              </button>
+              <span class="signed-in-only" style="font-size:0.7rem;color:#fde68a;">
+                Connecté(e) mais pas encore Adhésion · 已登入但尚未成為會員 —
+              </span>
+              <a href="adhesion.html" class="upgrade-to-asso-join-btn">
+                <i class="fas fa-id-card"></i> Adhérer · 成為會員
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -305,6 +327,7 @@
   </main>
 
   <script src="assets/js/firebase-read.js"></script>
+  <script src="assets/js/member-gate.js"></script>
   <script>
   'use strict';
 

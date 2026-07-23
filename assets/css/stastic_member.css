@@ -1654,3 +1654,65 @@ select.sm-input { cursor: pointer; }
 }
 .export-period-item:hover { background: #f0fdf4; color: #059669; }
 .export-period-item i { color: #059669; width: 14px; }
+
+/* ── Adhésion (paid member) gate banner ──────────────────────── */
+.upgrade-to-asso-banner {
+  background: linear-gradient(135deg, #fffbeb, #fef9c3);
+  border: 1.5px solid #fcd34d;
+  border-radius: 14px;
+  padding: 1.1rem 1.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.upgrade-to-asso-banner-text { flex: 1; min-width: 220px; }
+.upgrade-to-asso-banner-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #78350f;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.25rem;
+}
+.upgrade-to-asso-banner-desc { font-size: 0.76rem; color: #92400e; line-height: 1.5; }
+.upgrade-to-asso-banner-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.upgrade-to-asso-signin-btn,
+.upgrade-to-asso-join-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.upgrade-to-asso-signin-btn { background: #fff; color: #78350f; border: 1px solid #fcd34d; }
+.upgrade-to-asso-signin-btn:hover { opacity: 0.85; }
+.upgrade-to-asso-join-btn { background: #92400e; color: #fff; }
+.upgrade-to-asso-join-btn:hover { opacity: 0.9; }
+/* Only shown once signed in but not (yet) a paid member */
+.upgrade-to-asso-banner .signed-in-only { display: none; }
+.upgrade-to-asso-banner.signed-in-non-member .signed-in-only { display: inline-flex; }
+.upgrade-to-asso-banner.signed-in-non-member .signed-out-only { display: none; }
+/* Variant: drop the card chrome when nesting inside an already-colored card */
+.upgrade-to-asso-banner.inline-dark {
+  background: none; border: none; padding: 0;
+  flex-direction: column; align-items: flex-start; gap: 0.5rem;
+}
+/* Variant: compact single pill-button, for slotting into a CTA row */
+.upgrade-to-asso-banner.inline-btn {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: rgba(180,83,9,0.08); border: 1px solid rgba(180,83,9,0.3);
+  color: #92400e; padding: 0.65rem 1.25rem; border-radius: 99px;
+  font-size: 0.85rem; font-weight: 600; text-decoration: none;
+  transition: background 0.15s;
+}
+.upgrade-to-asso-banner.inline-btn:hover { background: rgba(180,83,9,0.15); }

@@ -945,14 +945,18 @@ function exportAssoCSV() {
 // directly (that would require shipping a token in a public JS file).
 // Instead: open the workflow's "Run workflow" page for the admin to
 // confirm, then watch the *existing* real-time Firebase listener
-// (initFirebase, below) for the moment assoMembers actually changes —
-// no polling, no new backend, just reacting to data we already subscribe to.
+// (initFirebase, below) for `dyn.lastAssoSync` — scripts/sync-helloasso.js
+// writes that record on *every* run, even when it finds 0 new members, so
+// the browser shows the exact same message the Action logged instead of
+// guessing from a timeout.
 
 const HELLOASSO_SYNC_WORKFLOW_URL =
   'https://github.com/ttf-tech/ttf-tech.github.io/actions/workflows/sync-helloasso.yml';
-const ASSO_SYNC_WATCH_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
+const ASSO_SYNC_WATCH_TIMEOUT_MS = 45 * 1000; // safety net only — real runs finish in ~10-15s
 
-let _assoSyncWatch = null; // { emails: Set<string>, timer }
+let _assoSyncWatching = false;
+let _assoSyncTimer = null;
+let _lastSeenAssoSyncTs = 0;
 
 function _assoSyncStatus(text) {
   const el = document.getElementById('asso-sync-status');
@@ -962,40 +966,32 @@ function _assoSyncStatus(text) {
   else { el.style.display = 'none'; }
 }
 
-function _assoEmailSet() {
-  return new Set(state.assoMembers.map(m => (m.email || '').trim().toLowerCase()).filter(Boolean));
-}
-
-function startAssoSyncWatch() {
-  if (_assoSyncWatch) clearTimeout(_assoSyncWatch.timer);
-  _assoSyncWatch = {
-    emails: _assoEmailSet(),
-    timer: setTimeout(() => {
-      _assoSyncWatch = null;
-      _assoSyncStatus(null);
-      showToast('Aucun nouveau membre · 沒有新會員', 10000);
-    }, ASSO_SYNC_WATCH_TIMEOUT_MS)
-  };
-  _assoSyncStatus('En attente du résultat de synchronisation… · 等待同步結果…');
-}
-
-// Called from initFirebase()'s real-time listener whenever fresh data arrives.
-function checkAssoSyncWatch() {
-  if (!_assoSyncWatch) return;
-  const newEmails = [...state.assoMembers.map(m => (m.email || '').trim().toLowerCase())].filter(Boolean);
-  const added = newEmails.filter(e => !_assoSyncWatch.emails.has(e));
-  if (added.length === 0) return; // keep watching until timeout or a real change lands
-
-  clearTimeout(_assoSyncWatch.timer);
-  _assoSyncWatch = null;
-  _assoSyncStatus(null);
-  showToast(`✅ ${added.length} membre(s) ajouté(s) · 已新增 ${added.length} 位會員`, 10000);
-}
-
 function triggerAssoSync() {
-  startAssoSyncWatch();
+  _assoSyncWatching = true;
+  clearTimeout(_assoSyncTimer);
+  _assoSyncTimer = setTimeout(() => {
+    if (!_assoSyncWatching) return;
+    _assoSyncWatching = false;
+    _assoSyncStatus(null);
+    showToast('Pas encore de résultat — vérifiez sur GitHub Actions · 尚未收到結果，請至 GitHub Actions 確認', 10000);
+  }, ASSO_SYNC_WATCH_TIMEOUT_MS);
+
   window.open(HELLOASSO_SYNC_WORKFLOW_URL, '_blank', 'noopener');
+  _assoSyncStatus('En attente du résultat de synchronisation… · 等待同步結果…');
   showToast('Onglet GitHub ouvert : cliquez « Run workflow » pour lancer la synchro · 請在開啟的分頁點擊「Run workflow」開始同步', 6000);
+}
+
+// Called from initFirebase()'s real-time listener with the raw
+// `dyn.lastAssoSync` record whenever fresh Firebase data arrives.
+function handleLastAssoSync(sync) {
+  if (!sync || !sync.ts || sync.ts <= _lastSeenAssoSyncTs) return;
+  _lastSeenAssoSyncTs = sync.ts;
+  if (!_assoSyncWatching) return; // ignore syncs from before the admin clicked the button
+
+  _assoSyncWatching = false;
+  clearTimeout(_assoSyncTimer);
+  _assoSyncStatus(null);
+  showToast(sync.message, 10000);
 }
 
 // ── Surveys tab ────────────────────────────────────────────────
@@ -2714,7 +2710,7 @@ function initFirebase() {
     if (activePane === 'asso')    renderAssoMembers();
     if (activePane === 'surveys') renderSurveys();
     if (activePane === 'sharing') renderSharings();
-    checkAssoSyncWatch();
+    if (dyn && dyn.lastAssoSync) handleLastAssoSync(dyn.lastAssoSync);
   });
 }
 

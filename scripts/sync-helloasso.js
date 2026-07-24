@@ -112,6 +112,13 @@ function extractMembersFromOrders(orders) {
 // ── Merge into the site's single Firebase RTDB blob ──────────────
 // Same shape as assets/js/firebase-read.js reads and stastic_member.js
 // writes: { ts, data: JSON.stringify(dynState) } under `grp_hub_v2`.
+//
+// Always writes — even when 0 members are found — and always stamps
+// `dyn.lastAssoSync = { ts, added, updated, total, message }`. That's what
+// makes the browser-side "Sync Asso" button reliable: admin.html's existing
+// real-time Firebase listener fires on every run (not just ones that changed
+// assoMembers), so it can show this exact `message` back to the admin
+// instead of guessing from a timeout.
 async function syncToFirebase(members) {
   const dataUrl = `${FIREBASE_DB_URL}/grp_hub_v2.json?auth=${FIREBASE_DB_SECRET}`;
 
@@ -144,6 +151,12 @@ async function syncToFirebase(members) {
     }
   }
 
+  const message = members.length === 0
+    ? '目前 HelloAsso 尚無會員繳費紀錄，無需同步 · No HelloAsso payments to sync yet'
+    : `已新增 ${added} 位、更新 ${updated} 位會員 · ${added} added, ${updated} updated`;
+
+  dyn.lastAssoSync = { ts: Date.now(), added, updated, total: members.length, message };
+
   const ts = Math.max(Date.now(), ((raw && raw.ts) || 0) + 1);
   const putRes = await fetch(dataUrl, {
     method: 'PUT',
@@ -152,7 +165,7 @@ async function syncToFirebase(members) {
   });
   if (!putRes.ok) throw new Error(`Firebase write failed: ${putRes.status} ${await putRes.text()}`);
 
-  console.log(`HelloAsso sync done — ${added} added, ${updated} updated (${members.length} membership records processed).`);
+  console.log(`HelloAsso sync done — ${message}`);
 }
 
 (async () => {
@@ -160,10 +173,6 @@ async function syncToFirebase(members) {
   try {
     const token   = await getHelloAssoToken();
     const orders  = await fetchAllMembershipOrders(token);
-    if (orders.length === 0) {
-      console.log('HelloAsso sync: 0 membership order found — nothing to sync yet · 目前 HelloAsso 尚無會員繳費紀錄，無需同步。');
-      return;
-    }
     const members = extractMembersFromOrders(orders);
     await syncToFirebase(members);
   } catch (e) {

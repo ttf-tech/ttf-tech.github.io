@@ -1,10 +1,6 @@
 name: Sync HelloAsso members
 
 on:
-  schedule:
-    # Every 30 minutes. GitHub may delay this slightly under load — fine for
-    # membership access, which isn't time-critical to the minute.
-    - cron: '*/30 * * * *'
   workflow_dispatch: {}
 
 jobs:

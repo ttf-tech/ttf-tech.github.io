@@ -2,12 +2,13 @@
 /**
  * Pulls paid "Adhésion" memberships from the HelloAsso API and merges them
  * into the same `assoMembers` list that assets/js/member-gate.js checks and
- * that admin.html's "Asso Membres" tab / CSV importer already manage.
+ * that admin.html's "Asso Membres" tab already manages.
  *
- * Runs on a schedule via .github/workflows/sync-helloasso.yml — GitHub
- * Actions secrets only, nothing here is ever committed or shipped to the
- * browser. Requires these repo secrets (Settings → Secrets and variables →
- * Actions):
+ * Triggered manually via .github/workflows/sync-helloasso.yml (the admin
+ * dashboard's "Sync Asso" button opens that workflow's "Run workflow" page —
+ * GitHub Actions secrets only, nothing here is ever committed or shipped to
+ * the browser). Requires these repo secrets (Settings → Secrets and
+ * variables → Actions):
  *   HELLOASSO_CLIENT_ID       HelloAsso API client ID
  *   HELLOASSO_CLIENT_SECRET   HelloAsso API client secret
  *   FIREBASE_DB_SECRET        Firebase RTDB legacy secret (Project Settings

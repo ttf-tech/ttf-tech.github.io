@@ -940,175 +940,62 @@ function exportAssoCSV() {
   showToast(`Export CSV · ${state.assoMembers.length} membre(s)`);
 }
 
-// ── Bulk import Asso Membres from a HelloAsso CSV export ────────
-// Reuses the same assoMembers schema/save pipeline as the manual
-// "+ Ajouter membre Asso" form — matches existing members by email
-// (update in place) and appends new ones. No new data store, no
-// separate "role" system: this just populates the same list that
-// assets/js/member-gate.js already checks against on Google Sign-In.
+// ── Sync Asso: trigger the HelloAsso → Firebase GitHub Action ───
+// admin.html has no server, so this can't call the GitHub/HelloAsso APIs
+// directly (that would require shipping a token in a public JS file).
+// Instead: open the workflow's "Run workflow" page for the admin to
+// confirm, then watch the *existing* real-time Firebase listener
+// (initFirebase, below) for the moment assoMembers actually changes —
+// no polling, no new backend, just reacting to data we already subscribe to.
 
-function parseCsv(text) {
-  const firstLine = (text.split(/\r\n|\n|\r/)[0] || '');
-  const delim = (firstLine.split(';').length > firstLine.split(',').length) ? ';' : ',';
+const HELLOASSO_SYNC_WORKFLOW_URL =
+  'https://github.com/ttf-tech/ttf-tech.github.io/actions/workflows/sync-helloasso.yml';
+const ASSO_SYNC_WATCH_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutes
 
-  const rows = [];
-  let row = [], field = '', inQuotes = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (inQuotes) {
-      if (c === '"') {
-        if (text[i + 1] === '"') { field += '"'; i++; }
-        else { inQuotes = false; }
-      } else {
-        field += c;
-      }
-    } else if (c === '"') {
-      inQuotes = true;
-    } else if (c === delim) {
-      row.push(field); field = '';
-    } else if (c === '\n' || c === '\r') {
-      if (c === '\r' && text[i + 1] === '\n') i++;
-      row.push(field); field = '';
-      if (row.some(f => f.trim() !== '')) rows.push(row);
-      row = [];
-    } else {
-      field += c;
-    }
-  }
-  if (field !== '' || row.length) { row.push(field); rows.push(row); }
-  if (rows.length === 0) return { headers: [], rows: [] };
+let _assoSyncWatch = null; // { emails: Set<string>, timer }
 
-  const headers = rows[0].map(h => h.trim());
-  return { headers, rows: rows.slice(1).filter(r => r.some(f => (f || '').trim() !== '')) };
+function _assoSyncStatus(text) {
+  const el = document.getElementById('asso-sync-status');
+  const textEl = document.getElementById('asso-sync-status-text');
+  if (!el || !textEl) return;
+  if (text) { textEl.textContent = text; el.style.display = 'block'; }
+  else { el.style.display = 'none'; }
 }
 
-function _csvGuessField(header) {
-  const h = header.toLowerCase();
-  if (/pr[ée]nom/.test(h))                                        return 'firstName';
-  if (/^nom$|nom de famille|nom et pr[ée]nom|full ?name/.test(h))  return 'name';
-  if (/e-?mail/.test(h))                                          return 'email';
-  if (/t[ée]l[ée]phone|\btel\b|phone/.test(h))                    return 'phone';
-  if (/ville|city/.test(h))                                       return 'city';
-  if (/linkedin/.test(h))                                         return 'linkedin';
-  if (/date.*(paiement|commande|adh[ée]sion|inscription)/.test(h)) return 'joinedAt';
-  if (/r[ée]f[ée]rence|n[o°]?\s*commande|order/.test(h))          return 'helloassoRef';
-  return '';
+function _assoEmailSet() {
+  return new Set(state.assoMembers.map(m => (m.email || '').trim().toLowerCase()).filter(Boolean));
 }
 
-const CSV_FIELD_OPTIONS = [
-  ['',             '— Ignorer —'],
-  ['name',         'Nom complet'],
-  ['firstName',    'Prénom (combiné avec Nom)'],
-  ['email',        'Email *'],
-  ['phone',        'Téléphone'],
-  ['city',         'Ville'],
-  ['linkedin',     'LinkedIn'],
-  ['joinedAt',     "Date d'adhésion"],
-  ['helloassoRef', 'Référence HelloAsso']
-];
-
-let _csvImportData = null; // { headers, rows }
-
-async function openCsvImportModal(file) {
-  const text = await file.text();
-  const parsed = parseCsv(text);
-  if (!parsed.headers.length || !parsed.rows.length) {
-    showToast('CSV vide ou illisible · CSV 空白或無法解析');
-    return;
-  }
-  _csvImportData = parsed;
-
-  const mapWrap = document.getElementById('csv-import-mapping');
-  const countEl = document.getElementById('csv-import-count');
-  if (!mapWrap || !countEl) return;
-
-  mapWrap.innerHTML = parsed.headers.map((h, i) => {
-    const guess  = _csvGuessField(h);
-    const sample = (parsed.rows[0][i] || '').slice(0, 28);
-    return `
-      <div style="display:flex;align-items:center;gap:0.6rem;padding:0.45rem 0;border-bottom:1px solid #f1f5f9;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:0.78rem;font-weight:700;color:#0f172a;">${escHtml(h)}</div>
-          <div style="font-size:0.68rem;color:#94a3b8;">ex : ${escHtml(sample)}</div>
-        </div>
-        <select class="sm-input csv-col-map" data-col="${i}" style="max-width:210px;flex-shrink:0;">
-          ${CSV_FIELD_OPTIONS.map(([val, label]) =>
-            `<option value="${val}" ${val === guess ? 'selected' : ''}>${escHtml(label)}</option>`
-          ).join('')}
-        </select>
-      </div>`;
-  }).join('');
-
-  countEl.textContent = `${parsed.rows.length} ligne(s) détectée(s) · 偵測到 ${parsed.rows.length} 筆資料`;
-  document.getElementById('csv-import-modal')?.classList.remove('hidden');
+function startAssoSyncWatch() {
+  if (_assoSyncWatch) clearTimeout(_assoSyncWatch.timer);
+  _assoSyncWatch = {
+    emails: _assoEmailSet(),
+    timer: setTimeout(() => {
+      _assoSyncWatch = null;
+      _assoSyncStatus(null);
+      showToast('Aucun nouveau membre · 沒有新會員', 10000);
+    }, ASSO_SYNC_WATCH_TIMEOUT_MS)
+  };
+  _assoSyncStatus('En attente du résultat de synchronisation… · 等待同步結果…');
 }
 
-function closeCsvImportModal() {
-  document.getElementById('csv-import-modal')?.classList.add('hidden');
-  const fileInput = document.getElementById('import-asso-csv-file');
-  if (fileInput) fileInput.value = '';
-  _csvImportData = null;
+// Called from initFirebase()'s real-time listener whenever fresh data arrives.
+function checkAssoSyncWatch() {
+  if (!_assoSyncWatch) return;
+  const newEmails = [...state.assoMembers.map(m => (m.email || '').trim().toLowerCase())].filter(Boolean);
+  const added = newEmails.filter(e => !_assoSyncWatch.emails.has(e));
+  if (added.length === 0) return; // keep watching until timeout or a real change lands
+
+  clearTimeout(_assoSyncWatch.timer);
+  _assoSyncWatch = null;
+  _assoSyncStatus(null);
+  showToast(`✅ ${added.length} membre(s) ajouté(s) · 已新增 ${added.length} 位會員`, 10000);
 }
 
-function _csvParseDate(raw) {
-  if (!raw) return new Date().toISOString();
-  const m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); // DD/MM/YYYY (HelloAsso default)
-  const d = m ? new Date(+m[3], +m[2] - 1, +m[1]) : new Date(raw);
-  return isNaN(d) ? new Date().toISOString() : d.toISOString();
-}
-
-function confirmCsvImport() {
-  if (!_csvImportData) return;
-
-  const fieldCol = {}; // field -> column index (first mapped column wins)
-  document.querySelectorAll('.csv-col-map').forEach(sel => {
-    if (sel.value && !(sel.value in fieldCol)) fieldCol[sel.value] = Number(sel.dataset.col);
-  });
-
-  if (fieldCol.email === undefined) {
-    showToast('Merci d\'associer au moins une colonne à Email · 請至少對應 Email 欄位');
-    return;
-  }
-
-  const dyn = extractDynamic();
-  let added = 0, updated = 0, skipped = 0;
-
-  for (const row of _csvImportData.rows) {
-    const get = f => (fieldCol[f] !== undefined ? (row[fieldCol[f]] || '').trim() : '');
-    const email = get('email').toLowerCase();
-    if (!email) { skipped++; continue; }
-
-    let name = get('name');
-    const firstName = get('firstName');
-    if (firstName) name = name ? `${firstName} ${name}` : firstName;
-    if (!name) name = email.split('@')[0];
-
-    const fields = {
-      name,
-      email,
-      phone:        get('phone'),
-      city:         get('city'),
-      linkedin:     get('linkedin'),
-      helloassoRef: get('helloassoRef'),
-      joinedAt:     _csvParseDate(get('joinedAt'))
-    };
-
-    const idx = dyn.assoMembers.findIndex(m => (m.email || '').trim().toLowerCase() === email);
-    if (idx >= 0) {
-      dyn.assoMembers[idx] = { ...dyn.assoMembers[idx], ...fields };
-      updated++;
-    } else {
-      dyn.assoMembers.push({ id: uid(), intro: '', job: '', goals: [], ...fields });
-      added++;
-    }
-  }
-
-  rebuildState(dyn);
-  _saveDynLocal(dyn);
-  _fbWrite(dyn);
-  renderAssoMembers();
-  closeCsvImportModal();
-  showToast(`Import HelloAsso · ${added} ajouté(s), ${updated} mis à jour${skipped ? `, ${skipped} ignorée(s)` : ''}`);
+function triggerAssoSync() {
+  startAssoSyncWatch();
+  window.open(HELLOASSO_SYNC_WORKFLOW_URL, '_blank', 'noopener');
+  showToast('Onglet GitHub ouvert : cliquez « Run workflow » pour lancer la synchro · 請在開啟的分頁點擊「Run workflow」開始同步', 6000);
 }
 
 // ── Surveys tab ────────────────────────────────────────────────
@@ -2827,6 +2714,7 @@ function initFirebase() {
     if (activePane === 'asso')    renderAssoMembers();
     if (activePane === 'surveys') renderSurveys();
     if (activePane === 'sharing') renderSharings();
+    checkAssoSyncWatch();
   });
 }
 
@@ -2901,28 +2789,9 @@ function init() {
   if (addAssoBtn)    addAssoBtn.addEventListener('click', () => openAssoMemberModal());
   if (exportAssoBtn) exportAssoBtn.addEventListener('click', exportAssoCSV);
 
-  // CSV import (HelloAsso)
-  const importAssoCsvBtn  = document.getElementById('import-asso-csv-btn');
-  const importAssoCsvFile = document.getElementById('import-asso-csv-file');
-  if (importAssoCsvBtn && importAssoCsvFile) {
-    importAssoCsvBtn.addEventListener('click', () => importAssoCsvFile.click());
-    importAssoCsvFile.addEventListener('change', () => {
-      if (importAssoCsvFile.files[0]) openCsvImportModal(importAssoCsvFile.files[0]);
-    });
-  }
-  const csvImportClose   = document.getElementById('csv-import-close');
-  const csvImportCancel  = document.getElementById('csv-import-cancel');
-  const csvImportConfirm = document.getElementById('csv-import-confirm');
-  if (csvImportClose)   csvImportClose.addEventListener('click', closeCsvImportModal);
-  if (csvImportCancel)  csvImportCancel.addEventListener('click', closeCsvImportModal);
-  if (csvImportConfirm) csvImportConfirm.addEventListener('click', confirmCsvImport);
-
-  const csvImportOverlay = document.getElementById('csv-import-modal');
-  if (csvImportOverlay) {
-    csvImportOverlay.addEventListener('click', e => {
-      if (e.target === csvImportOverlay) closeCsvImportModal();
-    });
-  }
+  // Sync Asso (HelloAsso GitHub Action trigger)
+  const syncAssoBtn = document.getElementById('sync-asso-btn');
+  if (syncAssoBtn) syncAssoBtn.addEventListener('click', triggerAssoSync);
 
   const assoSearch     = document.getElementById('asso-search');
   const assoCityFilter = document.getElementById('asso-city-filter');

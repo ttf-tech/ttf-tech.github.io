@@ -1,0 +1,27 @@
+name: Sync HelloAsso members
+
+on:
+  schedule:
+    # Every 30 minutes. GitHub may delay this slightly under load — fine for
+    # membership access, which isn't time-critical to the minute.
+    - cron: '*/30 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Sync HelloAsso adhésions into Firebase
+        env:
+          HELLOASSO_CLIENT_ID:     ${{ secrets.HELLOASSO_CLIENT_ID }}
+          HELLOASSO_CLIENT_SECRET: ${{ secrets.HELLOASSO_CLIENT_SECRET }}
+          HELLOASSO_ORG_SLUG:      ${{ secrets.HELLOASSO_ORG_SLUG }}
+          FIREBASE_DB_URL:         ${{ secrets.FIREBASE_DB_URL }}
+          FIREBASE_DB_SECRET:      ${{ secrets.FIREBASE_DB_SECRET }}
+        run: node scripts/sync-helloasso.js

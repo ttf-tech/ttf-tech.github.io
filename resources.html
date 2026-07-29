@@ -45,8 +45,19 @@
     }
     .res-card-title { font-size: 0.82rem; font-weight: 700; color: #0f172a; margin-bottom: 0.15rem; }
     .res-card-desc  { font-size: 0.72rem; color: #64748b; line-height: 1.4; }
-    .res-coming { font-size: 0.72rem; color: #94a3b8; font-style: italic; padding: 0.75rem 1rem;
-                  background: #f8fafc; border: 1px dashed #e2e8f0; border-radius: 8px; }
+    .res-coming {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.25rem;
+      font-size: 0.72rem; color: #94a3b8; font-style: italic; padding: 0.75rem 1rem;
+      background: #f8fafc; border: 1px dashed #e2e8f0; border-radius: 8px;
+    }
+    .res-coming-text { flex: 1; min-width: 220px; }
+
+    .helloasso-button-wrap { flex-shrink: 0; width: 100%; max-width: 280px; }
+    .helloasso-button-caption {
+      font-size: 0.65rem; font-weight: 700; font-style: normal; color: #4c1d95;
+      text-align: center; margin-bottom: 0.35rem;
+    }
+    .helloasso-button-wrap iframe { width: 100%; height: 70px; border: none; display: block; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen">
@@ -226,11 +237,19 @@
       <div class="res-section">
         <div class="res-section-title"><i class="fas fa-file-powerpoint" style="color:#dc2626;"></i>Slides &amp; Replays · 簡報與回放</div>
         <div class="res-coming">
-          Les slides et replays des webinaires passés seront ajoutés ici par la communauté.<br>
-          過去 webinar 的簡報與錄影連結將由社群成員陸續補充。<br><br>
-          <span style="color:#b45309;font-style:normal;font-weight:700;">
-            <i class="fas fa-lock" style="margin-right:0.3rem;"></i>Accès réservé aux membres Adhésion · 僅限 Adhésion 會員存取
-          </span>
+          <div class="res-coming-text">
+            Les slides et replays des webinaires passés seront ajoutés ici par la communauté.<br>
+            過去 webinar 的簡報與錄影連結將由社群成員陸續補充。<br><br>
+            <span style="color:#b45309;font-style:normal;font-weight:700;">
+              <i class="fas fa-lock" style="margin-right:0.3rem;"></i>Accès réservé aux membres Adhésion · 僅限 Adhésion 會員存取
+            </span>
+          </div>
+          <div class="helloasso-button-wrap">
+            <div class="helloasso-button-caption">正式加入 · Adhésion officielle</div>
+            <iframe id="haWidgetButton" title="Adhérer — Taiwan Tech France (HelloAsso)"
+                    allowtransparency="true" loading="lazy"
+                    src="https://www.helloasso.com/associations/taiwan-tech-france-association/adhesions/adhesion-officielle-taiwan-tech-france-association/widget-bouton"></iframe>
+          </div>
         </div>
       </div>
 

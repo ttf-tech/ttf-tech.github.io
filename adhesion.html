@@ -288,57 +288,6 @@
     /* overflow-x safety for compare table on mobile */
     .compare-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
-    /* ── Coming-soon modal ── */
-    .cs-overlay {
-      display: none; position: fixed; inset: 0; z-index: 200;
-      background: rgba(10,5,30,0.7); backdrop-filter: blur(6px);
-      align-items: center; justify-content: center; padding: 1rem;
-    }
-    .cs-overlay.open { display: flex; }
-    .cs-modal {
-      background: linear-gradient(160deg, #1e1b4b 0%, #2d1b69 60%, #1a0a42 100%);
-      border: 1.5px solid rgba(196,181,253,0.35);
-      border-radius: 20px; padding: 2.5rem 2rem 2rem;
-      max-width: 440px; width: 100%; position: relative;
-      text-align: center; box-shadow: 0 24px 64px rgba(0,0,0,0.5);
-    }
-    .cs-close {
-      position: absolute; top: 0.85rem; right: 1rem;
-      background: none; border: none; color: rgba(255,255,255,0.35);
-      font-size: 1.1rem; cursor: pointer; line-height: 1;
-      transition: color 0.15s;
-    }
-    .cs-close:hover { color: rgba(255,255,255,0.8); }
-    .cs-icon {
-      width: 72px; height: 72px; border-radius: 50%;
-      background: rgba(124,58,237,0.2); border: 2px solid rgba(196,181,253,0.35);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 2rem; margin: 0 auto 1.25rem;
-    }
-    .cs-modal h3 {
-      font-size: 1.15rem; font-weight: 900; color: #fff; margin-bottom: 0.4rem;
-    }
-    .cs-modal .cs-zh {
-      font-size: 0.82rem; color: #c4b5fd; margin-bottom: 1rem; font-weight: 600;
-    }
-    .cs-modal p {
-      font-size: 0.8rem; color: rgba(255,255,255,0.6); line-height: 1.65;
-      margin-bottom: 0.5rem;
-    }
-    .cs-modal p strong { color: rgba(255,255,255,0.85); }
-    .cs-whatsapp-btn {
-      display: inline-flex; align-items: center; gap: 0.5rem;
-      margin-top: 1.25rem; padding: 0.7rem 1.4rem; border-radius: 99px;
-      background: #25d366; color: #fff; font-size: 0.85rem; font-weight: 700;
-      text-decoration: none; transition: background 0.15s, transform 0.1s;
-    }
-    .cs-whatsapp-btn:hover { background: #1db954; transform: translateY(-1px); }
-    .cs-divider {
-      height: 1px; background: rgba(196,181,253,0.15); margin: 1.1rem 0;
-    }
-    .cs-notify-hint {
-      font-size: 0.68rem; color: rgba(255,255,255,0.3); line-height: 1.5;
-    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen">
@@ -459,7 +408,7 @@
               </tr>
               <tr>
                 <td>
-                  <span class="feature-name">Coffee Chat membres · 會員咖啡聊天</span>
+                  <span class="feature-name">Coffee Chat CV review membres · 會員咖啡聊天</span>
                   <span class="feature-zh">僅限 Adhésion 會員的交流聚會</span>
                 </td>
                 <td><span class="chk no"><i class="fas fa-minus-circle"></i></span></td>
@@ -768,10 +717,10 @@
           </p>
         </div>
         <div class="cta-actions">
-          <button onclick="document.getElementById('cs-overlay').classList.add('open')"
-             class="cta-btn-primary" style="border:none;cursor:pointer;">
+          <a href="https://www.helloasso.com/associations/taiwan-tech-france-association/adhesions/adhesion-officielle-taiwan-tech-france-association"
+             target="_blank" rel="noopener" class="cta-btn-primary">
             <i class="fas fa-heart"></i> Adhérer via HelloAsso · 立即加入
-          </button>
+          </a>
           <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener"
              class="cta-btn-secondary">
             <i class="fab fa-whatsapp"></i> Communauté WhatsApp
@@ -782,46 +731,7 @@
 
   </main>
 
-  <!-- ── COMING SOON MODAL ──────────────────────────────────────── -->
-  <div id="cs-overlay" class="cs-overlay" onclick="if(event.target===this)this.classList.remove('open')">
-    <div class="cs-modal">
-      <button class="cs-close" onclick="document.getElementById('cs-overlay').classList.remove('open')">
-        <i class="fas fa-times"></i>
-      </button>
-
-      <div class="cs-icon">⏳</div>
-
-      <h3>Bientôt disponible · 即將開放</h3>
-      <div class="cs-zh">Coming Soon</div>
-
-      <p>
-        La plateforme d'adhésion <strong>HelloAsso</strong> est en cours de configuration par notre bureau.
-        L'ouverture des inscriptions sera annoncée prochainement.
-      </p>
-      <p>
-        會員報名平台 <strong>HelloAsso</strong> 目前由執行委員會設定中，開放登記日期將另行通知，請耐心等候。
-      </p>
-
-      <div class="cs-divider"></div>
-
-      <p class="cs-notify-hint">
-        Pour être notifié(e) dès l'ouverture, rejoignez notre groupe WhatsApp — l'annonce y sera faite en premier.
-        <br>請加入 WhatsApp 社群，第一時間獲得開放通知。
-      </p>
-
-      <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener"
-         class="cs-whatsapp-btn">
-        <i class="fab fa-whatsapp"></i> Rejoindre le groupe · 加入群組
-      </a>
-    </div>
-  </div>
-
   <div id="site-footer"></div>
   <script src="assets/js/footer.js"></script>
-  <script>
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') document.getElementById('cs-overlay').classList.remove('open');
-    });
-  </script>
 </body>
 </html>

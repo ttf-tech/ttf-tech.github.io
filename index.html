@@ -400,6 +400,11 @@
               <i class="fas fa-briefcase"></i> Voir les offres · 職缺
             </a>
           </span>
+          <span class="restricted-asso-content" style="display:none;">
+            <button type="button" id="member-profile-open" class="sm-hero-cta-secondary" style="display:none;">
+              <i class="fas fa-user-edit"></i> Mon profil membre · 我的會員資料
+            </button>
+          </span>
           <a href="adhesion.html" class="upgrade-to-asso-banner inline-btn">
             <i class="fas fa-lock"></i> Adhérer pour voir les offres · 需入會查看
           </a>
@@ -989,8 +994,114 @@
 
   </main>
 
+  <!-- ── MEMBER SELF-SERVICE PROFILE ─────────────────────────── -->
+  <div id="member-profile-modal" class="sm-modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="member-profile-title">
+    <form id="member-profile-form" class="sm-modal-box" style="max-width:560px;" novalidate>
+      <div class="sm-modal-header">
+        <span class="sm-modal-title" id="member-profile-title">Mon profil membre · 我的會員資料</span>
+        <button id="member-profile-close" class="sm-modal-close" type="button" aria-label="Fermer · 關閉">
+          <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="sm-modal-body" style="max-height:70vh;overflow-y:auto;">
+        <div id="member-profile-admin-preview" style="display:none;margin-bottom:1rem;padding:0.85rem 1rem;border-radius:10px;border:1px solid #93c5fd;background:#eff6ff;color:#1e3a8a;font-size:0.7rem;line-height:1.6;">
+          <strong style="display:block;margin-bottom:0.2rem;font-size:0.78rem;">
+            <i class="fas fa-eye" aria-hidden="true" style="margin-right:0.3rem;"></i>Mode aperçu administrateur · 管理員預覽模式
+          </strong>
+          Cette interface permet aux membres de mettre à jour eux-mêmes leurs informations.
+          Pour éviter qu'un administrateur crée ou enregistre des données <code>assoMembers</code> incomplètes via ce formulaire libre-service, l'enregistrement est désactivé en mode administrateur.<br>
+          此畫面提供管理員參考會員如何自行更新資料。為避免管理員透過會員自助表單建立或寫入不完整的 <code>assoMembers</code> 資料，管理員無法在此儲存；如需維護會員，請使用管理後台。
+        </div>
+
+        <div id="member-profile-completeness" style="margin-bottom:1rem;padding:0.85rem 1rem;border-radius:10px;border:1px solid #fcd34d;background:#fffbeb;line-height:1.5;">
+          <div id="member-profile-completeness-title" style="font-size:0.78rem;font-weight:800;color:#92400e;"></div>
+          <div style="margin-top:0.2rem;font-size:0.68rem;color:#78350f;">
+            Complétez tous les champs pour exercer votre droit de vote à l'AG. · 完成所有會員資料後，方可行使年度大會投票權。
+          </div>
+          <div id="member-profile-missing-fields" style="margin-top:0.35rem;font-size:0.68rem;font-weight:600;color:#b45309;"></div>
+        </div>
+
+        <div class="sm-input-grid">
+          <div class="sm-form-group">
+            <label class="sm-label" for="mp-nickname">Surnom · 暱稱</label>
+            <input id="mp-nickname" class="sm-input" type="text" autocomplete="nickname">
+          </div>
+          <div class="sm-form-group">
+            <label class="sm-label" for="mp-gender">Genre · 性別</label>
+            <select id="mp-gender" class="sm-input">
+              <option value="">Non renseigné · 未填寫</option>
+              <option value="female">Femme · 女性</option>
+              <option value="male">Homme · 男性</option>
+              <option value="nonbinary">Non-binaire · 非二元</option>
+              <option value="other">Autre · 其他</option>
+              <option value="prefer_not_to_say">Préfère ne pas répondre · 不願透露</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="sm-input-grid">
+          <div class="sm-form-group">
+            <label class="sm-label" for="mp-phone">Téléphone · 電話</label>
+            <input id="mp-phone" class="sm-input" type="tel" autocomplete="tel">
+          </div>
+          <div class="sm-form-group">
+            <label class="sm-label" for="mp-city">Ville / région · 城市／地區</label>
+            <select id="mp-city" class="sm-input"></select>
+          </div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="mp-job">Profession / domaine · 職業／專業領域</label>
+          <input id="mp-job" class="sm-input" type="text" autocomplete="organization-title">
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="mp-linkedin">LinkedIn</label>
+          <input id="mp-linkedin" class="sm-input" type="url" inputmode="url" placeholder="https://linkedin.com/in/…">
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label" for="mp-intro">Présentation · 個人簡介</label>
+          <textarea id="mp-intro" class="sm-input" rows="3" style="resize:vertical;"></textarea>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label">Relation avec l'association / objectifs · 與協會的關係／參與目的</label>
+          <div id="mp-goals-list" style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.3rem;"></div>
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label">Consentements · 同意事項</label>
+          <div style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.3rem;">
+            <label class="sm-asso-goal-check">
+              <input id="mp-accepts-rules" type="checkbox">
+              <span>J'accepte les statuts et le règlement intérieur · 我接受章程與內部規章</span>
+            </label>
+            <label class="sm-asso-goal-check">
+              <input id="mp-notification-consent" type="checkbox">
+              <span>J'accepte de recevoir les communications membres · 我同意接收會員通知</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="member-profile-status" role="status" aria-live="polite" style="min-height:1.25rem;font-size:0.72rem;line-height:1.5;"></div>
+      </div>
+
+      <div class="sm-modal-footer">
+        <button id="member-profile-cancel" type="button" style="padding:0.5rem 1.1rem;border-radius:7px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:0.82rem;font-weight:600;cursor:pointer;">
+          Annuler · 取消
+        </button>
+        <button id="member-profile-save" type="submit" style="padding:0.5rem 1.25rem;border-radius:7px;border:none;background:#0a2d42;color:#fff;font-size:0.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:0.4rem;">
+          <i class="fas fa-save" aria-hidden="true"></i> Enregistrer · 儲存
+        </button>
+      </div>
+    </form>
+  </div>
+
   <script src="assets/js/firebase-read.js"></script>
   <script src="assets/js/member-gate.js"></script>
+  <script src="assets/js/member-profile.js"></script>
   <script>
   'use strict';
 

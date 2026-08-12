@@ -745,6 +745,8 @@ function renderAssoMembers() {
 
   const list = state.assoMembers.filter(m => {
     const matchQ    = !query   || m.name.toLowerCase().includes(query) ||
+                      (m.nickname || '').toLowerCase().includes(query) ||
+                      (m.email || '').toLowerCase().includes(query)    ||
                       (m.job  || '').toLowerCase().includes(query)     ||
                       (m.intro|| '').toLowerCase().includes(query);
     const matchCity = !cityFlt || m.city === cityFlt;
@@ -773,6 +775,7 @@ function renderAssoMembers() {
           <div class="sm-member-avatar sm-asso-avatar">${escHtml(initials)}</div>
           <div class="sm-asso-card-info">
             <div class="sm-member-name">${escHtml(m.name)}</div>
+            ${m.nickname ? `<div class="sm-asso-city"><i class="fas fa-user-tag"></i> ${escHtml(m.nickname)}</div>` : ''}
             ${m.city ? `<div class="sm-asso-city"><i class="fas fa-map-marker-alt"></i> ${escHtml(m.city)}</div>` : ''}
             ${m.job  ? `<div class="sm-asso-job">${escHtml(m.job)}</div>` : ''}
           </div>
@@ -819,6 +822,8 @@ function openAssoMemberModal(id = null) {
     if (!m) return;
     if (title) title.textContent = 'Modifier membre Asso';
     _setVal('am-name',     m.name);
+    _setVal('am-nickname', m.nickname || '');
+    _setVal('am-gender',   m.gender || '');
     _setVal('am-city',     m.city || '');
     _setVal('am-email',    m.email || '');
     _setVal('am-job',      m.job  || '');
@@ -827,6 +832,8 @@ function openAssoMemberModal(id = null) {
     _setVal('am-phone',    m.phone || '');
     _setVal('am-helloasso',m.helloassoRef || '');
     _setVal('am-joined',   m.joinedAt ? m.joinedAt.slice(0, 10) : '');
+    _setChecked('am-accepts-rules', !!m.acceptsRules);
+    _setChecked('am-notification-consent', !!m.notificationConsent);
     // Check goals
     overlay.querySelectorAll('input[name="am-goal"]').forEach(cb => {
       cb.checked = (m.goals || []).includes(cb.value);
@@ -834,8 +841,10 @@ function openAssoMemberModal(id = null) {
     if (delBtn) delBtn.classList.remove('hidden');
   } else {
     if (title) title.textContent = 'Ajouter membre Asso · 新增協會成員';
-    ['am-name','am-email','am-city','am-job','am-intro','am-linkedin','am-phone','am-helloasso'].forEach(id => _setVal(id, ''));
+    ['am-name','am-nickname','am-gender','am-email','am-city','am-job','am-intro','am-linkedin','am-phone','am-helloasso'].forEach(id => _setVal(id, ''));
     _setVal('am-joined', new Date().toISOString().slice(0, 10));
+    _setChecked('am-accepts-rules', false);
+    _setChecked('am-notification-consent', false);
     overlay?.querySelectorAll('input[name="am-goal"]').forEach(cb => { cb.checked = false; });
     if (delBtn) delBtn.classList.add('hidden');
   }
@@ -848,6 +857,11 @@ function _setVal(id, val) {
   if (el) el.value = val;
 }
 
+function _setChecked(id, checked) {
+  const el = document.getElementById(id);
+  if (el) el.checked = checked;
+}
+
 function closeAssoMemberModal() {
   _assoModalId = null;
   document.getElementById('asso-member-modal')?.classList.add('hidden');
@@ -858,8 +872,13 @@ function saveAssoMember() {
   if (!name) { showToast('Le nom est obligatoire · 姓名為必填'); return; }
 
   const goals = [...document.querySelectorAll('input[name="am-goal"]:checked')].map(cb => cb.value);
+  const existing = _assoModalId ? state.assoMembers.find(x => x.id === _assoModalId) : null;
+  const acceptsRules = !!document.getElementById('am-accepts-rules')?.checked;
+  const notificationConsent = !!document.getElementById('am-notification-consent')?.checked;
   const member = {
     name,
+    nickname:     document.getElementById('am-nickname')?.value.trim() || '',
+    gender:       document.getElementById('am-gender')?.value || '',
     email:        document.getElementById('am-email')?.value.trim() || '',
     city:         document.getElementById('am-city')?.value      || '',
     job:          document.getElementById('am-job')?.value.trim() || '',
@@ -868,7 +887,11 @@ function saveAssoMember() {
     phone:        document.getElementById('am-phone')?.value.trim() || '',
     helloassoRef: document.getElementById('am-helloasso')?.value.trim() || '',
     joinedAt:     new Date(document.getElementById('am-joined')?.value || Date.now()).toISOString(),
-    goals
+    goals,
+    acceptsRules,
+    acceptsRulesAt: acceptsRules ? (existing?.acceptsRulesAt || new Date().toISOString()) : '',
+    notificationConsent,
+    notificationConsentAt: notificationConsent ? (existing?.notificationConsentAt || new Date().toISOString()) : ''
   };
 
   const dyn = extractDynamic();
@@ -909,12 +932,14 @@ function exportAssoCSV() {
   if (!state.assoMembers.length) { showToast('Aucun membre officiel à exporter.'); return; }
 
   const goalMap = Object.fromEntries(ASSO_GOALS.map(g => [g.id, g.fr]));
-  const cols = ['Nom','Email','Ville','Poste / Entreprise','Téléphone','LinkedIn','Objectifs','Intro','Réf HelloAsso','Date adhésion'];
+  const cols = ['Nom','Surnom','Genre','Email','Ville','Poste / Entreprise','Téléphone','LinkedIn','Relation / Objectifs','Intro','Statuts acceptés','Date acceptation statuts','Notifications acceptées','Date consentement notifications','Réf HelloAsso','Date adhésion'];
 
   const escape = v => `"${String(v || '').replace(/"/g, '""')}"`;
 
   const rows = state.assoMembers.map(m => [
     m.name,
+    m.nickname     || '',
+    m.gender       || '',
     m.email        || '',
     m.city         || '',
     m.job          || '',
@@ -922,6 +947,10 @@ function exportAssoCSV() {
     m.linkedin     || '',
     (m.goals || []).map(g => goalMap[g] || g).join(' | '),
     m.intro        || '',
+    m.acceptsRules ? 'Oui' : 'Non',
+    m.acceptsRulesAt ? m.acceptsRulesAt.slice(0, 10) : '',
+    m.notificationConsent ? 'Oui' : 'Non',
+    m.notificationConsentAt ? m.notificationConsentAt.slice(0, 10) : '',
     m.helloassoRef || '',
     m.joinedAt ? m.joinedAt.slice(0, 10) : ''
   ].map(escape).join(','));

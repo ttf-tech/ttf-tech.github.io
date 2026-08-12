@@ -1451,6 +1451,24 @@
           <input id="am-name" class="sm-input" type="text" placeholder="ex: Wei-Chen Liu">
         </div>
 
+        <div class="sm-input-grid">
+          <div class="sm-form-group">
+            <label class="sm-label" for="am-nickname">Surnom · 暱稱 (optionnel)</label>
+            <input id="am-nickname" class="sm-input" type="text" placeholder="ex: Wei">
+          </div>
+          <div class="sm-form-group">
+            <label class="sm-label" for="am-gender">Genre · 性別 (optionnel)</label>
+            <select id="am-gender" class="sm-input">
+              <option value="">Non renseigné · 未填寫</option>
+              <option value="female">Femme · 女性</option>
+              <option value="male">Homme · 男性</option>
+              <option value="nonbinary">Non-binaire · 非二元</option>
+              <option value="other">Autre · 其他</option>
+              <option value="prefer_not_to_say">Préfère ne pas répondre · 不願透露</option>
+            </select>
+          </div>
+        </div>
+
         <div class="sm-form-group">
           <label class="sm-label" for="am-email">Email · 電子郵件 (optionnel)</label>
           <input id="am-email" class="sm-input" type="email" placeholder="ex: wei@example.com">
@@ -1475,7 +1493,7 @@
         </div>
 
         <div class="sm-form-group">
-          <label class="sm-label">Objectifs · 加入目的 (choix multiple)</label>
+          <label class="sm-label">Relation avec l'association / objectifs · 與協會的關係／參與目的 (choix multiple)</label>
           <div id="am-goals-list" style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.3rem;">
             <!-- Built by JS -->
           </div>
@@ -1502,6 +1520,23 @@
         <div class="sm-form-group">
           <label class="sm-label" for="am-helloasso">Référence HelloAsso (optionnel)</label>
           <input id="am-helloasso" class="sm-input" type="text" placeholder="N° de commande HelloAsso">
+        </div>
+
+        <div class="sm-form-group">
+          <label class="sm-label">Consentements · 同意事項</label>
+          <div style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.3rem;">
+            <label class="sm-asso-goal-check">
+              <input id="am-accepts-rules" type="checkbox">
+              <span>Accepte les statuts et le règlement intérieur · 接受章程與內部規章</span>
+            </label>
+            <label class="sm-asso-goal-check">
+              <input id="am-notification-consent" type="checkbox">
+              <span>Accepte de recevoir les communications membres · 同意接收會員通知</span>
+            </label>
+          </div>
+          <div style="margin-top:0.35rem;font-size:0.65rem;color:#94a3b8;line-height:1.45;">
+            La date est enregistrée automatiquement lors de la première validation. · 首次勾選儲存時會自動記錄同意時間。
+          </div>
         </div>
 
       </div>

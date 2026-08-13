@@ -101,6 +101,8 @@ function extractMembersFromOrders(orders) {
         city:         payer.city || '',
         phone:        findCustomField(item.customFields, /t[ée]l[ée]phone|\btel\b|phone/i),
         linkedin:     findCustomField(item.customFields, /linkedin/i),
+        expertise:    findCustomField(item.customFields, /domaine.*expertise|expertise/i),
+        motivation:   findCustomField(item.customFields, /pourquoi devenir|motivation/i),
         helloassoRef: `order-${order.id}-item-${item.id}`,
         joinedAt:     order.date ? new Date(order.date).toISOString() : new Date().toISOString()
       });

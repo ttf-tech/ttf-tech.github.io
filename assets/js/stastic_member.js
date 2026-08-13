@@ -223,6 +223,28 @@ const ASSO_GOALS = [
 const ASSO_CITIES = ['Paris', 'Lyon', 'Toulouse', 'Bordeaux', 'Grenoble',
                      'Sophia Antipolis', 'Montpellier', 'Taiwan', 'Autres'];
 
+// HelloAsso's "Pourquoi devenir membre officiel ?" answer text doesn't use the
+// same wording as ASSO_GOALS, so goal checkboxes are inferred from keywords
+// rather than an exact match.
+const GOAL_KEYWORDS = {
+  networking: ['network', 'réseau', 'reseau', '人脈', '社群', '連結'],
+  jobs:       ['job', 'emploi', '職缺', '機會'],
+  knowledge:  ['carrière', 'carriere', '職涯', '技術交流', 'knowledge', '經驗分享'],
+  longterm:   ['long terme', 'longterme', '長期', '房產', '退休', '投資', 'retraite', 'immobilier', 'investissement'],
+  local:      ['local', 'chapter', '在地', '線下', '小聚'],
+  info:       ['pratique', 'vie pratique', '生活', '簽證', '行政'],
+  collab:     ['collaboration', '合作', '機構'],
+  fiscal:     ['fiscal', 'fiscalité', 'fiscalite', '稅務', '資產規劃']
+};
+
+function inferGoalsFromMotivation(text) {
+  if (!text) return [];
+  const t = text.toLowerCase();
+  return ASSO_GOALS
+    .filter(g => (GOAL_KEYWORDS[g.id] || []).some(kw => t.includes(kw.toLowerCase())))
+    .map(g => g.id);
+}
+
 // ══════════════════════════════════════════════════════════════
 // DYNAMIC STATE — only user-created content (Firebase + cache)
 // ══════════════════════════════════════════════════════════════
@@ -783,6 +805,7 @@ function renderAssoMembers() {
           </div>
         </div>
         ${goals ? `<div class="sm-asso-goals">${goals}</div>` : ''}
+        ${m.motivation ? `<div class="sm-asso-city" style="margin-top:0.3rem;"><i class="fas fa-comment-dots" style="opacity:0.6;"></i> ${escHtml(m.motivation.length > 80 ? m.motivation.slice(0, 80) + '…' : m.motivation)}</div>` : ''}
         <div class="sm-asso-card-footer">
           <span class="sm-asso-paid-badge"><i class="fas fa-check-circle"></i> Membre officiel</span>
           ${m.linkedin ? `<a href="${escHtml(m.linkedin)}" target="_blank" onclick="event.stopPropagation()" class="sm-asso-linkedin"><i class="fab fa-linkedin"></i></a>` : ''}
@@ -838,9 +861,11 @@ function openAssoMemberModal(id = null) {
     _setVal('am-joined',   m.joinedAt ? m.joinedAt.slice(0, 10) : '');
     _setChecked('am-accepts-rules', !!m.acceptsRules);
     _setChecked('am-notification-consent', !!m.notificationConsent);
-    // Check goals
+    // Check goals — use saved selection if any, otherwise infer from the
+    // free-text HelloAsso answer so it isn't shown empty on first edit.
+    const effectiveGoals = (m.goals && m.goals.length) ? m.goals : inferGoalsFromMotivation(m.motivation);
     overlay.querySelectorAll('input[name="am-goal"]').forEach(cb => {
-      cb.checked = (m.goals || []).includes(cb.value);
+      cb.checked = effectiveGoals.includes(cb.value);
     });
     if (delBtn) delBtn.classList.remove('hidden');
   } else {

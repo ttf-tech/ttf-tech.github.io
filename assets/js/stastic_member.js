@@ -1498,7 +1498,7 @@ function renderAnnouncements() {
   if (!container) return;
 
   const upcoming = [...state.announcements]
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   if (upcoming.length === 0) {
     container.innerHTML = `

@@ -952,9 +952,9 @@ select.sm-input { cursor: pointer; }
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  background: linear-gradient(135deg, #0a2d42 0%, #0f4060 100%);
-  border-radius: 14px 14px 0 0;
-  padding: 0.85rem 1.25rem;
+  background: linear-gradient(135deg, #0a2d42 0%, #1a4a6e 100%);
+  border-radius: 12px 12px 0 0;
+  padding: 0.9rem 1.1rem;
   flex-wrap: wrap;
 }
 .sm-annc-header-left {
@@ -965,9 +965,8 @@ select.sm-input { cursor: pointer; }
 .sm-annc-icon {
   width: 36px;
   height: 36px;
-  border-radius: 10px;
-  background: rgba(251,191,36,0.2);
-  border: 1px solid rgba(251,191,36,0.35);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -987,17 +986,23 @@ select.sm-input { cursor: pointer; }
   margin-top: 0.1rem;
 }
 .sm-annc-list {
-  background: #fff;
+  background: #f1f5f9;
   border: 1px solid #e2e8f0;
   border-top: none;
-  border-radius: 0 0 14px 14px;
-  overflow: hidden;
+  border-radius: 0 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem;
 }
 .sm-annc-empty {
   text-align: center;
   padding: 2rem 1.5rem;
   color: #94a3b8;
   font-size: 0.82rem;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px dashed #e2e8f0;
 }
 .sm-annc-empty i { display: block; font-size: 1.8rem; opacity: 0.25; margin-bottom: 0.5rem; }
 
@@ -1006,12 +1011,13 @@ select.sm-input { cursor: pointer; }
   display: flex;
   gap: 1rem;
   align-items: flex-start;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid #f1f5f9;
-  transition: background 0.12s;
+  padding: 1.1rem 1.25rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  transition: box-shadow 0.15s, border-color 0.15s;
 }
-.sm-annc-card:last-child { border-bottom: none; }
-.sm-annc-card:hover { background: #f8fafc; }
+.sm-annc-card:hover { border-color: #cbd5e1; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
 
 .sm-annc-date-col {
   display: flex;

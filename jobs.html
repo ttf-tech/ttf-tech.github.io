@@ -169,7 +169,6 @@
       </div>
 
       <div class="jobs-wrap" id="jobs-list">
-        <div class="jobs-empty"><i class="fas fa-briefcase"></i>Chargement…</div>
       </div>
     </div>
 
@@ -260,9 +259,9 @@
 
     const countEl = document.getElementById('jobs-count');
     if (countEl) {
-      countEl.textContent = jobs.length === _allJobs.length
+      setFirebaseText(countEl, jobs.length === _allJobs.length
         ? `${_allJobs.length} offre${_allJobs.length !== 1 ? 's' : ''}`
-        : `${jobs.length} / ${_allJobs.length}`;
+        : `${jobs.length} / ${_allJobs.length}`);
     }
 
     if (jobs.length === 0) {
@@ -270,7 +269,11 @@
       return;
     }
 
-    container.innerHTML = jobs.map(j => {
+    reconcileFirebaseList(
+      container,
+      jobs,
+      j => j.id || `${j.createdAt || ''}|${j.title || ''}`,
+      j => {
       const cs       = JOB_COLORS[j.contract] || JOB_COLORS['Autre'];
       const expired  = isExpired(j.expiresAt);
       const newBadge = isNew(j.createdAt) && !expired
@@ -314,7 +317,8 @@
             ${cvBtn}
           </div>
         </div>`;
-    }).join('');
+      }
+    );
   }
 
   function locMatch(location, key) {

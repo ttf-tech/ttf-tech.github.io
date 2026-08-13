@@ -294,7 +294,6 @@
         <span class="section-count" id="upcoming-count">0</span>
       </div>
       <div class="events-grid" id="upcoming-list">
-        <div class="ev-empty"><i class="fas fa-calendar-alt"></i>Chargement…</div>
       </div>
     </section>
 
@@ -306,7 +305,6 @@
         <span class="section-count" id="past-count">0</span>
       </div>
       <div class="events-grid" id="past-list">
-        <div class="ev-empty"><i class="fas fa-play-circle"></i>Chargement…</div>
       </div>
     </section>
 
@@ -318,7 +316,6 @@
         <span class="section-count" id="speakers-count">0</span>
       </div>
       <div class="speakers-grid" id="speakers-grid">
-        <div class="ev-empty" style="grid-column:1/-1;"><i class="fas fa-microphone"></i>Chargement…</div>
       </div>
     </section>
 
@@ -441,14 +438,19 @@
   function renderSection(containerEl, countEl, events, isPast) {
     if (!containerEl) return;
     const filtered = events.filter(e => topicMatch(e, _activeTopic));
-    if (countEl) countEl.textContent = filtered.length;
+    setFirebaseText(countEl, filtered.length);
 
     if (filtered.length === 0) {
       const msg = isPast ? 'Aucun enregistrement pour le moment · 尚無過往錄影' : 'Aucun événement à venir · 目前沒有活動';
       containerEl.innerHTML = `<div class="ev-empty"><i class="fas fa-calendar-alt"></i>${msg}</div>`;
       return;
     }
-    containerEl.innerHTML = filtered.map(e => buildEventCard(e, isPast)).join('');
+    reconcileFirebaseList(
+      containerEl,
+      filtered,
+      e => e.id || `${e.date || ''}|${e.title || ''}`,
+      e => buildEventCard(e, isPast)
+    );
   }
 
   function buildSpeakers(allEvents) {
@@ -461,21 +463,23 @@
       if (e.speakerTitle) map[key].role = e.speakerTitle;
       (Array.isArray(e.topics) ? e.topics : []).forEach(t => map[key].topics.add(t));
     }
-    return Object.values(map).sort((a, b) => b.talkCount - a.talkCount);
+    return Object.values(map)
+      .map(speaker => ({ ...speaker, topics: [...speaker.topics] }))
+      .sort((a, b) => b.talkCount - a.talkCount);
   }
 
   function renderSpeakers(allEvents) {
     const grid     = document.getElementById('speakers-grid');
     const countEl  = document.getElementById('speakers-count');
     const speakers = buildSpeakers(allEvents);
-    if (countEl) countEl.textContent = speakers.length;
+    setFirebaseText(countEl, speakers.length);
 
     if (speakers.length === 0) {
       if (grid) grid.innerHTML = '<div class="ev-empty" style="grid-column:1/-1;"><i class="fas fa-microphone"></i>Aucun intervenant · 尚無講者資料</div>';
       return;
     }
     if (grid) {
-      grid.innerHTML = speakers.map(s => {
+      reconcileFirebaseList(grid, speakers, s => s.name, s => {
         const initials = s.name.split(' ').map(w => w[0] || '').slice(0, 2).join('').toUpperCase();
         const topicChips = [...s.topics].slice(0, 4).map(t => `<span class="speaker-topic-tag">${escHtmlRead(t)}</span>`).join('');
         return `
@@ -486,7 +490,7 @@
             <div class="speaker-count">${s.talkCount} talk${s.talkCount !== 1 ? 's' : ''}</div>
             ${topicChips ? `<div class="speaker-topics">${topicChips}</div>` : ''}
           </div>`;
-      }).join('');
+      });
     }
   }
 

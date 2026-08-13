@@ -377,7 +377,7 @@
 
         <div class="sm-kpi-grid" style="margin-bottom:1.4rem;">
           <div class="sm-kpi-tile">
-            <span class="sm-kpi-value accent" id="kpi-members">68</span>
+            <span class="sm-kpi-value accent" id="kpi-members">—</span>
             <span class="sm-kpi-label">Membres · 成員</span>
           </div>
           <div class="sm-kpi-tile">
@@ -1126,7 +1126,7 @@
       el.innerHTML = '<div class="pub-empty"><i class="fas fa-calendar-alt" style="display:block;font-size:1.5rem;opacity:0.2;margin-bottom:0.4rem;"></i>Aucun événement à venir · 目前沒有活動</div>';
       return;
     }
-    el.innerHTML = list.map(a => {
+    reconcileFirebaseList(el, list, a => a.id || `${a.date || ''}|${a.title || ''}`, a => {
       const d = a.date ? new Date(a.date) : null;
       const day   = d && !isNaN(d) ? d.getDate() : '—';
       const month = d && !isNaN(d) ? d.toLocaleDateString('fr-FR', { month: 'short' }).toUpperCase() : '';
@@ -1146,7 +1146,7 @@
             ${desc    ? `<div class="pub-event-desc">${desc}</div>` : ''}
           </div>
         </div>`;
-    }).join('');
+    });
   }
 
   function renderJobsPreview(jobs) {
@@ -1157,7 +1157,7 @@
       el.innerHTML = '<div class="pub-empty"><i class="fas fa-briefcase" style="display:block;font-size:1.5rem;opacity:0.2;margin-bottom:0.4rem;"></i>Aucune offre · 目前沒有職缺</div>';
       return;
     }
-    el.innerHTML = list.map(j => {
+    reconcileFirebaseList(el, list, j => j.id || `${j.createdAt || ''}|${j.title || ''}`, j => {
       const cs = JOB_CONTRACT_COLORS_PUB[j.contract] || JOB_CONTRACT_COLORS_PUB['Autre'];
       return `
         <div class="pub-job-card">
@@ -1169,7 +1169,7 @@
           ${j.salary ? `<div class="pub-job-salary"><i class="fas fa-coins" style="margin-right:0.2rem;"></i>${escHtmlRead(j.salary)}</div>` : ''}
           ${j.description ? `<div class="pub-job-desc">${escHtmlRead(j.description)}</div>` : ''}
         </div>`;
-    }).join('');
+    });
   }
 
   function updateActivityStrip(data) {
@@ -1178,10 +1178,10 @@
     const jobTitle = document.getElementById('act-job-title');
     const jobMeta  = document.getElementById('act-job-meta');
     if (job) {
-      if (jobTitle) jobTitle.textContent = job.title || '—';
-      if (jobMeta)  jobMeta.textContent  = [job.contract, job.location].filter(Boolean).join(' · ');
+      setFirebaseText(jobTitle, job.title || '—');
+      setFirebaseText(jobMeta, [job.contract, job.location].filter(Boolean).join(' · '));
     } else {
-      if (jobTitle) jobTitle.textContent = 'Aucune offre pour le moment · 尚無職缺';
+      setFirebaseText(jobTitle, 'Aucune offre pour le moment · 尚無職缺');
     }
 
     // Next upcoming event (soonest in the future, or last one if all past)
@@ -1194,19 +1194,19 @@
     const evTitle = document.getElementById('act-event-title');
     const evDate  = document.getElementById('act-event-date');
     if (event) {
-      if (evTitle) evTitle.textContent = event.title || '—';
-      if (evDate)  evDate.textContent  = event.date ? fmtDateRead(event.date) : '';
+      setFirebaseText(evTitle, event.title || '—');
+      setFirebaseText(evDate, event.date ? fmtDateRead(event.date) : '');
     } else {
-      if (evTitle) evTitle.textContent = 'Aucun événement · 尚無活動';
+      setFirebaseText(evTitle, 'Aucun événement · 尚無活動');
     }
   }
 
   subscribeFirebaseData(function(data) {
     const now = Date.now();
     const upcomingCount = data.announcements.filter(a => a.date && new Date(a.date) > now).length;
-    document.getElementById('kpi-members').textContent = data.memberCount;
-    document.getElementById('kpi-jobs').textContent    = data.jobs.length;
-    document.getElementById('kpi-events').textContent  = upcomingCount;
+    setFirebaseText(document.getElementById('kpi-members'), data.memberCount);
+    setFirebaseText(document.getElementById('kpi-jobs'), data.jobs.length);
+    setFirebaseText(document.getElementById('kpi-events'), upcomingCount);
     renderEventsPreview(data.announcements);
     renderJobsPreview(data.jobs);
     updateActivityStrip(data);
@@ -1334,11 +1334,22 @@
     }
   }
 
-  // Hook into the existing Firebase subscription
-  subscribeFirebaseData(function(data) {
-    updateCharts(data.surveyVotes);
-    renderUserSurveySection(data.userSurveys, data.surveyVotes, data.memberCount);
-  });
+  function surveyViewSignature(surveys, surveyVotes) {
+    const voteSummary = Object.keys(surveyVotes || {}).sort().map(surveyId => {
+      const votes = surveyVotes[surveyId] || {};
+      const counts = {};
+      Object.values(votes).forEach(options => {
+        (Array.isArray(options) ? options : []).forEach(optionId => {
+          counts[optionId] = (counts[optionId] || 0) + 1;
+        });
+      });
+      return [surveyId, Object.keys(votes).length, counts];
+    });
+    const publicSurveys = (surveys || []).map(({ votesByMember, ...survey }) => survey);
+    return JSON.stringify([publicSurveys, voteSummary]);
+  }
+
+  let _lastSurveyViewSignature = '';
 
   /* ── User-created survey section — Chart.js + 10% threshold ─── */
   const INDIGO_PALETTE = ['#6366f1','#818cf8','#4f46e5','#a5b4fc','#4338ca','#c7d2fe','#3730a3','#e0e7ff'];
@@ -1407,6 +1418,16 @@
       if (chart) _userCharts[survey.id] = chart;
     });
   }
+
+  // Subscribe only after all chart state and render functions are initialized.
+  // Cache callbacks can run synchronously during page startup.
+  subscribeFirebaseData(function(data) {
+    const signature = surveyViewSignature(data.userSurveys, data.surveyVotes);
+    if (signature === _lastSurveyViewSignature) return;
+    _lastSurveyViewSignature = signature;
+    updateCharts(data.surveyVotes);
+    renderUserSurveySection(data.userSurveys, data.surveyVotes, data.memberCount);
+  });
   </script>
   <div id="site-footer"></div>
   <script src="assets/js/footer.js"></script>

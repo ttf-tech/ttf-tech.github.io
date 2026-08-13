@@ -1708,6 +1708,7 @@ select.sm-input { cursor: pointer; }
 .upgrade-to-asso-banner .signed-in-only { display: none; }
 .upgrade-to-asso-banner.signed-in-non-member .signed-in-only { display: inline-flex; }
 .upgrade-to-asso-banner.signed-in-non-member .signed-out-only { display: none; }
+body.mg-auth-restoring .upgrade-to-asso-banner { display: none !important; }
 /* Variant: drop the card chrome when nesting inside an already-colored card */
 .upgrade-to-asso-banner.inline-dark {
   background: none; border: none; padding: 0;

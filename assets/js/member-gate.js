@@ -31,6 +31,7 @@
 'use strict';
 
 const MEMBER_GATE_VALID_DAYS = 365;
+const MEMBER_GATE_UI_HINT_KEY = 'ttf_auth_ui_hint_v1';
 
 const _MG_FB_CONFIG = {
   apiKey:            'AIzaSyCSfJ6-F9OEdmXQvwVHX9hpYvkp57mpeO8',
@@ -44,17 +45,47 @@ const _MG_FB_CONFIG = {
 
 let _mgUser = null;
 let _mgAssoMembers = [];
+let _mgAuthResolved = false;
+let _mgMembershipResolved = false;
+let _mgHasSignInHint = false;
 
 function _mgNorm(email) {
   return (email || '').trim().toLowerCase();
+}
+
+function _mgIsAdmin(email) {
+  const norm = _mgNorm(email);
+  const admins = (typeof ADMIN_EMAILS !== 'undefined') ? ADMIN_EMAILS : [];
+  return !!norm && admins.some(admin => _mgNorm(admin) === norm);
+}
+
+function _mgLoadSignInHint() {
+  try {
+    const hint = JSON.parse(sessionStorage.getItem(MEMBER_GATE_UI_HINT_KEY) || 'null');
+    return !!(hint && hint.signedIn === true);
+  } catch (_) {
+    return false;
+  }
+}
+
+function _mgSaveSignInHint(user) {
+  try {
+    if (user) {
+      sessionStorage.setItem(MEMBER_GATE_UI_HINT_KEY, JSON.stringify({
+        signedIn: true,
+        savedAt: Date.now()
+      }));
+    } else {
+      sessionStorage.removeItem(MEMBER_GATE_UI_HINT_KEY);
+    }
+  } catch (_) {}
 }
 
 function ttfIsAdhesionMember(email) {
   const norm = _mgNorm(email);
   if (!norm) return false;
 
-  const admins = (typeof ADMIN_EMAILS !== 'undefined') ? ADMIN_EMAILS : [];
-  if (admins.some(a => _mgNorm(a) === norm)) return true;
+  if (_mgIsAdmin(norm)) return true;
 
   return _mgAssoMembers.some(m => {
     if (_mgNorm(m.email) !== norm) return false;
@@ -65,36 +96,52 @@ function ttfIsAdhesionMember(email) {
 }
 
 function _mgApplyToDom() {
-  const hasAccess = ttfIsAdhesionMember(_mgUser && _mgUser.email);
+  const isAdmin = _mgIsAdmin(_mgUser && _mgUser.email);
+  const restoringAuth = _mgHasSignInHint && !_mgAuthResolved;
+  const checkingMembership = !!_mgUser && !isAdmin && !_mgMembershipResolved;
+  const isRestoring = restoringAuth || checkingMembership;
+  const hasAccess = !isRestoring && ttfIsAdhesionMember(_mgUser && _mgUser.email);
 
   document.querySelectorAll('.restricted-asso-content').forEach(el => {
     el.style.display = hasAccess ? '' : 'none';
   });
   document.querySelectorAll('.upgrade-to-asso-banner').forEach(el => {
-    el.style.display = hasAccess ? 'none' : '';
-    el.classList.toggle('signed-in-non-member', !!_mgUser && !hasAccess);
+    el.style.display = (hasAccess || isRestoring) ? 'none' : '';
+    el.classList.toggle('signed-in-non-member', !!_mgUser && !hasAccess && !isRestoring);
   });
   document.querySelectorAll('[data-member-gate-email]').forEach(el => {
     el.textContent = _mgUser ? _mgUser.email : '';
   });
   document.body.classList.toggle('mg-signed-in', !!_mgUser);
+  document.body.classList.toggle('mg-auth-restoring', isRestoring);
 }
 
 function ttfMemberGateInit() {
-  if (typeof firebase === 'undefined') return;
+  if (typeof firebase === 'undefined') {
+    document.body.classList.remove('mg-auth-restoring');
+    return;
+  }
   if (!firebase.apps.length) firebase.initializeApp(_MG_FB_CONFIG);
+
+  _mgHasSignInHint = _mgLoadSignInHint();
+  _mgApplyToDom();
 
   firebase.auth().onAuthStateChanged(function (user) {
     _mgUser = user;
+    _mgAuthResolved = true;
+    _mgHasSignInHint = !!user;
+    _mgSaveSignInHint(user);
     _mgApplyToDom();
   });
 
   if (typeof subscribeFirebaseData === 'function') {
     subscribeFirebaseData(function (data) {
       _mgAssoMembers = Array.isArray(data.assoMembers) ? data.assoMembers : [];
+      if (data.source !== 'cache') _mgMembershipResolved = true;
       _mgApplyToDom();
     });
   } else {
+    _mgMembershipResolved = true;
     _mgApplyToDom();
   }
 }
@@ -110,6 +157,8 @@ async function ttfMemberSignIn() {
 }
 
 async function ttfMemberSignOut() {
+  _mgHasSignInHint = false;
+  _mgSaveSignInHint(null);
   await firebase.auth().signOut();
 }
 

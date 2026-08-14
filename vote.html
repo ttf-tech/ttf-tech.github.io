@@ -229,7 +229,7 @@
             <i class="fas fa-shield-alt"></i>
             Comment voter ? · 如何投票？
           </div>
-          <div class="public-vote-note">Aucune connexion Google n’est requise. Chaque membre ne compte qu’une seule fois par sondage ; un nouveau vote remplace le précédent. Si votre nom n’apparaît pas, choisissez « Mon nom n’est pas dans la liste », saisissez-le puis votez : votre nom sera ajouté automatiquement. · 不需要 Google 登入；同一位會員在每份問卷只計一票，再次投票會覆蓋原本選項。如果名單中沒有您的名字，請選擇「名字不在名單」，輸入名稱後直接投票，系統會自動新增。</div>
+          <div class="public-vote-note">Aucune connexion Google n’est requise. Les sondages anonymes ne demandent aucun nom et peuvent être modifiés depuis le même navigateur. Pour un sondage nominatif, si votre nom n’apparaît pas, choisissez « Mon nom n’est pas dans la liste » : il sera ajouté avec votre vote. · 不需要 Google 登入；匿名問卷不會要求姓名，並可在同一瀏覽器修改投票。記名問卷若找不到您的名字，請選擇「名字不在名單」，系統會在投票時自動新增。</div>
           <div class="member-steps">
             <div class="member-step">
               <div class="member-step-num">1</div>
@@ -281,7 +281,7 @@
       </div>
       <div class="vote-modal-body">
 
-        <div class="vm-field">
+        <div class="vm-field" id="vm-member-field">
           <label class="vm-label" for="vm-member-select">
             <i class="fas fa-user" style="margin-right:0.3rem;color:#94a3b8;"></i>
             Votre nom de membre · 您的成員名稱 <span style="color:#be123c;">*</span>
@@ -578,8 +578,10 @@
     updateSubmitState();
   }
   function restoreSelectedVoteOptions() {
-    if (!_activeSurveyId || !_selectedMemberId) return;
-    _selectedOptions = [...voteOptions(_surveyVotes[_activeSurveyId]?.[_selectedMemberId])];
+    const survey = findSurvey(_activeSurveyId);
+    const voteKey = activeVoteKey(survey);
+    if (!survey || !voteKey) return;
+    _selectedOptions = [...voteOptions(_surveyVotes[_activeSurveyId]?.[voteKey])];
     document.querySelectorAll('#vm-options-list .vm-option').forEach(label => {
       const input = label.querySelector('input');
       const selected = Boolean(input && _selectedOptions.includes(input.value));
@@ -589,12 +591,29 @@
     updateSubmitState();
   }
   const seedSurveyIds = new Set(SURVEYS.map(survey => survey.id));
+  const surveyPrivacy = survey => survey?.privacy === 'show_voters' ? 'show_voters' : 'count_only';
   function activeSeedSurveys() {
     const byId = new Map(_surveysV4.map(survey => [survey.id, survey]));
     return SURVEYS.map(seed => {
       const remote = byId.get(seed.id);
       return remote ? { ...seed, ...remote, desc: remote.description || seed.desc } : seed;
     });
+  }
+  function findSurvey(surveyId) {
+    return [...activeSeedSurveys(), ..._userSurveys].find(survey => survey.id === surveyId);
+  }
+  function activeVoteKey(survey) {
+    return surveyPrivacy(survey) === 'count_only' ? (_voteUser?.uid || '') : _selectedMemberId;
+  }
+  function configureMemberField(survey) {
+    const anonymous = surveyPrivacy(survey) === 'count_only';
+    const field = document.getElementById('vm-member-field');
+    if (field) field.style.display = anonymous ? 'none' : '';
+    if (anonymous) {
+      _creatingNewMember = false;
+      _nameValid = false;
+      document.getElementById('vm-new-name-fields')?.classList.remove('visible');
+    }
   }
 
   /* ── Helpers ───────────────────────────────────────────────── */
@@ -786,6 +805,7 @@
     resetSubmitButton();
     const survey = activeSeedSurveys().find(s => s.id === surveyId);
     if (!survey) return;
+    configureMemberField(survey);
 
     document.getElementById('vm-title').textContent = survey.title;
     document.getElementById('vm-type-hint').textContent =
@@ -804,7 +824,10 @@
 
     const nameInput = document.getElementById('vm-name');
     nameInput.value = _myName;
-    if (_selectedMemberId) selectMember(_selectedMemberId, false);
+    if (surveyPrivacy(survey) === 'count_only') {
+      restoreSelectedVoteOptions();
+      updateSubmitState();
+    } else if (_selectedMemberId) selectMember(_selectedMemberId, false);
     else {
       _nameValid = false;
       updateSubmitState();
@@ -882,7 +905,12 @@
 
   function updateSubmitState() {
     const btn = document.getElementById('vm-submit');
-    btn.disabled = !(_voteUser && _nameValid && _selectedMemberId && _selectedOptions.length > 0);
+    if (!btn) return;
+    const survey = findSurvey(_activeSurveyId);
+    const identityReady = surveyPrivacy(survey) === 'count_only'
+      ? Boolean(_voteUser)
+      : Boolean(_nameValid && _selectedMemberId);
+    btn.disabled = !(_voteUser && identityReady && _selectedOptions.length > 0);
   }
 
   function resetSubmitButton() {
@@ -893,47 +921,54 @@
   }
 
   async function submitVote() {
-    if (!_activeSurveyId || !_nameValid || _selectedOptions.length === 0) return;
-    const isNewMember = _creatingNewMember;
+    const survey = findSurvey(_activeSurveyId);
+    const anonymousSurvey = surveyPrivacy(survey) === 'count_only';
+    if (!survey || !_voteUser || _selectedOptions.length === 0) return;
+    if (!anonymousSurvey && (!_nameValid || !_selectedMemberId)) return;
+    const isNewMember = !anonymousSurvey && _creatingNewMember;
     let member = _memberDirectory.find(item => item.id === _selectedMemberId);
     const typedName = document.getElementById('vm-name')?.value.trim() || '';
-    if (!isNewMember && !member) return;
+    if (!anonymousSurvey && !isNewMember && !member) return;
     if (isNewMember && (!typedName || !_voteUser)) return;
     const btn = document.getElementById('vm-submit');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi…';
 
     const surveyId    = _activeSurveyId;
-    let memberName  = isNewMember ? typedName : String(member.name || '').trim();
-    let memberId = isNewMember ? _voteUser.uid : member.id;
+    let memberName = anonymousSurvey ? '' : (isNewMember ? typedName : String(member.name || '').trim());
+    let voteKey = anonymousSurvey ? _voteUser.uid : (isNewMember ? _voteUser.uid : member.id);
     const chosenOpts  = [..._selectedOptions];
 
     if (_surveyVotesRef && _voteUser) {
       try {
-        const survey = [...activeSeedSurveys(), ..._userSurveys].find(item => item.id === surveyId);
         if (!survey || survey.status === 'closed') throw new Error('survey_closed');
         if (isNewMember) {
           member = await createSelfMember(memberName);
-          memberId = member.id;
+          voteKey = member.id;
           memberName = member.name;
         }
         const votesForSurvey = _surveyVotes[surveyId] || {};
-        const previous = votesForSurvey[memberId];
+        const previous = votesForSurvey[voteKey];
         const now = new Date().toISOString();
         const record = {
           uid: _voteUser.uid,
-          memberId,
           options: chosenOpts,
           source: _voteUser.isAnonymous ? 'anonymous' : 'authenticated',
           votedAt: previous?.votedAt || now,
           updatedAt: now
         };
-        if (survey.privacy === 'show_voters') record.displayName = memberName;
-        const updates = { [memberId]: record };
-        if (votesForSurvey[_voteUser.uid] && _voteUser.uid !== memberId) {
+        if (!anonymousSurvey) {
+          record.memberId = voteKey;
+          record.displayName = memberName;
+        }
+        const updates = { [voteKey]: record };
+        if (!anonymousSurvey && votesForSurvey[_voteUser.uid] && _voteUser.uid !== voteKey) {
           updates[_voteUser.uid] = null;
         }
-        await persistVoterBinding();
+        if (anonymousSurvey && _selectedMemberId && _selectedMemberId !== voteKey && votesForSurvey[_selectedMemberId]?.uid === _voteUser.uid) {
+          updates[_selectedMemberId] = null;
+        }
+        if (!anonymousSurvey) await persistVoterBinding();
         await _surveyVotesRef.child(surveyId).update(updates);
 
         // Optimistically update local cache so UI reflects result instantly
@@ -960,14 +995,15 @@
     renderSurveys();
   }
 
-  /* ── Derive "already voted" from Firebase for selected member ── */
+  /* ── Derive "already voted" from Firebase identity ── */
   function _deriveMyVotesFromFirebase() {
     _myVotes = {};
-    if (!_selectedMemberId) return;
+    if (!_voteUser) return;
     const allSurveys = [...activeSeedSurveys(), ..._userSurveys];
     for (const survey of allSurveys) {
       const votes = _surveyVotes[survey.id] || {};
-      const options = voteOptions(votes[_selectedMemberId]);
+      const voteKey = activeVoteKey(survey);
+      const options = voteOptions(votes[voteKey]);
       if (options.length) _myVotes[survey.id] = options;
     }
     renderSurveys();
@@ -982,6 +1018,7 @@
     _creatingNewMember = false;
     document.getElementById('vm-new-name-fields')?.classList.remove('visible');
     resetSubmitButton();
+    configureMemberField(survey);
 
     document.getElementById('vm-title').textContent = survey.title || 'Voter · 投票';
     document.getElementById('vm-type-hint').textContent =
@@ -999,7 +1036,10 @@
 
     const nameInput = document.getElementById('vm-name');
     nameInput.value = _myName;
-    if (_selectedMemberId) selectMember(_selectedMemberId, false);
+    if (surveyPrivacy(survey) === 'count_only') {
+      restoreSelectedVoteOptions();
+      updateSubmitState();
+    } else if (_selectedMemberId) selectMember(_selectedMemberId, false);
     else {
       _nameValid = false;
       updateSubmitState();

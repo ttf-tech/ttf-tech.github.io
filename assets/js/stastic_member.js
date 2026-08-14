@@ -1550,8 +1550,11 @@ function openVoteModal(sid) {
   const title   = document.getElementById('vote-modal-title');
   const opts    = document.getElementById('vote-modal-options');
   const memberEl = document.getElementById('vote-member-id');
+  const memberGroup = document.getElementById('vote-member-group');
+  const anonymousSurvey = survey.privacy !== 'show_voters';
 
   if (title) title.textContent = survey.title;
+  if (memberGroup) memberGroup.style.display = anonymousSurvey ? 'none' : '';
 
   if (memberEl) {
     memberEl.innerHTML = '<option value="">Sélectionnez un membre…</option>' + state.members.map(member =>
@@ -1595,10 +1598,11 @@ async function submitVote() {
   const memberId = memberEl?.value || '';
   const member = state.members.find(item => item.id === memberId);
   const name = String(member?.name || '').trim();
+  const anonymousSurvey = survey.privacy !== 'show_voters';
 
   if (errEl) errEl.style.display = 'none';
 
-  if (!member) {
+  if (!anonymousSurvey && !member) {
     if (errEl) {
       errEl.innerHTML =
         '<i class="fas fa-exclamation-triangle" style="margin-right:0.35rem;"></i>' +
@@ -1617,19 +1621,26 @@ async function submitVote() {
 
   if (_surveyV4Ready && _surveyVotesRef) {
     const actor = firebase.auth().currentUser;
+    if (!actor) {
+      showToast('Authentification indisponible · 無法取得登入狀態');
+      return;
+    }
+    const voteKey = anonymousSurvey ? actor.uid : memberId;
     const votesForSurvey = survey.votesByMember || {};
-    const previous = votesForSurvey[memberId];
+    const previous = votesForSurvey[voteKey];
     const now = new Date().toISOString();
     const record = {
-      uid: actor?.uid || memberId,
-      memberId,
+      uid: actor.uid,
       options: checked,
       source: 'admin',
       votedAt: previous?.votedAt || now,
       updatedAt: now
     };
-    if (survey.privacy === 'show_voters') record.displayName = name;
-    try { await _surveyVotesRef.child(survey.id).child(memberId).set(record); }
+    if (!anonymousSurvey) {
+      record.memberId = memberId;
+      record.displayName = name;
+    }
+    try { await _surveyVotesRef.child(survey.id).child(voteKey).set(record); }
     catch (error) {
       console.warn('[Firebase] admin vote failed', error);
       showToast('Vote impossible · 投票失敗');
@@ -1642,7 +1653,7 @@ async function submitVote() {
   closeVoteModal();
   renderSurveys();
   renderKPIs();
-  showToast(`Vote de ${name} enregistré !`);
+  showToast(anonymousSurvey ? 'Vote anonyme enregistré !' : `Vote de ${name} enregistré !`);
 }
 
 // ── Member modal ───────────────────────────────────────────────

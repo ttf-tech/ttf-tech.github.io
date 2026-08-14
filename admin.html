@@ -570,7 +570,7 @@
             <i class="fas fa-user-check"></i>
             <div>
               <strong>投票條件 · Condition de vote</strong>
-              <span>管理員代投時，請從清單選擇會員；同一會員再次提交會覆蓋原本的票。公開投票頁的使用者若找不到名字，可選擇「名字不在名單」，輸入名稱後直接投票，系統會自動新增。 · Pour voter depuis l’administration, sélectionnez un membre dans la liste ; un nouveau vote remplace le précédent. Sur la page publique, si le nom n’apparaît pas, l’utilisateur peut choisir « Mon nom n’est pas dans la liste », saisir son nom et voter : il sera ajouté automatiquement.</span>
+              <span>匿名問卷不選擇會員名稱，會以目前登入身分的技術 ID 儲存並允許修改；記名問卷才需要從會員清單選擇名稱。公開頁的記名問卷若找不到名字，使用者可選擇「名字不在名單」，投票時會自動新增。 · Un sondage anonyme ne demande aucun membre et utilise uniquement l’identifiant technique de la session pour permettre une modification. Un sondage nominatif demande de sélectionner un membre. Sur la page publique, un nom absent peut être ajouté automatiquement avec le vote.</span>
             </div>
           </div>
         </div>
@@ -854,7 +854,7 @@
       </div>
       <div class="sm-modal-body">
 
-        <div class="sm-form-group">
+        <div class="sm-form-group" id="vote-member-group">
           <label class="sm-label" for="vote-member-id">Membre *</label>
           <select id="vote-member-id" class="sm-input">
             <option value="">Sélectionnez un membre…</option>

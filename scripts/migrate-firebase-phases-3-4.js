@@ -82,6 +82,25 @@ function legacyVoteKey(surveyId, displayName) {
   return `legacy_${crypto.createHash('sha256').update(`${surveyId}:${displayName}`).digest('hex').slice(0, 24)}`;
 }
 
+function surveyDefinition(survey) {
+  const { votesByMember, legacyCounts, ...definition } = survey || {};
+  return definition;
+}
+
+function assertValidFirebaseKeys(value, path = '') {
+  if (!value || typeof value !== 'object') return;
+  if (Array.isArray(value)) {
+    value.forEach((child, index) => assertValidFirebaseKeys(child, `${path}/${index}`));
+    return;
+  }
+  for (const [key, child] of Object.entries(value)) {
+    if (/[.#$\[\]\/]/.test(key)) {
+      throw new Error(`Invalid Firebase key at ${path || '/'}: ${key}`);
+    }
+    assertValidFirebaseKeys(child, `${path}/${key}`);
+  }
+}
+
 function splitMember(member, existingProfile) {
   const official = { ...member };
   const migratedProfile = {
@@ -148,11 +167,10 @@ async function main() {
     memberProfiles[memberId] = split.profile;
   }
 
-  const dynamicSurveys = (Array.isArray(legacy.userSurveys) ? legacy.userSurveys : []).map(survey => {
-    const { votesByMember, ...definition } = survey;
-    return definition;
-  });
-  const migratedSurveyMap = Object.fromEntries([...SEED_SURVEYS, ...dynamicSurveys].map(survey => [survey.id, survey]));
+  const dynamicSurveys = (Array.isArray(legacy.userSurveys) ? legacy.userSurveys : []).map(surveyDefinition);
+  const migratedSurveyMap = Object.fromEntries(
+    [...SEED_SURVEYS.map(surveyDefinition), ...dynamicSurveys].map(survey => [survey.id, survey])
+  );
   const surveyMap = { ...migratedSurveyMap, ...asObject(root.surveys) };
   const legacyVotes = { ...(legacy.surveyVotes || {}) };
   for (const survey of (legacy.userSurveys || [])) {
@@ -169,22 +187,25 @@ async function main() {
     voteCount: Object.values(surveyVotes).reduce((total, votes) => total + Object.keys(votes || {}).length, 0)
   };
 
+  const payload = {
+    assoMembers: officialMembers,
+    memberProfiles,
+    surveys: surveyMap,
+    surveyVotes,
+    system: { ...(root.system || {}), phase34Migration: summary }
+  };
+  assertValidFirebaseKeys(payload);
+
   const write = await fetch(`${FIREBASE_DB_URL}/.json?${auth}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      assoMembers: officialMembers,
-      memberProfiles,
-      surveys: surveyMap,
-      surveyVotes,
-      'system/phase34Migration': summary
-    })
+    body: JSON.stringify(payload)
   });
   if (!write.ok) throw new Error(`Firebase write failed: ${write.status} ${await write.text()}`);
   console.log(`Phase 3/4 migration complete: ${JSON.stringify(summary)}`);
 }
 
-module.exports = { splitMember, convertVotes, legacyVoteKey };
+module.exports = { splitMember, convertVotes, legacyVoteKey, surveyDefinition, assertValidFirebaseKeys };
 
 if (require.main === module) {
   main().catch(error => {

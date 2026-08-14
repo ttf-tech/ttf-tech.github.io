@@ -19,6 +19,7 @@ let _firebaseReadLastData = null;
 let _firebaseReadLastSignature = '';
 const _firebaseReadLive = {
   publicStats: null,
+  communityMembers: null,
   announcements: null,
   jobs: null,
   surveys: null,
@@ -56,8 +57,11 @@ function _sortNewestFirst(records, primaryField) {
 
 function _makeFirebaseReadData(source) {
   const surveys = _recordsFromFirebase(_firebaseReadLive.surveys);
+  const communityMemberCount = _firebaseReadLive.communityMembers === null
+    ? (Number(_firebaseReadLive.publicStats?.communityMemberCount) || 68)
+    : 68 + _recordsFromFirebase(_firebaseReadLive.communityMembers).length;
   return {
-    memberCount: Number(_firebaseReadLive.publicStats?.communityMemberCount) || 68,
+    memberCount: communityMemberCount,
     announcements: _sortNewestFirst(_recordsFromFirebase(_firebaseReadLive.announcements), 'date'),
     jobs: _sortNewestFirst(_recordsFromFirebase(_firebaseReadLive.jobs), 'createdAt'),
     surveyVotes: (_firebaseReadLive.surveyVotes && typeof _firebaseReadLive.surveyVotes === 'object')
@@ -159,6 +163,7 @@ function subscribeFirebaseData(onData) {
         if (!firebase.apps.length) firebase.initializeApp(_FB_READ_CONFIG);
         const refs = {
           publicStats: firebase.database().ref('publicStats'),
+          communityMembers: firebase.database().ref('communityMembers'),
           announcements: firebase.database().ref('announcements'),
           jobs: firebase.database().ref('jobs'),
           surveys: firebase.database().ref('surveys'),

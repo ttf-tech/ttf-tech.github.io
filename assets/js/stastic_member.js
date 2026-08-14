@@ -84,6 +84,18 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+function normalizeVoterName(name) {
+  return String(name || '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('fr-FR');
+}
+
+function memberVoteLabel(member, members = state.members) {
+  const normalized = normalizeVoterName(member?.name);
+  const duplicateCount = members.filter(item => normalizeVoterName(item?.name) === normalized).length;
+  if (duplicateCount < 2) return member.name;
+  const suffix = String(member.id || '').replace(/[^a-z0-9]/gi, '').slice(-4).toUpperCase() || 'ID';
+  return `${member.name} · #${suffix}`;
+}
+
 function escHtml(s) {
   return String(s)
     .replace(/&/g, '&amp;')
@@ -1537,19 +1549,16 @@ function openVoteModal(sid) {
   const overlay = document.getElementById('vote-modal');
   const title   = document.getElementById('vote-modal-title');
   const opts    = document.getElementById('vote-modal-options');
-  const nameEl  = document.getElementById('vote-member-name');
-  const datalist = document.getElementById('vote-member-datalist');
+  const memberEl = document.getElementById('vote-member-id');
 
   if (title) title.textContent = survey.title;
 
-  // Populate member datalist
-  if (datalist) {
-    datalist.innerHTML = state.members.map(m =>
-      `<option value="${escHtml(m.name)}">`
+  if (memberEl) {
+    memberEl.innerHTML = '<option value="">Sélectionnez un membre…</option>' + state.members.map(member =>
+      `<option value="${escHtml(member.id)}">${escHtml(memberVoteLabel(member))}</option>`
     ).join('');
+    memberEl.value = '';
   }
-
-  if (nameEl) nameEl.value = '';
   const errEl2 = document.getElementById('vote-name-error');
   if (errEl2) errEl2.style.display = 'none';
 
@@ -1581,24 +1590,23 @@ async function submitVote() {
     return;
   }
 
-  const nameEl = document.getElementById('vote-member-name');
+  const memberEl = document.getElementById('vote-member-id');
   const errEl  = document.getElementById('vote-name-error');
-  const name   = nameEl?.value.trim();
+  const memberId = memberEl?.value || '';
+  const member = state.members.find(item => item.id === memberId);
+  const name = String(member?.name || '').trim();
 
   if (errEl) errEl.style.display = 'none';
 
-  if (!name) { showToast('Veuillez saisir votre nom.'); return; }
-
-  const isMember = state.members.some(m => m.name.trim().toLowerCase() === name.toLowerCase());
-  if (!isMember) {
+  if (!member) {
     if (errEl) {
       errEl.innerHTML =
         '<i class="fas fa-exclamation-triangle" style="margin-right:0.35rem;"></i>' +
-        'Votre nom n\'est pas dans la liste des membres. Rendez-vous dans l\'onglet <strong>Membres</strong> pour créer votre profil.' +
-        '<br><span style="opacity:0.8;">您的名字不在成員名單中，請先前往「<strong>成員</strong>」分頁建立您的成員資料後再投票。</span>';
+        'Veuillez sélectionner un membre existant.' +
+        '<br><span style="opacity:0.8;">請選擇既有會員。</span>';
       errEl.style.display = 'block';
     }
-    if (nameEl) nameEl.focus();
+    if (memberEl) memberEl.focus();
     return;
   }
 
@@ -1609,20 +1617,19 @@ async function submitVote() {
 
   if (_surveyV4Ready && _surveyVotesRef) {
     const actor = firebase.auth().currentUser;
-    const existingEntry = Object.entries(survey.votesByMember || {}).find(([key, vote]) =>
-      (vote?.displayName || key).trim().toLowerCase() === name.toLowerCase()
-    );
-    const voteKey = existingEntry?.[0] || `admin_${uid()}`;
+    const votesForSurvey = survey.votesByMember || {};
+    const previous = votesForSurvey[memberId];
     const now = new Date().toISOString();
     const record = {
-      uid: actor?.uid || voteKey,
+      uid: actor?.uid || memberId,
+      memberId,
       options: checked,
       source: 'admin',
-      votedAt: existingEntry?.[1]?.votedAt || now,
+      votedAt: previous?.votedAt || now,
       updatedAt: now
     };
     if (survey.privacy === 'show_voters') record.displayName = name;
-    try { await _surveyVotesRef.child(`${survey.id}/${voteKey}`).set(record); }
+    try { await _surveyVotesRef.child(survey.id).child(memberId).set(record); }
     catch (error) {
       console.warn('[Firebase] admin vote failed', error);
       showToast('Vote impossible · 投票失敗');

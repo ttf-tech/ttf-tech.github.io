@@ -570,7 +570,7 @@
             <i class="fas fa-user-check"></i>
             <div>
               <strong>投票條件 · Condition de vote</strong>
-              <span>需為社群成員才能投票。若遭拒絕，請先至「Membres」分頁以你的名字加入，再回來投票。 · Vous devez être membre pour voter. Si votre vote est refusé, allez dans l'onglet Membres, ajoutez-vous, puis revenez voter.</span>
+              <span>管理員代投時，請從清單選擇會員；同一會員再次提交會覆蓋原本的票。公開投票頁的使用者若找不到名字，可選擇「名字不在名單」，輸入名稱後直接投票，系統會自動新增。 · Pour voter depuis l’administration, sélectionnez un membre dans la liste ; un nouveau vote remplace le précédent. Sur la page publique, si le nom n’apparaît pas, l’utilisateur peut choisir « Mon nom n’est pas dans la liste », saisir son nom et voter : il sera ajouté automatiquement.</span>
             </div>
           </div>
         </div>
@@ -855,14 +855,12 @@
       <div class="sm-modal-body">
 
         <div class="sm-form-group">
-          <label class="sm-label" for="vote-member-name">Votre nom *</label>
-          <input id="vote-member-name" class="sm-input" type="text"
-                 list="vote-member-datalist"
-                 placeholder="Entrez ou sélectionnez votre nom…"
-                 autocomplete="off">
-          <datalist id="vote-member-datalist"></datalist>
+          <label class="sm-label" for="vote-member-id">Membre *</label>
+          <select id="vote-member-id" class="sm-input">
+            <option value="">Sélectionnez un membre…</option>
+          </select>
           <div style="font-size:0.68rem;color:#94a3b8;margin-top:0.2rem;">
-            Commencez à taper pour filtrer les membres existants, ou entrez un nouveau nom.
+            Le vote est enregistré avec l’identifiant unique du membre, même en cas d’homonymie.
           </div>
           <div id="vote-name-error" style="display:none;margin-top:0.5rem;padding:0.6rem 0.75rem;background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;font-size:0.75rem;color:#be123c;line-height:1.5;"></div>
         </div>

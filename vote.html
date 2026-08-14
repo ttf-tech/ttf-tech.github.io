@@ -173,6 +173,8 @@
     }
     .vm-name-status.valid   { color: #059669; }
     .vm-name-status.invalid { color: #be123c; }
+    .vm-new-name-fields { display: none; margin-top: 0.65rem; }
+    .vm-new-name-fields.visible { display: block; }
 
     /* Options */
     .vm-options-title { font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem; }
@@ -183,7 +185,7 @@
     }
     .vm-option:hover { border-color: #0a2d42; background: #f8fafc; }
     .vm-option.selected { border-color: #0a2d42; background: #f0f7ff; }
-    .vm-option input { width: 16px; height: 16px; cursor: pointer; accent-color: #0a2d42; flex-shrink: 0; }
+    .vm-option input { width: 16px; height: 16px; cursor: pointer; accent-color: #0a2d42; flex-shrink: 0; pointer-events: none; }
     .vm-option-label { font-size: 0.8rem; color: #0f172a; }
 
     .vm-footer { margin-top: 1rem; display: flex; gap: 0.6rem; justify-content: flex-end; }
@@ -227,7 +229,7 @@
             <i class="fas fa-shield-alt"></i>
             Comment voter ? · 如何投票？
           </div>
-          <div class="public-vote-note">Aucune connexion Google n’est requise. Saisissez un nom puis votez ; une identité technique anonyme protège chaque bulletin contre l’écrasement. · 不需要 Google 登入，填寫名稱後即可投票；系統會用匿名技術身分避免票數互相覆蓋。</div>
+          <div class="public-vote-note">Aucune connexion Google n’est requise. Chaque membre ne compte qu’une seule fois par sondage ; un nouveau vote remplace le précédent. Si votre nom n’apparaît pas, choisissez « Mon nom n’est pas dans la liste », saisissez-le puis votez : votre nom sera ajouté automatiquement. · 不需要 Google 登入；同一位會員在每份問卷只計一票，再次投票會覆蓋原本選項。如果名單中沒有您的名字，請選擇「名字不在名單」，輸入名稱後直接投票，系統會自動新增。</div>
           <div class="member-steps">
             <div class="member-step">
               <div class="member-step-num">1</div>
@@ -235,7 +237,7 @@
             </div>
             <div class="member-step">
               <div class="member-step-num">2</div>
-              <div>L'admin valide votre adhésion · 等待管理員驗證您的成員資格</div>
+              <div>Sélectionnez votre nom ou ajoutez-le · 選擇或新增您的名字</div>
             </div>
             <div class="member-step">
               <div class="member-step-num">3</div>
@@ -250,15 +252,15 @@
           <div style="margin-top:0.75rem;padding:0.65rem 0.9rem;background:rgba(255,255,255,0.7);border-radius:8px;border-left:3px solid #f59e0b;font-size:0.72rem;color:#78350f;line-height:1.55;">
             <i class="fas fa-exclamation-circle" style="margin-right:0.35rem;color:#f59e0b;"></i>
             <strong>Votre nom n'apparaît pas dans la liste ?</strong>
-            Rejoignez d'abord le groupe WhatsApp, puis envoyez un message à l'admin pour demander votre ajout en tant que membre.<br>
-            <span style="color:#92400e;">您的名字不在列表中？請先加入 WhatsApp 群組，然後私訊管理員請求將您加入成員名單，即可開始投票。</span>
+            Choisissez « Mon nom n’est pas dans la liste », saisissez votre nom puis votez.<br>
+            <span style="color:#92400e;">您的名字不在列表中？選擇「名字不在名單」，輸入名稱後直接投票即可。</span>
           </div>
         </div>
         <div class="member-required-actions">
           <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener" class="member-wa-btn">
             <i class="fab fa-whatsapp"></i> Rejoindre WhatsApp
           </a>
-          <div class="member-note">Les résultats sont visibles par tous · 結果對所有人公開。只有已驗證成員可以投票。</div>
+          <div class="member-note">Les résultats sont visibles par tous · 結果對所有人公開。選擇或新增會員名稱後即可投票。</div>
         </div>
       </div>
     </div>
@@ -280,15 +282,23 @@
       <div class="vote-modal-body">
 
         <div class="vm-field">
-          <label class="vm-label" for="vm-name">
+          <label class="vm-label" for="vm-member-select">
             <i class="fas fa-user" style="margin-right:0.3rem;color:#94a3b8;"></i>
             Votre nom de membre · 您的成員名稱 <span style="color:#be123c;">*</span>
           </label>
-          <input type="text" id="vm-name" class="vm-input"
-                 placeholder="Entrez votre nom... · 請輸入您的成員名稱"
-                 list="vm-name-datalist" autocomplete="off">
-          <datalist id="vm-name-datalist"></datalist>
-          <div class="vm-name-status" id="vm-name-status"></div>
+          <select id="vm-member-select" class="vm-input">
+            <option value="">Choisir un membre… · 選擇會員</option>
+            <option value="__new__">Mon nom n’est pas dans la liste · 名字不在名單</option>
+          </select>
+          <div class="vm-new-name-fields" id="vm-new-name-fields">
+            <label class="vm-label" for="vm-name" style="margin-top:0.1rem;">
+              Saisissez votre nom · 請輸入您的名稱 <span style="color:#be123c;">*</span>
+            </label>
+            <input type="text" id="vm-name" class="vm-input"
+                   placeholder="Entrez votre nom... · 請輸入您的成員名稱"
+                   autocomplete="off">
+            <div class="vm-name-status" id="vm-name-status"></div>
+          </div>
         </div>
 
         <div class="vm-field">
@@ -343,12 +353,16 @@
   };
   let _surveysRef = null;
   let _surveyVotesRef = null;
+  let _communityMembersRef = null;
+  let _voterBindingsRef = null;
   let _voteUser = null;
   if (typeof firebase !== 'undefined') {
     try {
       if (!firebase.apps.length) firebase.initializeApp(_FB_CONFIG);
       _surveysRef = firebase.database().ref('surveys');
       _surveyVotesRef = firebase.database().ref('surveyVotes');
+      _communityMembersRef = firebase.database().ref('communityMembers');
+      _voterBindingsRef = firebase.database().ref('voterBindings');
     } catch(e) { console.warn('Firebase init error', e); }
   }
 
@@ -460,23 +474,120 @@
   ];
 
   /* ── State ─────────────────────────────────────────────────── */
-  let _surveyVotes = {};       // { surveyId: { memberName: [optionIds] } }
+  let _surveyVotes = {};       // { surveyId: { memberId: voteRecord } }
   let _surveysV4 = [];
   let _surveyV4Ready = false;
   let _userSurveys  = [];      // user-created surveys from Firebase (admin → Sondages)
-  let _allMembers = [...SEED_MEMBER_NAMES];
+  let _communityMembers = [];
+  let _memberDirectory = SEED_MEMBER_NAMES.map((name, index) => ({ id: `seed_m_${index}`, name, source: 'seed' }));
   // localStorage = persists across browser sessions (name remembered forever)
   // _myVotes is derived from Firebase on every load — not from localStorage
   let _myVotes = {};  // populated from Firebase once we know the member name
   let _myName  = localStorage.getItem('ttf_my_name') || '';
+  let _selectedMemberId = localStorage.getItem('ttf_member_id') || '';
 
   // Modal state
   let _activeSurveyId  = null;
   let _selectedOptions = [];
   let _nameValid       = false;
+  let _creatingNewMember = false;
 
   const voteOptions = vote => Array.isArray(vote) ? vote : (Array.isArray(vote?.options) ? vote.options : []);
   const voteName = (key, vote) => vote?.displayName || key;
+  function normalizeVoterName(name) {
+    return String(name || '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('fr-FR');
+  }
+  function refreshMemberDirectory() {
+    _memberDirectory = [
+      ...SEED_MEMBER_NAMES.map((name, index) => ({ id: `seed_m_${index}`, name, source: 'seed' })),
+      ..._communityMembers.filter(member => member?.id && String(member?.name || '').trim())
+    ];
+    populateMemberSelect();
+  }
+  function memberChoiceLabel(member) {
+    const normalized = normalizeVoterName(member?.name);
+    const duplicateCount = _memberDirectory.filter(item => normalizeVoterName(item?.name) === normalized).length;
+    if (duplicateCount < 2) return member.name;
+    const suffix = String(member.id || '').replace(/[^a-z0-9]/gi, '').slice(-4).toUpperCase() || 'ID';
+    return `${member.name} · #${suffix}`;
+  }
+  function populateMemberSelect() {
+    const select = document.getElementById('vm-member-select');
+    if (!select) return;
+    select.innerHTML = '<option value="">Choisir un membre… · 選擇會員</option>' +
+      '<option value="__new__">Mon nom n’est pas dans la liste · 名字不在名單</option>' +
+      _memberDirectory.map(member => `<option value="${escHtmlRead(member.id)}">${escHtmlRead(memberChoiceLabel(member))}</option>`).join('');
+    select.value = _creatingNewMember
+      ? '__new__'
+      : (_memberDirectory.some(member => member.id === _selectedMemberId) ? _selectedMemberId : '');
+  }
+  async function persistVoterBinding() {
+    if (!_voteUser || !_voterBindingsRef || !_selectedMemberId || !_myName) return;
+    await _voterBindingsRef.child(_voteUser.uid).set({
+      uid: _voteUser.uid,
+      memberId: _selectedMemberId,
+      displayName: _myName,
+      updatedAt: new Date().toISOString()
+    });
+  }
+  function selectMember(memberId, persist = true) {
+    const member = _memberDirectory.find(item => item.id === memberId);
+    if (!member) {
+      _selectedMemberId = '';
+      _nameValid = false;
+      updateSubmitState();
+      return;
+    }
+    _selectedMemberId = member.id;
+    _creatingNewMember = false;
+    _myName = String(member.name || '').trim();
+    _nameValid = Boolean(_myName);
+    localStorage.setItem('ttf_member_id', _selectedMemberId);
+    localStorage.setItem('ttf_my_name', _myName);
+    const select = document.getElementById('vm-member-select');
+    if (select) select.value = _selectedMemberId;
+    const input = document.getElementById('vm-name');
+    if (input) input.value = _myName;
+    document.getElementById('vm-new-name-fields')?.classList.remove('visible');
+    const status = document.getElementById('vm-name-status');
+    if (status) {
+      status.innerHTML = '<i class="fas fa-check-circle"></i> Membre sélectionné · 已選擇會員';
+      status.className = 'vm-name-status valid';
+    }
+    updateSubmitState();
+    _deriveMyVotesFromFirebase();
+    restoreSelectedVoteOptions();
+    if (persist) persistVoterBinding().catch(error => console.warn('Voter binding save error', error));
+  }
+  function beginNewMember() {
+    _creatingNewMember = true;
+    _selectedMemberId = _voteUser?.uid || '';
+    _nameValid = false;
+    const fields = document.getElementById('vm-new-name-fields');
+    const input = document.getElementById('vm-name');
+    const status = document.getElementById('vm-name-status');
+    fields?.classList.add('visible');
+    if (input) {
+      input.value = '';
+      setTimeout(() => input.focus(), 0);
+    }
+    if (status) {
+      status.innerHTML = '<i class="fas fa-info-circle"></i> Saisissez votre nom puis votez · 輸入名稱後直接投票';
+      status.className = 'vm-name-status';
+    }
+    updateSubmitState();
+  }
+  function restoreSelectedVoteOptions() {
+    if (!_activeSurveyId || !_selectedMemberId) return;
+    _selectedOptions = [...voteOptions(_surveyVotes[_activeSurveyId]?.[_selectedMemberId])];
+    document.querySelectorAll('#vm-options-list .vm-option').forEach(label => {
+      const input = label.querySelector('input');
+      const selected = Boolean(input && _selectedOptions.includes(input.value));
+      label.classList.toggle('selected', selected);
+      if (input) input.checked = selected;
+    });
+    updateSubmitState();
+  }
   const seedSurveyIds = new Set(SURVEYS.map(survey => survey.id));
   function activeSeedSurveys() {
     const byId = new Map(_surveysV4.map(survey => [survey.id, survey]));
@@ -503,12 +614,6 @@
     const legacy = Object.values(survey.legacyCounts).reduce((a, b) => a + b, 0);
     const live   = Object.keys(_surveyVotes[survey.id] || {}).length;
     return legacy + live;
-  }
-
-  function isMember(name) {
-    if (!name) return false;
-    const n = name.trim().toLowerCase();
-    return n.length > 0;
   }
 
   /* ── Helpers for user surveys (no legacy counts) ──────────────── */
@@ -565,8 +670,8 @@
       ? `<span style="font-size:0.7rem;color:#94a3b8;font-style:italic;">Sondage clôturé · 已結束</span>`
       : hasVoted
         ? `<span class="survey-voted-badge"><i class="fas fa-check-circle"></i> Votre vote enregistré · 已投票</span>
-           <button class="vote-btn" disabled style="background:#e2e8f0;color:#64748b;cursor:default;">
-             <i class="fas fa-check"></i> Voté · 已完成
+           <button class="vote-btn" style="background:#475569;" onclick="openVoteModalUser('${survey.id}')">
+             <i class="fas fa-edit"></i> Modifier · 修改投票
            </button>`
         : `<span style="font-size:0.7rem;color:#94a3b8;">Résultats visibles par tous · 結果對所有人公開</span>
            <button class="vote-btn" style="background:#6366f1;" onclick="openVoteModalUser('${survey.id}')">
@@ -642,8 +747,8 @@
       ? `<span style="font-size:0.7rem;color:#94a3b8;font-style:italic;">Sondage clôturé · 已結束</span>`
       : hasVoted
       ? `<span class="survey-voted-badge"><i class="fas fa-check-circle"></i> Votre vote enregistré · 已投票</span>
-         <button class="vote-btn" style="background:#e2e8f0;color:#64748b;cursor:default;" disabled>
-           <i class="fas fa-check"></i> Voté · 已完成
+         <button class="vote-btn" style="background:#475569;" onclick="openVoteModal('${survey.id}')">
+           <i class="fas fa-edit"></i> Modifier · 修改投票
          </button>`
       : `<span style="font-size:0.7rem;color:#94a3b8;">Résultats visibles par tous · 結果對所有人公開</span>
          <button class="vote-btn" onclick="openVoteModal('${survey.id}')">
@@ -676,6 +781,9 @@
   function openVoteModal(surveyId) {
     _activeSurveyId  = surveyId;
     _selectedOptions = [];
+    _creatingNewMember = false;
+    document.getElementById('vm-new-name-fields')?.classList.remove('visible');
+    resetSubmitButton();
     const survey = activeSeedSurveys().find(s => s.id === surveyId);
     if (!survey) return;
 
@@ -687,19 +795,20 @@
     const list = document.getElementById('vm-options-list');
     const inputType = survey.type === 'multi' ? 'checkbox' : 'radio';
     list.innerHTML = survey.options.map(opt => `
-      <label class="vm-option" id="vmo-${opt.id}" onclick="toggleOption('${opt.id}','${survey.type}')">
+      <label class="vm-option" id="vmo-${opt.id}" onclick="toggleOption(event,'${opt.id}','${survey.type}')">
         <input type="${inputType}" name="vm-opt" value="${opt.id}" id="vmoi-${opt.id}">
         <span class="vm-option-label">${opt.label}</span>
       </label>`).join('');
 
-    // Populate datalist
-    const dl = document.getElementById('vm-name-datalist');
-    dl.innerHTML = _allMembers.map(n => `<option value="${n}">`).join('');
+    populateMemberSelect();
 
-    // Restore name if previously validated
     const nameInput = document.getElementById('vm-name');
     nameInput.value = _myName;
-    validateName(_myName);
+    if (_selectedMemberId) selectMember(_selectedMemberId, false);
+    else {
+      _nameValid = false;
+      updateSubmitState();
+    }
 
     document.getElementById('vm-error').classList.add('hidden');
     document.getElementById('vm-error').textContent = '';
@@ -710,9 +819,12 @@
     document.getElementById('vote-modal').classList.add('hidden');
     _activeSurveyId  = null;
     _selectedOptions = [];
+    _creatingNewMember = false;
+    document.getElementById('vm-new-name-fields')?.classList.remove('visible');
   }
 
-  function toggleOption(optId, type) {
+  function toggleOption(event, optId, type) {
+    event?.preventDefault();
     if (type === 'multi') {
       const i = _selectedOptions.indexOf(optId);
       if (i >= 0) { _selectedOptions.splice(i, 1); }
@@ -730,58 +842,106 @@
 
   function validateName(name) {
     const statusEl = document.getElementById('vm-name-status');
-    _nameValid = isMember(name);
-    if (!name) {
-      statusEl.textContent = '';
-      statusEl.className = 'vm-name-status';
-    } else if (_nameValid) {
-      statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Nom prêt · 名稱已填寫';
+    if (!_creatingNewMember) return;
+    const trimmedName = String(name || '').trim();
+    _selectedMemberId = _voteUser?.uid || '';
+    _myName = trimmedName;
+    _nameValid = Boolean(trimmedName && _selectedMemberId);
+    if (_nameValid) {
+      statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Le membre sera ajouté avec votre vote · 投票時會自動新增會員';
       statusEl.className = 'vm-name-status valid';
-      _myName = name;
-      localStorage.setItem('ttf_my_name', name);
-      // Re-derive myVotes from Firebase for this name
-      _deriveMyVotesFromFirebase();
     } else {
-      statusEl.innerHTML = '<i class="fas fa-times-circle"></i> Saisissez un nom · 請填寫名稱';
-      statusEl.className = 'vm-name-status invalid';
+      statusEl.innerHTML = '<i class="fas fa-info-circle"></i> Saisissez votre nom puis votez · 輸入名稱後直接投票';
+      statusEl.className = 'vm-name-status';
     }
     updateSubmitState();
   }
 
+  async function createSelfMember(name) {
+    if (!_voteUser || !_communityMembersRef) throw new Error('anonymous_auth_unavailable');
+    const existing = _communityMembers.find(member => member.id === _voteUser.uid);
+    const record = {
+      id: _voteUser.uid,
+      name,
+      joinedAt: existing?.joinedAt || new Date().toISOString(),
+      note: 'Ajouté par l’utilisateur · 使用者自行新增',
+      source: 'self'
+    };
+    await _communityMembersRef.child(_voteUser.uid).set(record);
+    const index = _communityMembers.findIndex(member => member.id === _voteUser.uid);
+    if (index >= 0) _communityMembers[index] = record;
+    else _communityMembers.push(record);
+    refreshMemberDirectory();
+    _creatingNewMember = false;
+    _selectedMemberId = record.id;
+    _myName = record.name;
+    localStorage.setItem('ttf_member_id', record.id);
+    localStorage.setItem('ttf_my_name', record.name);
+    return record;
+  }
+
   function updateSubmitState() {
     const btn = document.getElementById('vm-submit');
-    btn.disabled = !(_nameValid && _selectedOptions.length > 0);
+    btn.disabled = !(_voteUser && _nameValid && _selectedMemberId && _selectedOptions.length > 0);
+  }
+
+  function resetSubmitButton() {
+    const btn = document.getElementById('vm-submit');
+    if (!btn) return;
+    btn.innerHTML = '<i class="fas fa-paper-plane"></i> Soumettre · 提交投票';
+    updateSubmitState();
   }
 
   async function submitVote() {
     if (!_activeSurveyId || !_nameValid || _selectedOptions.length === 0) return;
+    const isNewMember = _creatingNewMember;
+    let member = _memberDirectory.find(item => item.id === _selectedMemberId);
+    const typedName = document.getElementById('vm-name')?.value.trim() || '';
+    if (!isNewMember && !member) return;
+    if (isNewMember && (!typedName || !_voteUser)) return;
     const btn = document.getElementById('vm-submit');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi…';
 
     const surveyId    = _activeSurveyId;
-    const memberName  = document.getElementById('vm-name').value.trim();
+    let memberName  = isNewMember ? typedName : String(member.name || '').trim();
+    let memberId = isNewMember ? _voteUser.uid : member.id;
     const chosenOpts  = [..._selectedOptions];
 
     if (_surveyVotesRef && _voteUser) {
       try {
         const survey = [...activeSeedSurveys(), ..._userSurveys].find(item => item.id === surveyId);
         if (!survey || survey.status === 'closed') throw new Error('survey_closed');
-        const previous = _surveyVotes[surveyId]?.[_voteUser.uid];
+        if (isNewMember) {
+          member = await createSelfMember(memberName);
+          memberId = member.id;
+          memberName = member.name;
+        }
+        const votesForSurvey = _surveyVotes[surveyId] || {};
+        const previous = votesForSurvey[memberId];
         const now = new Date().toISOString();
         const record = {
           uid: _voteUser.uid,
+          memberId,
           options: chosenOpts,
           source: _voteUser.isAnonymous ? 'anonymous' : 'authenticated',
           votedAt: previous?.votedAt || now,
           updatedAt: now
         };
         if (survey.privacy === 'show_voters') record.displayName = memberName;
-        await _surveyVotesRef.child(`${surveyId}/${_voteUser.uid}`).set(record);
+        const updates = { [memberId]: record };
+        if (votesForSurvey[_voteUser.uid] && _voteUser.uid !== memberId) {
+          updates[_voteUser.uid] = null;
+        }
+        await persistVoterBinding();
+        await _surveyVotesRef.child(surveyId).update(updates);
 
         // Optimistically update local cache so UI reflects result instantly
         if (!_surveyVotes[surveyId]) _surveyVotes[surveyId] = {};
-        _surveyVotes[surveyId][_voteUser.uid] = record;
+        Object.entries(updates).forEach(([key, value]) => {
+          if (value === null) delete _surveyVotes[surveyId][key];
+          else _surveyVotes[surveyId][key] = value;
+        });
       } catch(e) {
         console.warn('Vote write error', e);
         btn.disabled = false;
@@ -800,16 +960,17 @@
     renderSurveys();
   }
 
-  /* ── Derive "already voted" from Firebase for stored member name ── */
+  /* ── Derive "already voted" from Firebase for selected member ── */
   function _deriveMyVotesFromFirebase() {
     _myVotes = {};
-    if (!_voteUser) return;
+    if (!_selectedMemberId) return;
     const allSurveys = [...activeSeedSurveys(), ..._userSurveys];
     for (const survey of allSurveys) {
       const votes = _surveyVotes[survey.id] || {};
-      const options = voteOptions(votes[_voteUser.uid]);
+      const options = voteOptions(votes[_selectedMemberId]);
       if (options.length) _myVotes[survey.id] = options;
     }
+    renderSurveys();
   }
 
   /* ── Open vote modal for user-created surveys ──────────────────── */
@@ -818,6 +979,9 @@
     if (!survey) return;
     _activeSurveyId  = surveyId;
     _selectedOptions = [];
+    _creatingNewMember = false;
+    document.getElementById('vm-new-name-fields')?.classList.remove('visible');
+    resetSubmitButton();
 
     document.getElementById('vm-title').textContent = survey.title || 'Voter · 投票';
     document.getElementById('vm-type-hint').textContent =
@@ -826,17 +990,20 @@
     const list = document.getElementById('vm-options-list');
     const inputType = survey.type === 'multi' ? 'checkbox' : 'radio';
     list.innerHTML = (survey.options || []).map(opt => `
-      <label class="vm-option" id="vmo-${opt.id}" onclick="toggleOption('${opt.id}','${survey.type}')">
+      <label class="vm-option" id="vmo-${opt.id}" onclick="toggleOption(event,'${opt.id}','${survey.type}')">
         <input type="${inputType}" name="vm-opt" value="${opt.id}" id="vmoi-${opt.id}">
         <span class="vm-option-label">${escHtmlRead(opt.label || opt.id)}</span>
       </label>`).join('');
 
-    const dl = document.getElementById('vm-name-datalist');
-    dl.innerHTML = _allMembers.map(n => `<option value="${n}">`).join('');
+    populateMemberSelect();
 
     const nameInput = document.getElementById('vm-name');
     nameInput.value = _myName;
-    validateName(_myName);
+    if (_selectedMemberId) selectMember(_selectedMemberId, false);
+    else {
+      _nameValid = false;
+      updateSubmitState();
+    }
 
     document.getElementById('vm-error').classList.add('hidden');
     document.getElementById('vote-modal').classList.remove('hidden');
@@ -844,7 +1011,17 @@
 
   /* ── Firebase listener ─────────────────────────────────────── */
   function initFirebase() {
-    if (!_surveysRef || !_surveyVotesRef || typeof firebase.auth !== 'function') { renderSurveys(); return; }
+    if (!_surveysRef || !_surveyVotesRef || !_communityMembersRef || !_voterBindingsRef || typeof firebase.auth !== 'function') { renderSurveys(); return; }
+    _communityMembersRef.on('value', snap => {
+      const raw = snap.val() || {};
+      _communityMembers = Array.isArray(raw)
+        ? raw.filter(Boolean)
+        : Object.entries(raw).map(([id, member]) => ({ id, ...(member || {}) }));
+      refreshMemberDirectory();
+      if (_selectedMemberId && _memberDirectory.some(member => member.id === _selectedMemberId)) {
+        selectMember(_selectedMemberId, false);
+      }
+    });
     _surveysRef.on('value', snap => {
       const raw = snap.val();
       if (!raw) return;
@@ -857,7 +1034,6 @@
       renderSurveys();
     });
     _surveyVotesRef.on('value', snap => {
-      if (!snap.exists()) return;
       _surveyV4Ready = true;
       _surveyVotes = snap.val() || {};
       _deriveMyVotesFromFirebase();
@@ -870,6 +1046,29 @@
         return;
       }
       _voteUser = user;
+      try {
+        const bindingSnapshot = await _voterBindingsRef.child(user.uid).once('value');
+        const binding = bindingSnapshot.val();
+        if (binding?.memberId) {
+          _selectedMemberId = binding.memberId;
+          _myName = String(binding.displayName || _myName || '').trim();
+          localStorage.setItem('ttf_member_id', _selectedMemberId);
+          if (_myName) localStorage.setItem('ttf_my_name', _myName);
+        }
+      } catch (error) {
+        console.warn('Voter binding load error', error);
+      }
+      populateMemberSelect();
+      if (_creatingNewMember) {
+        _selectedMemberId = user.uid;
+        const select = document.getElementById('vm-member-select');
+        if (select) select.value = '__new__';
+        validateName(document.getElementById('vm-name')?.value || '');
+      } else if (_selectedMemberId && _memberDirectory.some(member => member.id === _selectedMemberId)) selectMember(_selectedMemberId, false);
+      else {
+        _nameValid = false;
+        updateSubmitState();
+      }
       _deriveMyVotesFromFirebase();
       renderSurveys();
     });
@@ -877,6 +1076,19 @@
 
   /* ── Event bindings ─────────────────────────────────────────── */
   document.getElementById('vm-name')?.addEventListener('input', e => validateName(e.target.value));
+  document.getElementById('vm-member-select')?.addEventListener('change', e => {
+    if (e.target.value === '__new__') {
+      beginNewMember();
+    } else if (e.target.value) {
+      selectMember(e.target.value);
+    } else {
+      _creatingNewMember = false;
+      _selectedMemberId = '';
+      _nameValid = false;
+      document.getElementById('vm-new-name-fields')?.classList.remove('visible');
+      updateSubmitState();
+    }
+  });
   document.getElementById('vote-modal')?.addEventListener('click', e => {
     if (e.target === document.getElementById('vote-modal')) closeVoteModal();
   });

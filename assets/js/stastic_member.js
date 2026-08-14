@@ -271,7 +271,8 @@ const ASSO_CITIES = ['Paris', 'Lyon', 'Toulouse', 'Bordeaux', 'Grenoble',
 
 const MEMBER_PROFILE_FIELDS = [
   'nickname', 'gender', 'city', 'job', 'intro', 'linkedin', 'phone', 'goals',
-  'acceptsRules', 'acceptsRulesAt', 'notificationConsent', 'notificationConsentAt'
+  'acceptsRules', 'acceptsRulesAt', 'notificationConsent', 'notificationConsentAt',
+  'notificationPreferenceAt'
 ];
 const HELLOASSO_PROFILE_OVERLAP = ['city', 'phone', 'linkedin'];
 
@@ -487,7 +488,9 @@ function renderTechChart() {
 
   if (_chartTech) { _chartTech.destroy(); _chartTech = null; }
 
-  if (!survey) { canvas.parentElement.innerHTML = '<p class="sm-empty" style="padding:1rem;color:#94a3b8;font-size:0.8rem;">Sondage tech introuvable.</p>'; return; }
+  // Firebase may still be loading. Keep the canvas so the chart can render
+  // when the surveys listener receives the data.
+  if (!survey) return;
 
   const counts = computeCounts(survey);
   const labels = survey.options.map(o => o.label);
@@ -565,7 +568,9 @@ function renderInvestChart() {
 
   if (_chartInvest) { _chartInvest.destroy(); _chartInvest = null; }
 
-  if (!survey) { canvas.parentElement.innerHTML = '<p class="sm-empty" style="padding:1rem;color:#94a3b8;font-size:0.8rem;">Sondage investissement introuvable.</p>'; return; }
+  // Firebase may still be loading. Keep the canvas so the chart can render
+  // when the surveys listener receives the data.
+  if (!survey) return;
 
   const counts = computeCounts(survey);
   const labels = survey.options.map(o => o.label);
@@ -1148,7 +1153,11 @@ async function saveAssoMember() {
     acceptsRules,
     acceptsRulesAt: acceptsRules ? (existing?.acceptsRulesAt || new Date().toISOString()) : '',
     notificationConsent,
-    notificationConsentAt: notificationConsent ? (existing?.notificationConsentAt || new Date().toISOString()) : ''
+    notificationConsentAt: notificationConsent ? (existing?.notificationConsentAt || new Date().toISOString()) : '',
+    notificationPreferenceAt:
+      existing?.notificationPreferenceAt && existing?.notificationConsent === notificationConsent
+        ? existing.notificationPreferenceAt
+        : new Date().toISOString()
   };
 
   const savedMember = { ...(existing || {}), id: _assoModalId || uid(), ...member };
@@ -3117,7 +3126,9 @@ function initAdminProfiles() {
         ? raw.filter(Boolean)
         : Object.entries(raw).map(([id, survey]) => ({ id, ...(survey || {}) }));
       applySurveyV4State();
-      if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'surveys') renderSurveys();
+      const activeTab = document.querySelector('.tab-pane.active')?.dataset?.tab;
+      if (activeTab === 'surveys') renderSurveys();
+      if (activeTab === 'dashboard') renderDashboard();
       renderKPIs();
     };
     _surveysRef.on('value', _surveysHandler, error => {
@@ -3127,7 +3138,9 @@ function initAdminProfiles() {
     _surveyVotesHandler = snapshot => {
       _surveyVotesV4 = snapshot.val() || {};
       if (_surveyV4Ready) applySurveyV4State();
-      if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'surveys') renderSurveys();
+      const activeTab = document.querySelector('.tab-pane.active')?.dataset?.tab;
+      if (activeTab === 'surveys') renderSurveys();
+      if (activeTab === 'dashboard') renderDashboard();
     };
     _surveyVotesRef.on('value', _surveyVotesHandler, error => {
       console.warn('[Firebase] survey votes read failed', error);

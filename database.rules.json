@@ -137,6 +137,7 @@
         "acceptsRulesAt": { ".validate": "newData.isString() && newData.val().length <= 50" },
         "notificationConsent": { ".validate": "newData.isBoolean()" },
         "notificationConsentAt": { ".validate": "newData.isString() && newData.val().length <= 50" },
+        "notificationPreferenceAt": { ".validate": "newData.isString() && newData.val().length <= 50" },
         "createdAt": { ".validate": "newData.isString() && newData.val().length <= 50" },
         "profileUpdatedAt": { ".validate": "newData.isString() && newData.val().length <= 50" },
         "goals": { "$goalIndex": { ".validate": "newData.isString() && newData.val().length <= 100" } },

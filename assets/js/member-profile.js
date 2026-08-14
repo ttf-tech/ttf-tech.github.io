@@ -25,8 +25,13 @@
     { label: '個人簡介 / Présentation', complete: profile => hasText(profile.intro) },
     { label: '與協會的關係／參與目的 / Objectifs', complete: profile => Array.isArray(profile.goals) && profile.goals.length > 0 },
     { label: '接受章程 / Règlement', complete: profile => profile.acceptsRules === true },
-    { label: '接收會員通知 / Communications', complete: profile => profile.notificationConsent === true }
+    { label: '會員通知偏好 / Préférence de communication', complete: profile => hasNotificationPreference(profile) }
   ];
+
+  function hasNotificationPreference(profile) {
+    return hasText(profile?.notificationPreferenceAt) ||
+      (profile?.notificationConsent === true && hasText(profile?.notificationConsentAt));
+  }
 
   let currentUser = null;
   let assoMembers = [];
@@ -40,6 +45,7 @@
   let ownMemberProfileRef = null;
   let ownMemberProfileHandler = null;
   let returnFocusTo = null;
+  let backdropPressStarted = false;
   let currentAdminAccess = false;
   let adminCheckVersion = 0;
 
@@ -188,7 +194,10 @@
     setValue('mp-linkedin', profile.linkedin);
     setValue('mp-intro', profile.intro);
     setChecked('mp-accepts-rules', profile.acceptsRules);
-    setChecked('mp-notification-consent', profile.notificationConsent);
+    document.querySelectorAll('input[name="mp-notification-consent"]').forEach(input => {
+      input.checked = hasNotificationPreference(profile) &&
+        input.value === (profile.notificationConsent === true ? 'yes' : 'no');
+    });
     document.querySelectorAll('input[name="mp-goal"]').forEach(input => {
       input.checked = (profile.goals || []).includes(input.value);
     });
@@ -224,7 +233,8 @@
 
   function formProfile() {
     const acceptsRules = !!byId('mp-accepts-rules')?.checked;
-    const notificationConsent = !!byId('mp-notification-consent')?.checked;
+    const notificationChoice = document.querySelector('input[name="mp-notification-consent"]:checked')?.value || '';
+    const notificationConsent = notificationChoice === 'yes';
     return {
       nickname: byId('mp-nickname')?.value.trim() || '',
       gender: byId('mp-gender')?.value || '',
@@ -235,18 +245,27 @@
       intro: byId('mp-intro')?.value.trim() || '',
       goals: [...document.querySelectorAll('input[name="mp-goal"]:checked')].map(input => input.value),
       acceptsRules,
-      notificationConsent
+      notificationConsent,
+      notificationPreferenceAt: notificationChoice
+        ? (currentMember?.notificationPreferenceAt || 'pending')
+        : ''
     };
   }
 
   function editableFields(existing) {
     const profile = formProfile();
+    const now = new Date().toISOString();
+    const preferenceUnchanged = hasNotificationPreference(existing) &&
+      existing.notificationConsent === profile.notificationConsent;
     return {
       ...profile,
-      acceptsRulesAt: profile.acceptsRules ? (existing.acceptsRulesAt || new Date().toISOString()) : '',
+      acceptsRulesAt: profile.acceptsRules ? (existing.acceptsRulesAt || now) : '',
       notificationConsentAt: profile.notificationConsent
-        ? (existing.notificationConsentAt || new Date().toISOString())
-        : ''
+        ? (existing.notificationConsentAt || now)
+        : '',
+      notificationPreferenceAt: preferenceUnchanged
+        ? (existing.notificationPreferenceAt || existing.notificationConsentAt || now)
+        : now
     };
   }
 
@@ -392,8 +411,17 @@
     byId('member-profile-form')?.addEventListener('submit', saveProfile);
     byId('member-profile-form')?.addEventListener('input', () => renderModalCompleteness(formProfile()));
     byId('member-profile-form')?.addEventListener('change', () => renderModalCompleteness(formProfile()));
-    byId('member-profile-modal')?.addEventListener('click', event => {
-      if (event.target === event.currentTarget) closeModal();
+    const modal = byId('member-profile-modal');
+    modal?.addEventListener('pointerdown', event => {
+      backdropPressStarted = event.target === event.currentTarget;
+    });
+    modal?.addEventListener('pointerup', event => {
+      const shouldClose = backdropPressStarted && event.target === event.currentTarget;
+      backdropPressStarted = false;
+      if (shouldClose) closeModal();
+    });
+    modal?.addEventListener('pointercancel', () => {
+      backdropPressStarted = false;
     });
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape') closeModal();

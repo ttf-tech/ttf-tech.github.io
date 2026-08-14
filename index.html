@@ -1079,10 +1079,24 @@
               <input id="mp-accepts-rules" type="checkbox">
               <span>J'accepte les statuts et le règlement intérieur · 我接受章程與內部規章</span>
             </label>
-            <label class="sm-asso-goal-check">
-              <input id="mp-notification-consent" type="checkbox">
-              <span>J'accepte de recevoir les communications membres · 我同意接收會員通知</span>
-            </label>
+            <fieldset style="margin-top:0.35rem;padding:0.75rem 0.85rem;border:1px solid #e2e8f0;border-radius:10px;">
+              <legend style="padding:0 0.3rem;font-size:0.72rem;font-weight:700;color:#334155;">
+                Communications membres · 會員通知 <span aria-hidden="true">*</span>
+              </legend>
+              <div style="display:flex;flex-direction:column;gap:0.45rem;">
+                <label class="sm-asso-goal-check">
+                  <input type="radio" name="mp-notification-consent" value="yes" required>
+                  <span>Oui, je souhaite recevoir les actualités et invitations. · 是，我希望接收會員消息與活動邀請。</span>
+                </label>
+                <label class="sm-asso-goal-check">
+                  <input type="radio" name="mp-notification-consent" value="no" required>
+                  <span>Non merci. · 不，謝謝。</span>
+                </label>
+              </div>
+              <div style="margin-top:0.5rem;font-size:0.65rem;color:#64748b;line-height:1.45;">
+                Votre choix n’affecte pas votre statut de membre ni la complétude de votre profil. · 無論同意或不同意，都算完成此欄位，也不影響會員資格。
+              </div>
+            </fieldset>
           </div>
         </div>
 

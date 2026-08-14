@@ -2966,65 +2966,6 @@ function deleteExpense() {
   showToast('Transaction supprimée.');
 }
 
-// ── Import / Export JSON ───────────────────────────────────────
-function exportJSON() {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = `ttf-firebase-backup-${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-  showToast('Export JSON téléchargé.');
-}
-
-function triggerImport() {
-  document.getElementById('import-file')?.click();
-}
-
-function handleImport(evt) {
-  const file = evt.target.files?.[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async () => {
-    try {
-      const data = JSON.parse(reader.result);
-      if (!data || typeof data !== 'object') throw new Error('Format invalide');
-      // Support both old full-state JSON exports and new dynamic-only exports
-      const dyn = _emptyDynamic();
-      if (Array.isArray(data.addedMembers))  dyn.addedMembers  = data.addedMembers;
-      else if (Array.isArray(data.members))  dyn.addedMembers  = data.members.filter(m => !m.id.startsWith('seed_m_'));
-      if (Array.isArray(data.announcements)) dyn.announcements = data.announcements;
-      if (Array.isArray(data.jobs))          dyn.jobs          = data.jobs;
-      if (Array.isArray(data.sharings))      dyn.sharings      = data.sharings;
-      if (Array.isArray(data.meetings))      dyn.meetings      = data.meetings;
-      if (Array.isArray(data.expenses))      dyn.expenses      = data.expenses;
-      if (data.surveyVotes)                  dyn.surveyVotes   = data.surveyVotes;
-      if (Array.isArray(data.userSurveys))   dyn.userSurveys   = data.userSurveys;
-      rebuildState(dyn);
-      await Promise.all([
-        persistNormalizedCollection('communityMembers', dyn.addedMembers),
-        persistNormalizedCollection('announcements', dyn.announcements),
-        persistNormalizedCollection('jobs', dyn.jobs),
-        persistNormalizedCollection('sharings', dyn.sharings),
-        persistNormalizedCollection('meetings', dyn.meetings),
-        persistNormalizedCollection('expenses', dyn.expenses)
-      ]);
-      await persistPublicStats();
-      setTab('dashboard');
-      renderKPIs();
-      showToast('Import réussi !');
-    } catch (_) {
-      showToast('Erreur : fichier JSON invalide.');
-    } finally {
-      evt.target.value = '';
-    }
-  };
-  reader.readAsText(file);
-}
-
 function initAdminProfiles() {
   if (!_adminProfilesRef || !_adminAccessRef || !_assoMembersV2Ref || !_memberProfilesRef || !_assoFieldAuditRef || !_surveysRef || !_surveyVotesRef ||
       !_helloAssoSyncRef || typeof firebase.auth !== 'function') return;
@@ -3203,14 +3144,6 @@ function init() {
   // Add member button
   const addMemberBtn = document.getElementById('add-member-btn');
   if (addMemberBtn) addMemberBtn.addEventListener('click', () => openMemberModal());
-
-  // Export / import
-  const exportBtn = document.getElementById('export-btn');
-  const importBtn = document.getElementById('import-btn');
-  const importFile = document.getElementById('import-file');
-  if (exportBtn)  exportBtn.addEventListener('click', exportJSON);
-  if (importBtn)  importBtn.addEventListener('click', triggerImport);
-  if (importFile) importFile.addEventListener('change', handleImport);
 
   // Vote modal buttons
   const voteClose  = document.getElementById('vote-modal-close');

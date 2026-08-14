@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <link rel="stylesheet" href="assets/css/stastic_member.css">
   <link rel="stylesheet" href="assets/css/layout.css">
 
@@ -63,6 +64,11 @@
     }
     .member-required-why strong { color: #92400e; }
     .member-required-actions { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+    .member-required-card .member-steps,
+    .member-required-card .member-required-why,
+    .member-required-card .member-required-actions,
+    .member-required-left > div[style*="margin-top"] { display: none !important; }
+    .public-vote-note { font-size:0.76rem;color:#78350f;line-height:1.65; }
     .member-wa-btn {
       display: inline-flex; align-items: center; gap: 0.45rem;
       padding: 0.6rem 1.25rem; border-radius: 99px;
@@ -221,6 +227,7 @@
             <i class="fas fa-shield-alt"></i>
             Comment voter ? · 如何投票？
           </div>
+          <div class="public-vote-note">Aucune connexion Google n’est requise. Saisissez un nom puis votez ; une identité technique anonyme protège chaque bulletin contre l’écrasement. · 不需要 Google 登入，填寫名稱後即可投票；系統會用匿名技術身分避免票數互相覆蓋。</div>
           <div class="member-steps">
             <div class="member-step">
               <div class="member-step-num">1</div>
@@ -334,11 +341,16 @@
     messagingSenderId: '461066170665',
     appId:             '1:461066170665:web:1b090d8e383404c4320738'
   };
-  let _fbRef = null;
+  let _legacyFbRef = null;
+  let _surveysRef = null;
+  let _surveyVotesRef = null;
+  let _voteUser = null;
   if (typeof firebase !== 'undefined') {
     try {
       if (!firebase.apps.length) firebase.initializeApp(_FB_CONFIG);
-      _fbRef = firebase.database().ref('grp_hub_v2');
+      _legacyFbRef = firebase.database().ref('grp_hub_v2');
+      _surveysRef = firebase.database().ref('surveys');
+      _surveyVotesRef = firebase.database().ref('surveyVotes');
     } catch(e) { console.warn('Firebase init error', e); }
   }
 
@@ -451,6 +463,8 @@
 
   /* ── State ─────────────────────────────────────────────────── */
   let _surveyVotes = {};       // { surveyId: { memberName: [optionIds] } }
+  let _surveysV4 = [];
+  let _surveyV4Ready = false;
   let _addedMembers = [];      // from Firebase
   let _userSurveys  = [];      // user-created surveys from Firebase (admin → Sondages)
   let _allMembers = [...SEED_MEMBER_NAMES];
@@ -464,11 +478,23 @@
   let _selectedOptions = [];
   let _nameValid       = false;
 
+  const voteOptions = vote => Array.isArray(vote) ? vote : (Array.isArray(vote?.options) ? vote.options : []);
+  const voteName = (key, vote) => vote?.displayName || key;
+  const seedSurveyIds = new Set(SURVEYS.map(survey => survey.id));
+  function activeSeedSurveys() {
+    const byId = new Map(_surveysV4.map(survey => [survey.id, survey]));
+    return SURVEYS.map(seed => {
+      const remote = byId.get(seed.id);
+      return remote ? { ...seed, ...remote, desc: remote.description || seed.desc } : seed;
+    });
+  }
+
   /* ── Helpers ───────────────────────────────────────────────── */
   function computeCounts(survey) {
     const counts = { ...survey.legacyCounts };
     const votes = _surveyVotes[survey.id] || {};
-    for (const opts of Object.values(votes)) {
+    for (const vote of Object.values(votes)) {
+      const opts = voteOptions(vote);
       for (const oid of opts) {
         counts[oid] = (counts[oid] || 0) + 1;
       }
@@ -485,15 +511,15 @@
   function isMember(name) {
     if (!name) return false;
     const n = name.trim().toLowerCase();
-    return _allMembers.some(m => m.toLowerCase() === n);
+    return n.length > 0;
   }
 
   /* ── Helpers for user surveys (no legacy counts) ──────────────── */
   function computeUserCounts(survey) {
     const votes = _surveyVotes[survey.id] || {};
     const counts = {};
-    for (const optArray of Object.values(votes)) {
-      for (const oid of (Array.isArray(optArray) ? optArray : [])) {
+    for (const vote of Object.values(votes)) {
+      for (const oid of voteOptions(vote)) {
         counts[oid] = (counts[oid] || 0) + 1;
       }
     }
@@ -525,8 +551,8 @@
       if (survey.privacy === 'show_voters') {
         const votes = _surveyVotes[survey.id] || {};
         const names = Object.entries(votes)
-          .filter(([, opts]) => opts.includes(opt.id))
-          .map(([name]) => name).join(', ');
+          .filter(([, vote]) => voteOptions(vote).includes(opt.id))
+          .map(([key, vote]) => voteName(key, vote)).join(', ');
         if (names) voterNames = `<div style="font-size:0.62rem;color:#94a3b8;margin-top:0.15rem;">${escHtmlRead(names)}</div>`;
       }
       return `
@@ -578,7 +604,7 @@
   function renderSurveys() {
     const container = document.getElementById('surveys-container');
     if (!container) return;
-    const seedHtml = SURVEYS.map(s => renderSurveyCard(s)).join('');
+    const seedHtml = activeSeedSurveys().map(s => renderSurveyCard(s)).join('');
     const userHtml = _userSurveys.length > 0
       ? `<div style="margin-top:0.5rem;padding:0.4rem 0;border-top:2px dashed #e2e8f0;display:flex;align-items:center;gap:0.5rem;">
            <span style="font-size:0.7rem;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.06em;">
@@ -596,6 +622,7 @@
     const voters     = totalVoters(survey);
     const myVote     = _myVotes[survey.id] || [];
     const hasVoted   = myVote.length > 0;
+    const isOpen     = survey.status !== 'closed';
     const typeLabel  = survey.type === 'multi' ? 'Choix multiple · 可複選' : 'Choix unique · 單選';
 
     const bars = survey.options.map(opt => {
@@ -614,7 +641,9 @@
         </div>`;
     }).join('');
 
-    const footer = hasVoted
+    const footer = !isOpen
+      ? `<span style="font-size:0.7rem;color:#94a3b8;font-style:italic;">Sondage clôturé · 已結束</span>`
+      : hasVoted
       ? `<span class="survey-voted-badge"><i class="fas fa-check-circle"></i> Votre vote enregistré · 已投票</span>
          <button class="vote-btn" style="background:#e2e8f0;color:#64748b;cursor:default;" disabled>
            <i class="fas fa-check"></i> Voté · 已完成
@@ -629,7 +658,7 @@
         <div class="survey-card-head">
           <div class="survey-card-left">
             <span class="survey-card-badge badge-open" style="background:${survey.colorBg};color:${survey.color};">
-              <i class="fas ${survey.icon}" style="margin-right:0.2rem;"></i> Ouvert · 開放投票
+              <i class="fas ${survey.icon}" style="margin-right:0.2rem;"></i> ${isOpen ? 'Ouvert · 開放投票' : 'Clôturé · 已結束'}
             </span>
             <span class="survey-card-badge badge-type" style="margin-left:0.3rem;">${typeLabel}</span>
             <div class="survey-card-title">${survey.title}</div>
@@ -650,7 +679,7 @@
   function openVoteModal(surveyId) {
     _activeSurveyId  = surveyId;
     _selectedOptions = [];
-    const survey = SURVEYS.find(s => s.id === surveyId);
+    const survey = activeSeedSurveys().find(s => s.id === surveyId);
     if (!survey) return;
 
     document.getElementById('vm-title').textContent = survey.title;
@@ -709,14 +738,14 @@
       statusEl.textContent = '';
       statusEl.className = 'vm-name-status';
     } else if (_nameValid) {
-      statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Membre vérifié · 成員身份已驗證';
+      statusEl.innerHTML = '<i class="fas fa-check-circle"></i> Nom prêt · 名稱已填寫';
       statusEl.className = 'vm-name-status valid';
       _myName = name;
       localStorage.setItem('ttf_my_name', name);
       // Re-derive myVotes from Firebase for this name
       _deriveMyVotesFromFirebase();
     } else {
-      statusEl.innerHTML = '<i class="fas fa-times-circle"></i> Nom non trouvé dans la liste des membres · 名字不在成員列表中';
+      statusEl.innerHTML = '<i class="fas fa-times-circle"></i> Saisissez un nom · 請填寫名稱';
       statusEl.className = 'vm-name-status invalid';
     }
     updateSubmitState();
@@ -737,35 +766,25 @@
     const memberName  = document.getElementById('vm-name').value.trim();
     const chosenOpts  = [..._selectedOptions];
 
-    if (_fbRef) {
+    if (_surveyVotesRef && _voteUser) {
       try {
-        // Use a Firebase transaction so concurrent votes never overwrite each other.
-        // Firebase retries the update function automatically if another client
-        // writes the node between our read and our write.
-        await _fbRef.transaction(current => {
-          const empty = { addedMembers:[], announcements:[], jobs:[],
-                          surveyVotes:{}, sharings:[], userSurveys:[] };
-          let dyn = empty;
-          if (current && typeof current.data === 'string') {
-            try { dyn = JSON.parse(current.data); } catch(_) { dyn = empty; }
-          }
-          if (!dyn.surveyVotes)             dyn.surveyVotes = {};
-          if (!dyn.surveyVotes[surveyId])   dyn.surveyVotes[surveyId] = {};
-          dyn.surveyVotes[surveyId][memberName] = chosenOpts;
-          // Keep userSurveys[i].votesByMember in sync with surveyVotes
-          if (Array.isArray(dyn.userSurveys)) {
-            const uidx = dyn.userSurveys.findIndex(s => s.id === surveyId);
-            if (uidx >= 0) {
-              if (!dyn.userSurveys[uidx].votesByMember) dyn.userSurveys[uidx].votesByMember = {};
-              dyn.userSurveys[uidx].votesByMember[memberName] = chosenOpts;
-            }
-          }
-          return { ts: Date.now(), data: JSON.stringify(dyn) };
-        });
+        const survey = [...activeSeedSurveys(), ..._userSurveys].find(item => item.id === surveyId);
+        if (!survey || survey.status === 'closed') throw new Error('survey_closed');
+        const previous = _surveyVotes[surveyId]?.[_voteUser.uid];
+        const now = new Date().toISOString();
+        const record = {
+          uid: _voteUser.uid,
+          options: chosenOpts,
+          source: _voteUser.isAnonymous ? 'anonymous' : 'authenticated',
+          votedAt: previous?.votedAt || now,
+          updatedAt: now
+        };
+        if (survey.privacy === 'show_voters') record.displayName = memberName;
+        await _surveyVotesRef.child(`${surveyId}/${_voteUser.uid}`).set(record);
 
         // Optimistically update local cache so UI reflects result instantly
         if (!_surveyVotes[surveyId]) _surveyVotes[surveyId] = {};
-        _surveyVotes[surveyId][memberName] = chosenOpts;
+        _surveyVotes[surveyId][_voteUser.uid] = record;
       } catch(e) {
         console.warn('Vote write error', e);
         btn.disabled = false;
@@ -786,18 +805,13 @@
 
   /* ── Derive "already voted" from Firebase for stored member name ── */
   function _deriveMyVotesFromFirebase() {
-    if (!_myName) return;
-    const nameLower = _myName.trim().toLowerCase();
     _myVotes = {};
-    const allSurveys = [...SURVEYS, ..._userSurveys];
+    if (!_voteUser) return;
+    const allSurveys = [...activeSeedSurveys(), ..._userSurveys];
     for (const survey of allSurveys) {
       const votes = _surveyVotes[survey.id] || {};
-      for (const [key, opts] of Object.entries(votes)) {
-        if (key.trim().toLowerCase() === nameLower && Array.isArray(opts) && opts.length > 0) {
-          _myVotes[survey.id] = opts;
-          break;
-        }
-      }
+      const options = voteOptions(votes[_voteUser.uid]);
+      if (options.length) _myVotes[survey.id] = options;
     }
   }
 
@@ -833,19 +847,47 @@
 
   /* ── Firebase listener ─────────────────────────────────────── */
   function initFirebase() {
-    if (!_fbRef) { renderSurveys(); return; }
-    _fbRef.on('value', snap => {
+    if (!_legacyFbRef || !_surveysRef || !_surveyVotesRef || typeof firebase.auth !== 'function') { renderSurveys(); return; }
+    _legacyFbRef.on('value', snap => {
       const raw = snap.val();
       if (raw && typeof raw.data === 'string') {
         try {
           const dyn = JSON.parse(raw.data);
-          _surveyVotes  = dyn.surveyVotes || {};
+          if (!_surveyV4Ready) _surveyVotes = dyn.surveyVotes || {};
           _addedMembers = Array.isArray(dyn.addedMembers) ? dyn.addedMembers : [];
-          _userSurveys  = Array.isArray(dyn.userSurveys) ? dyn.userSurveys : [];
+          if (!_surveyV4Ready) _userSurveys = Array.isArray(dyn.userSurveys) ? dyn.userSurveys : [];
           _allMembers   = [...SEED_MEMBER_NAMES, ..._addedMembers.map(m => m.name).filter(Boolean)];
         } catch(_) {}
       }
       // Always re-derive voted state from Firebase (not sessionStorage)
+      _deriveMyVotesFromFirebase();
+      renderSurveys();
+    });
+    _surveysRef.on('value', snap => {
+      const raw = snap.val();
+      if (!raw) return;
+      _surveyV4Ready = true;
+      _surveysV4 = Array.isArray(raw)
+        ? raw.filter(Boolean)
+        : Object.entries(raw).map(([id, survey]) => ({ id, ...(survey || {}) }));
+      _userSurveys = _surveysV4.filter(survey => !seedSurveyIds.has(survey.id));
+      _deriveMyVotesFromFirebase();
+      renderSurveys();
+    });
+    _surveyVotesRef.on('value', snap => {
+      if (!snap.exists()) return;
+      _surveyV4Ready = true;
+      _surveyVotes = snap.val() || {};
+      _deriveMyVotesFromFirebase();
+      renderSurveys();
+    });
+    firebase.auth().onAuthStateChanged(async user => {
+      if (!user) {
+        try { await firebase.auth().signInAnonymously(); }
+        catch (error) { console.warn('Anonymous auth failed', error); }
+        return;
+      }
+      _voteUser = user;
       _deriveMyVotesFromFirebase();
       renderSurveys();
     });

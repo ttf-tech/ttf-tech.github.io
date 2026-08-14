@@ -36,6 +36,9 @@
   let currentProfileSource = null;
   let ownAdminProfileRef = null;
   let ownAdminProfileHandler = null;
+  let ownMemberProfile = null;
+  let ownMemberProfileRef = null;
+  let ownMemberProfileHandler = null;
   let returnFocusTo = null;
   let currentAdminAccess = false;
   let adminCheckVersion = 0;
@@ -112,6 +115,10 @@
     } else if (ownAssoRecord && isActiveMember(ownAssoRecord)) {
       currentMember = {
         ...ownAssoRecord,
+        ...(ownMemberProfile || {}),
+        id: ownAssoRecord.id,
+        email: ownAssoRecord.email,
+        name: ownAssoRecord.name,
         _storageSource: ownAssoV2 ? 'v2' : 'legacy'
       };
       currentProfileSource = 'asso';
@@ -286,38 +293,30 @@
         if (!result.committed) throw new Error('admin_profile_write_aborted');
         currentMember = { ...result.snapshot.val(), id: user.uid, uid: user.uid };
       } else {
-        if (currentMember._storageSource === 'v2' && currentMember.id) {
-          const memberRef = firebase.database().ref(`assoMembers/${currentMember.id}`);
-          const result = await memberRef.transaction(existing => {
-            if (!existing || norm(existing.email) !== email) return;
-            return { ...existing, ...fieldsToSave, profileUpdatedAt: now };
-          });
-          if (!result.committed) throw new Error('member_profile_v2_write_aborted');
-          ownAssoV2 = { ...result.snapshot.val(), id: currentMember.id };
-          currentMember = { ...ownAssoV2, _storageSource: 'v2' };
-        } else {
-          const ref = firebase.database().ref('grp_hub_v2');
-          const result = await ref.transaction(current => {
-            if (!current || typeof current.data !== 'string') return;
-
-            let dynamicData;
-            try { dynamicData = JSON.parse(current.data); } catch (_) { return; }
-            if (!Array.isArray(dynamicData.assoMembers)) return;
-
-            const assoIndex = dynamicData.assoMembers.findIndex(member => norm(member.email) === email);
-            if (assoIndex < 0 || (!isAdmin && !isActiveMember(dynamicData.assoMembers[assoIndex]))) return;
-
-            dynamicData.assoMembers[assoIndex] = {
-              ...dynamicData.assoMembers[assoIndex],
-              ...fieldsToSave,
-              profileUpdatedAt: now
-            };
-            const ts = Math.max(Date.now(), (current.ts || 0) + 1);
-            return { ...current, ts, data: JSON.stringify(dynamicData) };
-          });
-          if (!result.committed) throw new Error('member_profile_write_aborted');
-          currentMember = { ...currentMember, ...fieldsToSave, profileUpdatedAt: now };
+        if (!user.uid || !currentMember.id || currentMember._storageSource !== 'v2') {
+          throw new Error('member_profile_v2_required');
         }
+        const profileRef = firebase.database().ref(`memberProfiles/${currentMember.id}`);
+        const result = await profileRef.transaction(existing => ({
+          ...(existing || {}),
+          uid: user.uid,
+          memberId: currentMember.id,
+          email,
+          source: 'member',
+          createdAt: existing?.createdAt || now,
+          ...fieldsToSave,
+          profileUpdatedAt: now
+        }));
+        if (!result.committed) throw new Error('member_profile_write_aborted');
+        ownMemberProfile = result.snapshot.val();
+        currentMember = {
+          ...ownAssoV2,
+          ...ownMemberProfile,
+          id: ownAssoV2.id,
+          email: ownAssoV2.email,
+          name: ownAssoV2.name,
+          _storageSource: 'v2'
+        };
       }
 
       renderModalCompleteness(currentMember);
@@ -360,6 +359,31 @@
     });
   }
 
+  function watchOwnMemberProfile(user) {
+    if (ownMemberProfileRef && ownMemberProfileHandler) {
+      ownMemberProfileRef.off('value', ownMemberProfileHandler);
+    }
+    ownMemberProfileRef = null;
+    ownMemberProfileHandler = null;
+    ownMemberProfile = null;
+
+    if (!user || !user.uid || isAdminAccount() || !ownAssoV2) {
+      refreshCurrentMember();
+      return;
+    }
+
+    ownMemberProfileRef = firebase.database().ref(`memberProfiles/${ownAssoV2.id}`);
+    ownMemberProfileHandler = snapshot => {
+      ownMemberProfile = snapshot.val() || null;
+      refreshCurrentMember();
+    };
+    ownMemberProfileRef.on('value', ownMemberProfileHandler, error => {
+      console.warn('[member-profile] member profile read failed', error);
+      ownMemberProfile = null;
+      refreshCurrentMember();
+    });
+  }
+
   function init() {
     buildOptions();
     byId('member-profile-open')?.addEventListener('click', openModal);
@@ -380,6 +404,7 @@
       currentUser = user;
       currentAdminAccess = false;
       ownAssoV2 = null;
+      watchOwnMemberProfile(null);
       watchOwnAdminProfile(user);
       refreshCurrentMember();
 
@@ -393,6 +418,7 @@
           if (checkVersion !== adminCheckVersion) return;
           ownAssoV2 = membership?.active ? membership.member : null;
         }
+        watchOwnMemberProfile(user);
         watchOwnAdminProfile(user);
         refreshCurrentMember();
       }

@@ -19,6 +19,9 @@ const _firebaseReadSubscribers = new Set();
 let _firebaseReadStarted = false;
 let _firebaseReadLastData = null;
 let _firebaseReadLastSignature = '';
+let _firebaseReadLegacyDyn = null;
+let _firebaseReadSurveysV4 = null;
+let _firebaseReadVotesV4 = null;
 
 function escHtmlRead(s) {
   return String(s)
@@ -80,8 +83,10 @@ function _savePublicCache(data) {
     const anonymousVotes = {};
     Object.entries(data.surveyVotes || {}).forEach(([surveyId, votesByMember]) => {
       anonymousVotes[surveyId] = {};
-      Object.values(votesByMember || {}).forEach((options, index) => {
-        anonymousVotes[surveyId][`cached_${index}`] = Array.isArray(options) ? options : [];
+      Object.values(votesByMember || {}).forEach((vote, index) => {
+        anonymousVotes[surveyId][`cached_${index}`] = Array.isArray(vote)
+          ? vote
+          : (Array.isArray(vote?.options) ? vote.options : []);
       });
     });
     const publicSurveys = (data.userSurveys || []).map(({ votesByMember, ...survey }) => survey);
@@ -94,6 +99,16 @@ function _savePublicCache(data) {
       userSurveys: publicSurveys
     }));
   } catch (_) {}
+}
+
+function _publishCombinedFirebaseReadData(source) {
+  const data = _makeFirebaseReadData(_firebaseReadLegacyDyn, source);
+  if (_firebaseReadSurveysV4) {
+    data.userSurveys = _firebaseReadSurveysV4.filter(survey => !String(survey.id || '').startsWith('seed_'));
+    data.surveyVotes = _firebaseReadVotesV4 || {};
+  }
+  _savePublicCache(data);
+  _publishFirebaseReadData(data);
 }
 
 function _publishFirebaseReadData(data) {
@@ -158,13 +173,24 @@ function subscribeFirebaseData(onData) {
           }
           let dyn;
           try { dyn = JSON.parse(raw.data); } catch (_) { return; }
-          const liveData = _makeFirebaseReadData(dyn, 'firebase');
-          _savePublicCache(liveData);
-          _publishFirebaseReadData(liveData);
+          _firebaseReadLegacyDyn = dyn;
+          _publishCombinedFirebaseReadData('firebase');
         }, error => {
           console.warn('[firebase-read] sync error', error);
           if (!_firebaseReadLastData) _publishFirebaseReadData(_makeFirebaseReadData(null, 'fallback'));
         });
+        firebase.database().ref('surveys').on('value', snap => {
+          const raw = snap.val();
+          if (!raw) return;
+          _firebaseReadSurveysV4 = Array.isArray(raw)
+            ? raw.filter(Boolean)
+            : Object.entries(raw).map(([id, survey]) => ({ id, ...(survey || {}) }));
+          _publishCombinedFirebaseReadData('firebase-v4');
+        }, error => console.warn('[firebase-read] surveys sync error', error));
+        firebase.database().ref('surveyVotes').on('value', snap => {
+          _firebaseReadVotesV4 = snap.val() || {};
+          if (_firebaseReadSurveysV4) _publishCombinedFirebaseReadData('firebase-v4');
+        }, error => console.warn('[firebase-read] survey votes sync error', error));
       } catch (e) {
         console.warn('[firebase-read] init error', e);
         if (!_firebaseReadLastData) _publishFirebaseReadData(_makeFirebaseReadData(null, 'fallback'));

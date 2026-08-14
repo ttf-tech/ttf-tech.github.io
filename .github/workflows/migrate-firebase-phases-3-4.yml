@@ -1,0 +1,22 @@
+name: Migrate Firebase phases 3 and 4
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Migrate member profiles, surveys and votes
+        env:
+          FIREBASE_DB_URL: https://groupe-tech-fr-default-rtdb.europe-west1.firebasedatabase.app
+          FIREBASE_DB_SECRET: ${{ secrets.FIREBASE_DB_SECRET }}
+        run: node scripts/migrate-firebase-phases-3-4.js

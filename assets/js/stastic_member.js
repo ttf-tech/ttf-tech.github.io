@@ -31,8 +31,19 @@ let _adminAccessHandler = null;
 let _adminDataAuthVersion = 0;
 let _assoMembersV2Ref = null;
 let _assoMembersV2Handler = null;
+let _memberProfilesRef = null;
+let _memberProfilesHandler = null;
+let _assoFieldAuditRef = null;
+let _assoFieldAuditHandler = null;
 let _helloAssoSyncRef = null;
 let _helloAssoSyncHandler = null;
+let _surveysRef = null;
+let _surveysHandler = null;
+let _surveyVotesRef = null;
+let _surveyVotesHandler = null;
+let _surveyV4Ready = false;
+let _surveysV4 = [];
+let _surveyVotesV4 = {};
 let _assoV2Ready = false;
 let _assoMembersV2 = [];
 let _assoMembersV2Loaded = false;
@@ -46,7 +57,11 @@ if (_FB_READY) {
     _adminProfilesRef = firebase.database().ref('adminProfiles');
     _adminAccessRef = firebase.database().ref('access/admins');
     _assoMembersV2Ref = firebase.database().ref('assoMembers');
+    _memberProfilesRef = firebase.database().ref('memberProfiles');
+    _assoFieldAuditRef = firebase.database().ref('assoMemberFieldAudit');
     _helloAssoSyncRef = firebase.database().ref('system/helloAssoSync');
+    _surveysRef = firebase.database().ref('surveys');
+    _surveyVotesRef = firebase.database().ref('surveyVotes');
   } catch (e) {
     console.warn('[Firebase] init failed, falling back to localStorage', e);
   }
@@ -241,6 +256,32 @@ const ASSO_GOALS = [
 const ASSO_CITIES = ['Paris', 'Lyon', 'Toulouse', 'Bordeaux', 'Grenoble',
                      'Sophia Antipolis', 'Montpellier', 'Taiwan', 'Autres'];
 
+const MEMBER_PROFILE_FIELDS = [
+  'nickname', 'gender', 'city', 'job', 'intro', 'linkedin', 'phone', 'goals',
+  'acceptsRules', 'acceptsRulesAt', 'notificationConsent', 'notificationConsentAt'
+];
+const HELLOASSO_PROFILE_OVERLAP = ['city', 'phone', 'linkedin'];
+
+function splitAssoMemberRecord(member) {
+  const now = new Date().toISOString();
+  const profile = {
+    memberId: member.id,
+    email: (member.email || '').trim().toLowerCase(),
+    source: 'member',
+    createdAt: member.profileCreatedAt || member.createdAt || now,
+    profileUpdatedAt: now
+  };
+  if (member.uid) profile.uid = member.uid;
+  MEMBER_PROFILE_FIELDS.forEach(field => {
+    if (Object.prototype.hasOwnProperty.call(member, field)) profile[field] = member[field];
+  });
+  const official = Object.fromEntries(Object.entries(member).filter(([field]) =>
+    (!MEMBER_PROFILE_FIELDS.includes(field) || HELLOASSO_PROFILE_OVERLAP.includes(field)) &&
+    !['memberId', 'profileUpdatedAt', 'profileCreatedAt', 'uid', 'source'].includes(field)
+  ));
+  return { official, profile };
+}
+
 // HelloAsso's "Pourquoi devenir membre officiel ?" answer text doesn't use the
 // same wording as ASSO_GOALS, so goal checkboxes are inferred from keywords
 // rather than an exact match.
@@ -306,11 +347,13 @@ function _saveDynLocal(dyn) {
 // Merge static seeds + dynamic user data into the shared `state` object
 function rebuildState(dyn) {
   const votes = dyn.surveyVotes || {};
-  state.surveys      = SEED_SURVEYS.map(s => ({ ...s, votesByMember: votes[s.id] || {} }))
-                         .concat((dyn.userSurveys || []).map(s => ({
-                           ...s,
-                           votesByMember: votes[s.id] || s.votesByMember || {}
-                         })));
+  if (!_surveyV4Ready) {
+    state.surveys = SEED_SURVEYS.map(s => ({ ...s, votesByMember: votes[s.id] || {} }))
+      .concat((dyn.userSurveys || []).map(s => ({
+        ...s,
+        votesByMember: votes[s.id] || s.votesByMember || {}
+      })));
+  }
   state.members      = [...SEED_MEMBERS, ...(dyn.addedMembers || [])];
   state.announcements = dyn.announcements || [];
   state.jobs          = dyn.jobs          || [];
@@ -345,7 +388,7 @@ function saveState() {
 }
 
 // ── Shared state object (always has seeds, dynamic parts filled immediately from cache)
-const state = { members: [], surveys: [], sharings: [], meetings: [], expenses: [], announcements: [], jobs: [], assoMembers: [], adminProfiles: [], adminAccess: [] };
+const state = { members: [], surveys: [], sharings: [], meetings: [], expenses: [], announcements: [], jobs: [], assoMembers: [], adminProfiles: [], memberProfiles: [], assoFieldAudit: {}, adminAccess: [] };
 rebuildState(loadDynamic().dyn); // instant render from localStorage cache
 
 // ensureSeed is now a no-op — seeds are always applied via rebuildState()
@@ -362,7 +405,8 @@ function computeCounts(survey) {
   }
   // Add live votes by member
   if (survey.votesByMember) {
-    for (const votes of Object.values(survey.votesByMember)) {
+    for (const vote of Object.values(survey.votesByMember)) {
+      const votes = Array.isArray(vote) ? vote : (Array.isArray(vote?.options) ? vote.options : []);
       for (const optId of votes) {
         counts[optId] = (counts[optId] || 0) + 1;
       }
@@ -794,6 +838,9 @@ function renderAssoMembers() {
   const adminProfileMap = new Map(
     (state.adminProfiles || []).map(profile => [(profile.email || '').trim().toLowerCase(), profile])
   );
+  const memberProfileMap = new Map(
+    (state.memberProfiles || []).filter(profile => profile.memberId).map(profile => [profile.memberId, profile])
+  );
   const officialEmailSet = new Set(
     (state.assoMembers || []).map(member => (member.email || '').trim().toLowerCase())
   );
@@ -801,8 +848,10 @@ function renderAssoMembers() {
     const email = (member.email || '').trim().toLowerCase();
     const isAdmin = adminEmailSet.has(email);
     const adminProfile = isAdmin ? adminProfileMap.get(email) : null;
+    const memberProfile = memberProfileMap.get(member.id) || null;
     return {
       ...member,
+      ...(memberProfile || {}),
       ...(adminProfile || {}),
       id: member.id,
       email: member.email,
@@ -887,6 +936,7 @@ function openAssoMemberModal(id = null) {
   const overlay = document.getElementById('asso-member-modal');
   const title   = document.getElementById('asso-modal-title');
   const delBtn  = document.getElementById('asso-modal-delete');
+  const auditEl = document.getElementById('asso-field-audit');
 
   // City dropdown
   const cityEl = document.getElementById('am-city');
@@ -908,8 +958,10 @@ function openAssoMemberModal(id = null) {
   }
 
   if (id) {
-    const m = state.assoMembers.find(x => x.id === id);
-    if (!m) return;
+    const official = state.assoMembers.find(x => x.id === id);
+    if (!official) return;
+    const profile = (state.memberProfiles || []).find(x => x.memberId === id) || {};
+    const m = { ...official, ...profile, id: official.id, email: official.email, name: official.name };
     if (title) title.textContent = 'Modifier membre Asso';
     _setVal('am-name',     m.name);
     _setVal('am-nickname', m.nickname || '');
@@ -933,6 +985,16 @@ function openAssoMemberModal(id = null) {
       cb.checked = effectiveGoals.includes(cb.value);
     });
     if (delBtn) delBtn.classList.remove('hidden');
+    if (auditEl) {
+      const entries = Object.entries(state.assoFieldAudit?.[id] || {})
+        .sort(([, a], [, b]) => String(b?.editedAt || '').localeCompare(String(a?.editedAt || '')));
+      auditEl.style.display = entries.length ? 'block' : 'none';
+      auditEl.innerHTML = entries.length
+        ? `<strong><i class="fas fa-history"></i> Modifications administrateur · 管理員修改紀錄</strong><br>${entries.map(([field, audit]) =>
+            `${escHtml(field)} — ${escHtml(audit.adminName || audit.adminEmail || audit.adminUid || '')} · ${escHtml(fmtDate(audit.editedAt))}`
+          ).join('<br>')}`
+        : '';
+    }
   } else {
     if (title) title.textContent = 'Ajouter membre Asso · 新增協會成員';
     ['am-name','am-nickname','am-gender','am-email','am-city','am-job','am-expertise','am-intro','am-linkedin','am-phone','am-helloasso','am-motivation'].forEach(id => _setVal(id, ''));
@@ -941,6 +1003,7 @@ function openAssoMemberModal(id = null) {
     _setChecked('am-notification-consent', false);
     overlay?.querySelectorAll('input[name="am-goal"]').forEach(cb => { cb.checked = false; });
     if (delBtn) delBtn.classList.add('hidden');
+    if (auditEl) auditEl.style.display = 'none';
   }
 
   if (overlay) overlay.classList.remove('hidden');
@@ -961,6 +1024,15 @@ function closeAssoMemberModal() {
   document.getElementById('asso-member-modal')?.classList.add('hidden');
 }
 
+function applySurveyV4State() {
+  const seedMap = new Map(SEED_SURVEYS.map(survey => [survey.id, survey]));
+  state.surveys = _surveysV4.map(survey => ({
+    ...(seedMap.get(survey.id) || {}),
+    ...survey,
+    votesByMember: _surveyVotesV4[survey.id] || {}
+  }));
+}
+
 function _isAssoMembershipActive(joinedAt) {
   if (!joinedAt) return true;
   const joinedTime = new Date(joinedAt).getTime();
@@ -969,18 +1041,32 @@ function _isAssoMembershipActive(joinedAt) {
   return ageDays >= 0 && ageDays <= 365;
 }
 
-async function _writeAssoMemberV2(member, previousEmail) {
+async function _writeAssoMemberV2(member, previousEmail, previousMember) {
   if (!_assoV2Ready || !member?.id || typeof ttfHashAssoEmail !== 'function') return;
   const email = (member.email || '').trim().toLowerCase();
   const previous = (previousEmail || '').trim().toLowerCase();
   const active = _isAssoMembershipActive(member.joinedAt);
+  const { official, profile } = splitAssoMemberRecord({ ...member, email });
+  official.email = email;
+  official.status = active ? 'active' : 'inactive';
   const updates = {
-    [`assoMembers/${member.id}`]: {
-      ...member,
-      email,
-      status: active ? 'active' : 'inactive'
-    }
+    [`assoMembers/${member.id}`]: official,
+    [`memberProfiles/${member.id}`]: profile
   };
+  const actor = firebase.auth().currentUser;
+  const auditedAt = new Date().toISOString();
+  const before = previousMember || {};
+  Object.keys(member).forEach(field => {
+    if (field === 'id' || JSON.stringify(before[field]) === JSON.stringify(member[field])) return;
+    updates[`assoMemberFieldAudit/${member.id}/${field}`] = {
+      adminUid: actor?.uid || '',
+      adminEmail: actor?.email || '',
+      adminName: actor?.displayName || actor?.email || '',
+      editedAt: auditedAt,
+      previousValue: before[field] === undefined ? null : before[field],
+      newValue: member[field] === undefined ? null : member[field]
+    };
+  });
 
   if (previous && previous !== email) {
     const previousHash = await ttfHashAssoEmail(previous);
@@ -999,11 +1085,16 @@ async function _writeAssoMemberV2(member, previousEmail) {
     }
   }
   await firebase.database().ref().update(updates);
+  return { official, profile };
 }
 
 async function _deleteAssoMemberV2(member) {
   if (!_assoV2Ready || !member?.id || typeof ttfHashAssoEmail !== 'function') return;
-  const updates = { [`assoMembers/${member.id}`]: null };
+  const updates = {
+    [`assoMembers/${member.id}`]: null,
+    [`memberProfiles/${member.id}`]: null,
+    [`assoMemberFieldAudit/${member.id}`]: null
+  };
   const emailHash = await ttfHashAssoEmail(member.email || '');
   if (emailHash) updates[`assoMemberLookup/${emailHash}`] = null;
   await firebase.database().ref().update(updates);
@@ -1014,7 +1105,13 @@ async function saveAssoMember() {
   if (!name) { showToast('Le nom est obligatoire · 姓名為必填'); return; }
 
   const goals = [...document.querySelectorAll('input[name="am-goal"]:checked')].map(cb => cb.value);
-  const existing = _assoModalId ? state.assoMembers.find(x => x.id === _assoModalId) : null;
+  const existingOfficial = _assoModalId ? state.assoMembers.find(x => x.id === _assoModalId) : null;
+  const existingProfile = _assoModalId
+    ? (state.memberProfiles || []).find(x => x.memberId === _assoModalId)
+    : null;
+  const existing = existingOfficial
+    ? { ...existingOfficial, ...(existingProfile || {}), id: existingOfficial.id, email: existingOfficial.email, name: existingOfficial.name }
+    : null;
   const acceptsRules = !!document.getElementById('am-accepts-rules')?.checked;
   const notificationConsent = !!document.getElementById('am-notification-consent')?.checked;
   const member = {
@@ -1038,33 +1135,32 @@ async function saveAssoMember() {
     notificationConsentAt: notificationConsent ? (existing?.notificationConsentAt || new Date().toISOString()) : ''
   };
 
-  const dyn = extractDynamic();
-  let savedMember;
-  if (_assoModalId) {
-    const idx = dyn.assoMembers.findIndex(x => x.id === _assoModalId);
-    if (idx >= 0) {
-      dyn.assoMembers[idx] = { ...dyn.assoMembers[idx], ...member };
-      savedMember = dyn.assoMembers[idx];
+  const savedMember = { ...(existing || {}), id: _assoModalId || uid(), ...member };
+  if (_assoV2Ready) {
+    try {
+      const saved = await _writeAssoMemberV2(savedMember, existing?.email, existing);
+      const officialIndex = _assoMembersV2.findIndex(item => item.id === savedMember.id);
+      if (officialIndex >= 0) _assoMembersV2[officialIndex] = saved.official;
+      else _assoMembersV2.push(saved.official);
+      const profileIndex = state.memberProfiles.findIndex(item => item.memberId === savedMember.id);
+      if (profileIndex >= 0) state.memberProfiles[profileIndex] = saved.profile;
+      else state.memberProfiles.push(saved.profile);
+      state.assoMembers = _assoMembersV2;
+    } catch (error) {
+      console.warn('[Firebase] Asso member save failed', error);
+      showToast('Enregistrement Firebase impossible · Firebase 儲存失敗', 5000);
+      return;
     }
-    showToast('Membre Asso mis à jour · 協會成員已更新');
   } else {
-    savedMember = { id: uid(), ...member };
-    dyn.assoMembers.push(savedMember);
-    showToast('Membre Asso ajouté · 協會成員已新增');
+    const dyn = extractDynamic();
+    const idx = dyn.assoMembers.findIndex(x => x.id === savedMember.id);
+    if (idx >= 0) dyn.assoMembers[idx] = savedMember;
+    else dyn.assoMembers.push(savedMember);
+    rebuildState(dyn);
+    _saveDynLocal(dyn);
+    _fbWrite(dyn);
   }
-
-  if (!savedMember) return;
-
-  if (_assoV2Ready) _assoMembersV2 = dyn.assoMembers;
-  rebuildState(dyn);
-  _saveDynLocal(dyn);
-  _fbWrite(dyn);
-  try {
-    await _writeAssoMemberV2(savedMember, existing?.email);
-  } catch (error) {
-    console.warn('[Firebase] v2 Asso member save failed', error);
-    showToast('新會員路徑同步失敗，舊資料仍已保存 · V2 sync failed', 5000);
-  }
+  showToast(_assoModalId ? 'Membre Asso mis à jour · 協會成員已更新' : 'Membre Asso ajouté · 協會成員已新增');
   closeAssoMemberModal();
   renderAssoMembers();
 }
@@ -1079,15 +1175,21 @@ async function deleteAssoMember() {
   const removedMember = dyn.assoMembers[idx];
   dyn.assoMembers.splice(idx, 1);
 
-  if (_assoV2Ready) _assoMembersV2 = dyn.assoMembers;
-  rebuildState(dyn);
-  _saveDynLocal(dyn);
-  _fbWrite(dyn);
-  try {
-    await _deleteAssoMemberV2(removedMember);
-  } catch (error) {
-    console.warn('[Firebase] v2 Asso member delete failed', error);
-    showToast('新會員路徑刪除失敗，請稍後重試 · V2 delete failed', 5000);
+  if (_assoV2Ready) {
+    try {
+      await _deleteAssoMemberV2(removedMember);
+      _assoMembersV2 = _assoMembersV2.filter(item => item.id !== removedMember.id);
+      state.memberProfiles = state.memberProfiles.filter(item => item.memberId !== removedMember.id);
+      state.assoMembers = _assoMembersV2;
+    } catch (error) {
+      console.warn('[Firebase] Asso member delete failed', error);
+      showToast('Suppression Firebase impossible · Firebase 刪除失敗', 5000);
+      return;
+    }
+  } else {
+    rebuildState(dyn);
+    _saveDynLocal(dyn);
+    _fbWrite(dyn);
   }
   closeAssoMemberModal();
   renderAssoMembers();
@@ -1233,8 +1335,8 @@ function buildSurveyCard(survey) {
     let votersHtml = '';
     if (!survey.isLegacy && survey.privacy === 'show_voters') {
       const voters = Object.entries(survey.votesByMember || {})
-        .filter(([, v]) => v.includes(opt.id))
-        .map(([name]) => escHtml(name));
+        .filter(([, vote]) => (Array.isArray(vote) ? vote : (vote?.options || [])).includes(opt.id))
+        .map(([key, vote]) => escHtml(vote?.displayName || key));
       votersHtml = voters.length
         ? `<div class="sm-option-voters">${voters.join(', ')}</div>`
         : '';
@@ -1302,7 +1404,7 @@ function buildSurveyCard(survey) {
 }
 
 // ── Survey actions ─────────────────────────────────────────────
-function toggleSurveyStatus(sid) {
+async function toggleSurveyStatus(sid) {
   const survey = state.surveys.find(s => s.id === sid);
   if (!survey) return;
   if (survey.status === 'open') {
@@ -1312,18 +1414,36 @@ function toggleSurveyStatus(sid) {
     survey.status = 'open';
     survey.closedAt = null;
   }
-  saveState();
+  if (_surveyV4Ready && _surveysRef) {
+    try {
+      await _surveysRef.child(sid).update({ status: survey.status, closedAt: survey.closedAt });
+    } catch (error) {
+      console.warn('[Firebase] survey status update failed', error);
+      showToast('Mise à jour impossible · 更新失敗');
+      return;
+    }
+  } else saveState();
   renderSurveys();
   renderKPIs();
   showToast(survey.status === 'open' ? 'Sondage ré-ouvert.' : 'Sondage clôturé.');
 }
 
-function deleteSurvey(sid) {
+async function deleteSurvey(sid) {
   if (!confirm('Supprimer ce sondage et tous ses votes ?')) return;
   const idx = state.surveys.findIndex(s => s.id === sid);
   if (idx < 0) return;
-  state.surveys.splice(idx, 1);
-  saveState();
+  if (_surveyV4Ready && _surveysRef) {
+    try {
+      await firebase.database().ref().update({ [`surveys/${sid}`]: null, [`surveyVotes/${sid}`]: null });
+    } catch (error) {
+      console.warn('[Firebase] survey delete failed', error);
+      showToast('Suppression impossible · 刪除失敗');
+      return;
+    }
+  } else {
+    state.surveys.splice(idx, 1);
+    saveState();
+  }
   renderSurveys();
   renderKPIs();
   showToast('Sondage supprimé.');
@@ -1353,7 +1473,7 @@ function addOptionRow(value = '') {
   builder.appendChild(row);
 }
 
-function handleCreateSurvey() {
+async function handleCreateSurvey() {
   const title   = document.getElementById('c-title')?.value.trim();
   const titleFr = document.getElementById('c-title-fr')?.value.trim();
   const desc    = document.getElementById('c-desc')?.value.trim();
@@ -1383,12 +1503,20 @@ function handleCreateSurvey() {
     createdAt: new Date().toISOString(),
     closedAt: null,
     options,
-    votesByMember: {},
     legacyCounts: {}
   };
 
-  state.surveys.unshift(survey);
-  saveState();
+  if (_surveyV4Ready && _surveysRef) {
+    try { await _surveysRef.child(survey.id).set(survey); }
+    catch (error) {
+      console.warn('[Firebase] survey create failed', error);
+      showToast('Création impossible · 建立失敗');
+      return;
+    }
+  } else {
+    state.surveys.unshift({ ...survey, votesByMember: {} });
+    saveState();
+  }
 
   // Reset form
   ['c-title', 'c-title-fr', 'c-desc'].forEach(id => {
@@ -1454,7 +1582,7 @@ function closeVoteModal() {
   if (overlay) overlay.classList.add('hidden');
 }
 
-function submitVote() {
+async function submitVote() {
   if (!_voteModalSid) return;
   const survey = state.surveys.find(s => s.id === _voteModalSid);
   if (!survey || survey.status !== 'open') {
@@ -1489,8 +1617,31 @@ function submitVote() {
 
   if (checked.length === 0) { showToast('Sélectionnez au moins une option.'); return; }
 
-  survey.votesByMember[name] = checked;
-  saveState();
+  if (_surveyV4Ready && _surveyVotesRef) {
+    const actor = firebase.auth().currentUser;
+    const existingEntry = Object.entries(survey.votesByMember || {}).find(([key, vote]) =>
+      (vote?.displayName || key).trim().toLowerCase() === name.toLowerCase()
+    );
+    const voteKey = existingEntry?.[0] || `admin_${uid()}`;
+    const now = new Date().toISOString();
+    const record = {
+      uid: actor?.uid || voteKey,
+      options: checked,
+      source: 'admin',
+      votedAt: existingEntry?.[1]?.votedAt || now,
+      updatedAt: now
+    };
+    if (survey.privacy === 'show_voters') record.displayName = name;
+    try { await _surveyVotesRef.child(`${survey.id}/${voteKey}`).set(record); }
+    catch (error) {
+      console.warn('[Firebase] admin vote failed', error);
+      showToast('Vote impossible · 投票失敗');
+      return;
+    }
+  } else {
+    survey.votesByMember[name] = checked;
+    saveState();
+  }
   closeVoteModal();
   renderSurveys();
   renderKPIs();
@@ -2830,15 +2981,19 @@ function _fbWrite(dyn) {
     // e.g. during cold-start before first Firebase sync).
     // Then apply local votes on top — admin-submitted vote wins for same key.
     const mergedVotes = Object.assign({}, remoteDyn.surveyVotes || {});
-    for (const [sid, localVotes] of Object.entries(dyn.surveyVotes || {})) {
-      mergedVotes[sid] = Object.assign({}, mergedVotes[sid] || {}, localVotes);
+    if (!_surveyV4Ready) {
+      for (const [sid, localVotes] of Object.entries(dyn.surveyVotes || {})) {
+        mergedVotes[sid] = Object.assign({}, mergedVotes[sid] || {}, localVotes);
+      }
     }
 
     // ── userSurveys merge ────────────────────────────────────────
     // Once synced, local state is authoritative (honours admin deletions).
     // During cold-start, also preserve remote surveys admin doesn't know yet.
     let mergedSurveys;
-    if (_fbSyncDone) {
+    if (_surveyV4Ready) {
+      mergedSurveys = remoteDyn.userSurveys || [];
+    } else if (_fbSyncDone) {
       mergedSurveys = dyn.userSurveys || [];
     } else {
       const localIds = new Set((dyn.userSurveys || []).map(s => s.id));
@@ -2857,7 +3012,12 @@ function _fbWrite(dyn) {
     // Always produce a ts strictly > the current Firebase ts so the stale-write
     // guard rule (".write": "newData.ts > data.ts") never blocks a legitimate save.
     const ts = Math.max(Date.now(), ((current && current.ts) || 0) + 1);
-    return { ts, data: JSON.stringify({ ...dyn, surveyVotes: mergedVotes, userSurveys: syncedSurveys }) };
+    return { ts, data: JSON.stringify({
+      ...dyn,
+      surveyVotes: mergedVotes,
+      userSurveys: syncedSurveys,
+      assoMembers: _assoV2Ready ? (remoteDyn.assoMembers || []) : (dyn.assoMembers || [])
+    }) };
                                     }).catch(e => {
     console.warn('[Firebase] save error', e);
     showToast('⚠️ Firebase sync failed — data saved locally only. Check database rules.', 5000);
@@ -2912,25 +3072,38 @@ function initFirebase() {
 }
 
 function initAdminProfiles() {
-  if (!_adminProfilesRef || !_adminAccessRef || !_assoMembersV2Ref ||
+  if (!_adminProfilesRef || !_adminAccessRef || !_assoMembersV2Ref || !_memberProfilesRef || !_assoFieldAuditRef || !_surveysRef || !_surveyVotesRef ||
       !_helloAssoSyncRef || typeof firebase.auth !== 'function') return;
   firebase.auth().onAuthStateChanged(async user => {
     const authVersion = ++_adminDataAuthVersion;
     if (_adminProfilesHandler) _adminProfilesRef.off('value', _adminProfilesHandler);
     if (_adminAccessHandler) _adminAccessRef.off('value', _adminAccessHandler);
     if (_assoMembersV2Handler) _assoMembersV2Ref.off('value', _assoMembersV2Handler);
+    if (_memberProfilesHandler) _memberProfilesRef.off('value', _memberProfilesHandler);
+    if (_assoFieldAuditHandler) _assoFieldAuditRef.off('value', _assoFieldAuditHandler);
     if (_helloAssoSyncHandler) _helloAssoSyncRef.off('value', _helloAssoSyncHandler);
+    if (_surveysHandler) _surveysRef.off('value', _surveysHandler);
+    if (_surveyVotesHandler) _surveyVotesRef.off('value', _surveyVotesHandler);
     _adminProfilesHandler = null;
     _adminAccessHandler = null;
     _assoMembersV2Handler = null;
+    _memberProfilesHandler = null;
+    _assoFieldAuditHandler = null;
     _helloAssoSyncHandler = null;
+    _surveysHandler = null;
+    _surveyVotesHandler = null;
     state.adminProfiles = [];
     state.adminAccess = [];
+    state.memberProfiles = [];
+    state.assoFieldAudit = {};
     _assoV2Ready = false;
     _assoMembersV2 = [];
     _assoMembersV2Loaded = false;
     _assoV2Hydrated = false;
     _helloAssoSyncSummary = null;
+    _surveyV4Ready = false;
+    _surveysV4 = [];
+    _surveyVotesV4 = {};
 
     const allowed = user && typeof ttfResolveAdminAccess === 'function'
       ? await ttfResolveAdminAccess(user)
@@ -2961,6 +3134,48 @@ function initAdminProfiles() {
     };
     _adminAccessRef.on('value', _adminAccessHandler, error => {
       console.warn('[Firebase] admin access read failed', error);
+    });
+
+    _memberProfilesHandler = snapshot => {
+      const raw = snapshot.val() || {};
+      state.memberProfiles = Array.isArray(raw)
+        ? raw.filter(Boolean)
+        : Object.entries(raw).map(([memberId, profile]) => ({ memberId, ...(profile || {}) }));
+      if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
+    };
+    _memberProfilesRef.on('value', _memberProfilesHandler, error => {
+      console.warn('[Firebase] memberProfiles read failed', error);
+    });
+
+    _assoFieldAuditHandler = snapshot => {
+      state.assoFieldAudit = snapshot.val() || {};
+    };
+    _assoFieldAuditRef.on('value', _assoFieldAuditHandler, error => {
+      console.warn('[Firebase] Asso field audit read failed', error);
+    });
+
+    _surveysHandler = snapshot => {
+      const raw = snapshot.val();
+      if (!raw) return;
+      _surveyV4Ready = true;
+      _surveysV4 = Array.isArray(raw)
+        ? raw.filter(Boolean)
+        : Object.entries(raw).map(([id, survey]) => ({ id, ...(survey || {}) }));
+      applySurveyV4State();
+      if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'surveys') renderSurveys();
+      renderKPIs();
+    };
+    _surveysRef.on('value', _surveysHandler, error => {
+      console.warn('[Firebase] surveys read failed', error);
+    });
+
+    _surveyVotesHandler = snapshot => {
+      _surveyVotesV4 = snapshot.val() || {};
+      if (_surveyV4Ready) applySurveyV4State();
+      if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'surveys') renderSurveys();
+    };
+    _surveyVotesRef.on('value', _surveyVotesHandler, error => {
+      console.warn('[Firebase] survey votes read failed', error);
     });
 
     _assoMembersV2Handler = snapshot => {

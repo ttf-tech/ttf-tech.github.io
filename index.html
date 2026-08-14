@@ -1100,9 +1100,9 @@
     </form>
   </div>
 
-  <script src="assets/js/firebase-read.js"></script>
+  <script src="assets/js/firebase-read.js?v=4"></script>
   <script src="assets/js/member-gate.js"></script>
-  <script src="assets/js/member-profile.js"></script>
+  <script src="assets/js/member-profile.js?v=4"></script>
   <script>
   'use strict';
 
@@ -1252,8 +1252,9 @@
     const meta   = SURVEY_META[surveyId];
     const counts = [...meta.legacy]; // copy seed baseline
     const votes  = (surveyVotes || {})[surveyId] || {};
-    for (const optArray of Object.values(votes)) {
-      for (const optId of (Array.isArray(optArray) ? optArray : [])) {
+    for (const vote of Object.values(votes)) {
+      const optArray = Array.isArray(vote) ? vote : (Array.isArray(vote?.options) ? vote.options : []);
+      for (const optId of optArray) {
         const idx = meta.keys.indexOf(optId);
         if (idx >= 0) counts[idx]++;
       }
@@ -1339,8 +1340,9 @@
     const voteSummary = Object.keys(surveyVotes || {}).sort().map(surveyId => {
       const votes = surveyVotes[surveyId] || {};
       const counts = {};
-      Object.values(votes).forEach(options => {
-        (Array.isArray(options) ? options : []).forEach(optionId => {
+      Object.values(votes).forEach(vote => {
+        const options = Array.isArray(vote) ? vote : (Array.isArray(vote?.options) ? vote.options : []);
+        options.forEach(optionId => {
           counts[optionId] = (counts[optionId] || 0) + 1;
         });
       });
@@ -1402,8 +1404,9 @@
     eligible.forEach(survey => {
       const votes  = surveyVotes[survey.id] || {};
       const counts = {};
-      for (const optArray of Object.values(votes)) {
-        for (const oid of (Array.isArray(optArray) ? optArray : [])) {
+      for (const vote of Object.values(votes)) {
+        const optArray = Array.isArray(vote) ? vote : (Array.isArray(vote?.options) ? vote.options : []);
+        for (const oid of optArray) {
           counts[oid] = (counts[oid] || 0) + 1;
         }
       }

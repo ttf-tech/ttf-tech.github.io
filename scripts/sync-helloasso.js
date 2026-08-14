@@ -133,18 +133,23 @@ async function syncToFirebase(helloAssoMembers) {
   const authQuery = `auth=${encodeURIComponent(FIREBASE_DB_SECRET)}`;
   const legacyUrl = `${FIREBASE_DB_URL}/grp_hub_v2.json?${authQuery}`;
   const v2Url = `${FIREBASE_DB_URL}/assoMembers.json?${authQuery}`;
+  const auditUrl = `${FIREBASE_DB_URL}/assoMemberFieldAudit.json?${authQuery}`;
   const rootUrl = `${FIREBASE_DB_URL}/.json?${authQuery}`;
 
-  const [legacyResponse, v2Response] = await Promise.all([fetch(legacyUrl), fetch(v2Url)]);
+  const [legacyResponse, v2Response, auditResponse] = await Promise.all([fetch(legacyUrl), fetch(v2Url), fetch(auditUrl)]);
   if (!legacyResponse.ok) {
     throw new Error(`Firebase legacy read failed: ${legacyResponse.status} ${await legacyResponse.text()}`);
   }
   if (!v2Response.ok) {
     throw new Error(`Firebase v2 read failed: ${v2Response.status} ${await v2Response.text()}`);
   }
+  if (!auditResponse.ok) {
+    throw new Error(`Firebase audit read failed: ${auditResponse.status} ${await auditResponse.text()}`);
+  }
 
   const raw = await legacyResponse.json();
   const existingV2 = objectToMembers(await v2Response.json());
+  const fieldAudit = await auditResponse.json() || {};
   let dynamicData = {
     addedMembers: [], announcements: [], jobs: [], sharings: [], meetings: [],
     expenses: [], surveyVotes: {}, userSurveys: [], assoMembers: []
@@ -160,25 +165,30 @@ async function syncToFirebase(helloAssoMembers) {
 
   // V2 becomes authoritative after the first successful migration.
   const baseline = existingV2.length > 0 ? existingV2 : dynamicData.assoMembers;
-  const membersWithoutEmail = baseline.filter(member => !normalizeEmail(member.email));
-  const membersByEmail = new Map(
-    baseline
-      .filter(member => normalizeEmail(member.email))
-      .map(member => [normalizeEmail(member.email), { ...member }])
-  );
+  const membersById = new Map(baseline.map(member => [member.id, { ...member }]));
+  const memberByEmail = new Map(baseline
+    .filter(member => normalizeEmail(member.email))
+    .map(member => [normalizeEmail(member.email), member]));
+  const memberByRef = new Map(baseline
+    .filter(member => member.helloassoRef)
+    .map(member => [member.helloassoRef, member]));
+  for (const member of baseline) {
+    const audit = fieldAudit[member.id] || {};
+    const previousEmail = normalizeEmail(audit.email?.previousValue);
+    const previousRef = audit.helloassoRef?.previousValue;
+    if (previousEmail) memberByEmail.set(previousEmail, member);
+    if (previousRef) memberByRef.set(previousRef, member);
+  }
 
   let added = 0;
   let updated = 0;
   const syncedAt = new Date().toISOString();
   for (const incoming of helloAssoMembers) {
     const email = normalizeEmail(incoming.email);
-    const existing = membersByEmail.get(email);
+    const existing = memberByRef.get(incoming.helloassoRef) || memberByEmail.get(email);
     const id = existing?.id || `ha_${hashEmail(email).slice(0, 20)}`;
-    membersByEmail.set(email, {
+    const merged = {
       id,
-      intro: '',
-      job: '',
-      goals: [],
       ...(existing || {}),
       ...incoming,
       email,
@@ -189,13 +199,18 @@ async function syncToFirebase(helloAssoMembers) {
       motivation: incoming.motivation || existing?.motivation || '',
       status: isActiveMembership(incoming.joinedAt) ? 'active' : 'inactive',
       syncedAt
-    });
+    };
+    const audit = fieldAudit[id] || {};
+    for (const field of Object.keys(audit)) {
+      if (existing && Object.prototype.hasOwnProperty.call(existing, field)) merged[field] = existing[field];
+    }
+    membersById.set(id, merged);
     if (existing) updated++;
     else added++;
   }
 
   // Preserve admin-created members not returned by HelloAsso.
-  const finalMembers = [...membersByEmail.values(), ...membersWithoutEmail].map(member => ({
+  const finalMembers = [...membersById.values()].map(member => ({
     ...member,
     id: member.id,
     email: normalizeEmail(member.email),
@@ -216,7 +231,7 @@ async function syncToFirebase(helloAssoMembers) {
     ? '尚無 HelloAsso 會員付款資料 · No HelloAsso payments to sync yet'
     : `已新增 ${added} 位、更新 ${updated} 位 · ${added} added, ${updated} updated`;
   const syncSummary = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     ts: Date.now(),
     added,
     updated,
@@ -225,16 +240,11 @@ async function syncToFirebase(helloAssoMembers) {
     message
   };
 
-  dynamicData.assoMembers = finalMembers;
-  dynamicData.lastAssoSync = syncSummary;
-  const ts = Math.max(Date.now(), ((raw && raw.ts) || 0) + 1);
-
-  // One atomic root PATCH keeps the new paths and compatibility blob aligned.
+  // Phase 3 keeps the legacy blob read-only. New syncs update only normalized paths.
   const writeResponse = await fetch(rootUrl, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      grp_hub_v2: { ts, data: JSON.stringify(dynamicData) },
       assoMembers: memberMap,
       assoMemberLookup: lookupMap,
       'system/helloAssoSync': syncSummary

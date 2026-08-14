@@ -24,11 +24,14 @@ const _FB_CONFIG = {
 const _FB_READY = typeof firebase !== 'undefined' &&
                   !_FB_CONFIG.apiKey.startsWith('YOUR_');
 let _fbRef = null;
+let _adminProfilesRef = null;
+let _adminProfilesHandler = null;
 let _fbSyncDone = false; // true after first Firebase on('value') fires
 if (_FB_READY) {
   try {
     if (!firebase.apps.length) firebase.initializeApp(_FB_CONFIG);
     _fbRef = firebase.database().ref(STORE_KEY);
+    _adminProfilesRef = firebase.database().ref('adminProfiles');
   } catch (e) {
     console.warn('[Firebase] init failed, falling back to localStorage', e);
   }
@@ -327,7 +330,7 @@ function saveState() {
 }
 
 // ── Shared state object (always has seeds, dynamic parts filled immediately from cache)
-const state = { members: [], surveys: [], sharings: [], meetings: [], expenses: [], announcements: [], jobs: [] };
+const state = { members: [], surveys: [], sharings: [], meetings: [], expenses: [], announcements: [], jobs: [], assoMembers: [], adminProfiles: [] };
 rebuildState(loadDynamic().dyn); // instant render from localStorage cache
 
 // ensureSeed is now a no-op — seeds are always applied via rebuildState()
@@ -765,8 +768,45 @@ function renderAssoMembers() {
   const query   = (document.getElementById('asso-search')?.value   || '').toLowerCase();
   const cityFlt = (document.getElementById('asso-city-filter')?.value || '');
 
-  const list = state.assoMembers.filter(m => {
-    const matchQ    = !query   || m.name.toLowerCase().includes(query) ||
+  const adminEmails = (typeof ADMIN_EMAILS !== 'undefined' && Array.isArray(ADMIN_EMAILS))
+    ? ADMIN_EMAILS.map(email => email.trim().toLowerCase())
+    : [];
+  const adminEmailSet = new Set(adminEmails);
+  const adminProfileMap = new Map(
+    (state.adminProfiles || []).map(profile => [(profile.email || '').trim().toLowerCase(), profile])
+  );
+  const officialEmailSet = new Set(
+    (state.assoMembers || []).map(member => (member.email || '').trim().toLowerCase())
+  );
+  const officialRows = (state.assoMembers || []).map(member => {
+    const email = (member.email || '').trim().toLowerCase();
+    const isAdmin = adminEmailSet.has(email);
+    const adminProfile = isAdmin ? adminProfileMap.get(email) : null;
+    return {
+      ...member,
+      ...(adminProfile || {}),
+      id: member.id,
+      email: member.email,
+      name: member.name,
+      joinedAt: member.joinedAt,
+      _isOfficial: true,
+      _isAdmin: isAdmin
+    };
+  });
+  const adminOnlyRows = adminEmails
+    .filter(email => !officialEmailSet.has(email))
+    .map(email => ({
+      id: `admin_view_${email}`,
+      email,
+      name: email.split('@')[0],
+      source: 'admin',
+      ...(adminProfileMap.get(email) || {}),
+      _isOfficial: false,
+      _isAdmin: true
+    }));
+
+  const list = [...officialRows, ...adminOnlyRows].filter(m => {
+    const matchQ    = !query   || (m.name || '').toLowerCase().includes(query) ||
                       (m.nickname || '').toLowerCase().includes(query) ||
                       (m.email || '').toLowerCase().includes(query)    ||
                       (m.job  || '').toLowerCase().includes(query)     ||
@@ -788,12 +828,18 @@ function renderAssoMembers() {
 
   const goalMap = Object.fromEntries(ASSO_GOALS.map(g => [g.id, g.fr]));
   container.innerHTML = list.map(m => {
-    const initials = m.name.split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
+    const initials = (m.name || m.email || '?').split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
     const goals    = (m.goals || []).slice(0, 3).map(g =>
       `<span class="sm-asso-goal-badge">${escHtml(goalMap[g] || g)}</span>`
     ).join('') + (m.goals?.length > 3 ? `<span class="sm-asso-goal-badge sm-asso-goal-more">+${m.goals.length - 3}</span>` : '');
+    const badge = m._isOfficial && m._isAdmin
+      ? '<span class="sm-asso-paid-badge sm-asso-role-badge combined"><i class="fas fa-user-shield"></i> Membre officiel · Administrateur</span>'
+      : m._isAdmin
+        ? '<span class="sm-asso-paid-badge sm-asso-role-badge admin"><i class="fas fa-user-shield"></i> Administrateur</span>'
+        : '<span class="sm-asso-paid-badge sm-asso-role-badge official"><i class="fas fa-check-circle"></i> Membre officiel</span>';
+    const cardAction = m._isOfficial ? `onclick="openAssoMemberModal('${escHtml(m.id)}')"` : '';
     return `
-      <div class="sm-member-card sm-asso-card" data-id="${escHtml(m.id)}" onclick="openAssoMemberModal('${escHtml(m.id)}')">
+      <div class="sm-member-card sm-asso-card${m._isOfficial ? '' : ' sm-admin-profile-card'}" data-id="${escHtml(m.id)}" ${cardAction}>
         <div class="sm-asso-card-top">
           <div class="sm-member-avatar sm-asso-avatar">${escHtml(initials)}</div>
           <div class="sm-asso-card-info">
@@ -807,10 +853,10 @@ function renderAssoMembers() {
         ${goals ? `<div class="sm-asso-goals">${goals}</div>` : ''}
         ${m.motivation ? `<div class="sm-asso-city" style="margin-top:0.3rem;"><i class="fas fa-comment-dots" style="opacity:0.6;"></i> ${escHtml(m.motivation.length > 80 ? m.motivation.slice(0, 80) + '…' : m.motivation)}</div>` : ''}
         <div class="sm-asso-card-footer">
-          <span class="sm-asso-paid-badge"><i class="fas fa-check-circle"></i> Membre officiel</span>
+          ${badge}
           ${m.linkedin ? `<a href="${escHtml(m.linkedin)}" target="_blank" onclick="event.stopPropagation()" class="sm-asso-linkedin"><i class="fab fa-linkedin"></i></a>` : ''}
         </div>
-        <div class="sm-member-joined"><i class="fas fa-calendar-alt" style="margin-right:0.3rem;opacity:0.5;"></i>${fmtDate(m.joinedAt)}</div>
+        <div class="sm-member-joined"><i class="fas fa-calendar-alt" style="margin-right:0.3rem;opacity:0.5;"></i>${fmtDate(m.joinedAt || m.createdAt)}</div>
       </div>`;
   }).join('');
 }
@@ -2776,9 +2822,39 @@ function initFirebase() {
   });
 }
 
+function initAdminProfiles() {
+  if (!_adminProfilesRef || typeof firebase.auth !== 'function') return;
+  firebase.auth().onAuthStateChanged(user => {
+    if (_adminProfilesHandler) _adminProfilesRef.off('value', _adminProfilesHandler);
+    _adminProfilesHandler = null;
+    state.adminProfiles = [];
+
+    const email = (user?.email || '').trim().toLowerCase();
+    const allowed = (typeof ADMIN_EMAILS !== 'undefined' && Array.isArray(ADMIN_EMAILS))
+      ? ADMIN_EMAILS.some(adminEmail => adminEmail.trim().toLowerCase() === email)
+      : false;
+    if (!user || !allowed) {
+      if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
+      return;
+    }
+
+    _adminProfilesHandler = snapshot => {
+      const raw = snapshot.val() || {};
+      state.adminProfiles = Array.isArray(raw)
+        ? raw.filter(Boolean)
+        : Object.entries(raw).map(([uid, profile]) => ({ uid, id: profile?.id || uid, ...(profile || {}) }));
+      if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
+    };
+    _adminProfilesRef.on('value', _adminProfilesHandler, error => {
+      console.warn('[Firebase] adminProfiles read failed', error);
+    });
+  });
+}
+
 // ── Init ───────────────────────────────────────────────────────
 function init() {
   initFirebase(); // connects Firebase listener if configured; no-op otherwise
+  initAdminProfiles();
   renderKPIs();
 
   // Tab buttons

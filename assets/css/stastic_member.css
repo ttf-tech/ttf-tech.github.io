@@ -364,6 +364,22 @@
   align-items: center;
   gap: 0.3rem;
 }
+.sm-asso-role-badge.admin {
+  color: #1e40af;
+  background: #dbeafe;
+}
+.sm-asso-role-badge.combined {
+  color: #6d28d9;
+  background: #ede9fe;
+}
+.sm-admin-profile-card {
+  border-color: #c7d2fe;
+  background: linear-gradient(160deg, #eef2ff 0%, #fff 60%);
+  cursor: default;
+}
+.sm-admin-profile-card .sm-asso-avatar {
+  background: linear-gradient(135deg, #4338ca, #7c3aed);
+}
 .sm-asso-linkedin {
   color: #0a66c2;
   font-size: 1rem;

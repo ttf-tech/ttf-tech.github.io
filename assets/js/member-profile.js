@@ -30,7 +30,11 @@
 
   let currentUser = null;
   let assoMembers = [];
+  let adminProfiles = [];
   let currentMember = null;
+  let currentProfileSource = null;
+  let ownAdminProfileRef = null;
+  let ownAdminProfileHandler = null;
   let returnFocusTo = null;
 
   const byId = id => document.getElementById(id);
@@ -56,15 +60,22 @@
 
     const missing = missingFields(profile);
     const complete = missing.length === 0;
+    const adminProfile = currentProfileSource === 'admin';
     box.style.background = complete ? '#f0fdf4' : '#fffbeb';
     box.style.borderColor = complete ? '#86efac' : '#fcd34d';
     title.style.color = complete ? '#166534' : '#92400e';
-    title.textContent = complete
-      ? '✓ Profil complet · 會員資料完整'
-      : `⚠ Profil incomplet · 會員資料尚缺 ${missing.length} 項`;
+    title.textContent = adminProfile
+      ? (complete
+          ? "✓ Profil d'équipe complet · 管理團隊資料完整"
+          : `⚠ Profil d'équipe incomplet · 管理團隊資料尚缺 ${missing.length} 項`)
+      : (complete
+          ? '✓ Profil complet · 會員資料完整'
+          : `⚠ Profil incomplet · 會員資料尚缺 ${missing.length} 項`);
     missingElement.style.color = complete ? '#15803d' : '#b45309';
     missingElement.textContent = complete
-      ? 'Conditions de données remplies pour le vote à l’AG. · 已完成年度大會投票所需資料。'
+      ? (adminProfile
+          ? "Profil d'équipe complété. · 管理團隊資料已完成。"
+          : 'Conditions de données remplies pour le vote à l’AG. · 已完成年度大會投票所需資料。')
       : `尚缺 · Manquant : ${missing.map(field => field.label).join('、')}`;
   }
 
@@ -78,13 +89,35 @@
 
   function refreshCurrentMember() {
     const signedInEmail = norm(currentUser && currentUser.email);
-    const ownRecord = signedInEmail
+    const ownAssoRecord = signedInEmail
       ? assoMembers.find(member => norm(member.email) === signedInEmail)
       : null;
-    const adminPreview = isAdminAccount();
-    currentMember = ownRecord && (isActiveMember(ownRecord) || adminPreview) ? ownRecord : null;
+    const ownAdminRecord = signedInEmail
+      ? adminProfiles.find(profile => norm(profile.email) === signedInEmail)
+      : null;
+    const isAdmin = isAdminAccount();
+
+    if (isAdmin) {
+      currentMember = {
+        ...(ownAssoRecord || {}),
+        ...(ownAdminRecord || {}),
+        id: currentUser.uid || ownAdminRecord?.id || '',
+        uid: currentUser.uid || ownAdminRecord?.uid || '',
+        email: currentUser.email || '',
+        name: ownAdminRecord?.name || ownAssoRecord?.name || currentUser.displayName ||
+          (currentUser.email || '').split('@')[0],
+        source: 'admin'
+      };
+      currentProfileSource = 'admin';
+    } else if (ownAssoRecord && isActiveMember(ownAssoRecord)) {
+      currentMember = ownAssoRecord;
+      currentProfileSource = 'asso';
+    } else {
+      currentMember = null;
+      currentProfileSource = null;
+    }
     const button = byId('member-profile-open');
-    const canUseProfile = !!currentMember || adminPreview;
+    const canUseProfile = !!currentMember;
     if (button) button.style.display = canUseProfile ? 'inline-flex' : 'none';
     if (!canUseProfile) closeModal();
   }
@@ -127,11 +160,16 @@
 
   function openModal() {
     refreshCurrentMember();
-    const adminPreview = isAdminAccount();
-    if (!currentMember && !adminPreview) return;
+    if (!currentMember) return;
 
     buildOptions();
     const profile = currentMember || {};
+    const modalTitle = byId('member-profile-title');
+    if (modalTitle) {
+      modalTitle.textContent = currentProfileSource === 'admin'
+        ? "Mon profil d'équipe · 我的管理團隊資料"
+        : 'Mon profil membre · 我的會員資料';
+    }
     setValue('mp-nickname', profile.nickname);
     setValue('mp-gender', profile.gender);
     setValue('mp-phone', profile.phone);
@@ -147,16 +185,19 @@
     renderModalCompleteness(profile);
     const saveButton = byId('member-profile-save');
     if (saveButton) {
-      saveButton.disabled = adminPreview || !currentMember;
+      saveButton.disabled = !currentMember;
       saveButton.style.opacity = saveButton.disabled ? '0.5' : '1';
       saveButton.style.cursor = saveButton.disabled ? 'not-allowed' : 'pointer';
     }
     const adminNotice = byId('member-profile-admin-preview');
-    if (adminNotice) adminNotice.style.display = adminPreview ? 'block' : 'none';
-    setStatus(
-      adminPreview || currentMember ? '' : 'Aucun profil Asso associé. · 找不到對應的 Asso 會員資料。',
-      !adminPreview && !currentMember
-    );
+    if (adminNotice) adminNotice.style.display = currentProfileSource === 'admin' ? 'block' : 'none';
+    const completenessHelp = byId('member-profile-completeness-help');
+    if (completenessHelp) {
+      completenessHelp.textContent = currentProfileSource === 'admin'
+        ? "Ce profil d'équipe est séparé des adhésions officielles. · 此管理團隊資料與正式會員資格分開計算。"
+        : "Complétez tous les champs pour exercer votre droit de vote à l'AG. · 完成所有會員資料後，方可行使年度大會投票權。";
+    }
+    setStatus('', false);
 
     returnFocusTo = document.activeElement;
     byId('member-profile-modal')?.classList.remove('hidden');
@@ -201,10 +242,6 @@
 
   async function saveProfile(event) {
     event.preventDefault();
-    if (isAdminAccount()) {
-      setStatus('Mode administrateur : enregistrement désactivé. · 管理員預覽模式無法儲存。', true);
-      return;
-    }
     const form = byId('member-profile-form');
     if (!form || !form.checkValidity()) {
       form?.reportValidity();
@@ -225,37 +262,87 @@
 
     try {
       const email = norm(user.email);
+      const isAdmin = isAdminAccount();
       const fieldsToSave = editableFields(currentMember);
-      const ref = firebase.database().ref('grp_hub_v2');
-      const result = await ref.transaction(current => {
-        if (!current || typeof current.data !== 'string') return;
+      const now = new Date().toISOString();
 
-        let dynamicData;
-        try { dynamicData = JSON.parse(current.data); } catch (_) { return; }
-        if (!Array.isArray(dynamicData.assoMembers)) return;
+      if (currentProfileSource === 'admin') {
+        if (!isAdmin || !user.uid) throw new Error('admin_profile_forbidden');
+        const profileRef = firebase.database().ref(`adminProfiles/${user.uid}`);
+        const result = await profileRef.transaction(existing => ({
+          ...(existing || {}),
+          id: user.uid,
+          uid: user.uid,
+          email: user.email,
+          name: existing?.name || currentMember.name || user.displayName || email.split('@')[0],
+          source: 'admin',
+          createdAt: existing?.createdAt || now,
+          ...fieldsToSave,
+          profileUpdatedAt: now
+        }));
+        if (!result.committed) throw new Error('admin_profile_write_aborted');
+        currentMember = { ...result.snapshot.val(), id: user.uid, uid: user.uid };
+      } else {
+        const ref = firebase.database().ref('grp_hub_v2');
+        const result = await ref.transaction(current => {
+          if (!current || typeof current.data !== 'string') return;
 
-        const index = dynamicData.assoMembers.findIndex(member => norm(member.email) === email);
-        if (index < 0 || !isActiveMember(dynamicData.assoMembers[index])) return;
+          let dynamicData;
+          try { dynamicData = JSON.parse(current.data); } catch (_) { return; }
+          if (!Array.isArray(dynamicData.assoMembers)) return;
 
-        const existing = dynamicData.assoMembers[index];
-        dynamicData.assoMembers[index] = { ...existing, ...fieldsToSave };
-        const ts = Math.max(Date.now(), (current.ts || 0) + 1);
-        return { ...current, ts, data: JSON.stringify(dynamicData) };
-      });
+          const assoIndex = dynamicData.assoMembers.findIndex(member => norm(member.email) === email);
+          if (assoIndex < 0 || (!isAdmin && !isActiveMember(dynamicData.assoMembers[assoIndex]))) return;
 
-      if (!result.committed) throw new Error('profile_write_aborted');
-      currentMember = { ...currentMember, ...fieldsToSave };
+          dynamicData.assoMembers[assoIndex] = {
+            ...dynamicData.assoMembers[assoIndex],
+            ...fieldsToSave,
+            profileUpdatedAt: now
+          };
+          const ts = Math.max(Date.now(), (current.ts || 0) + 1);
+          return { ...current, ts, data: JSON.stringify(dynamicData) };
+        });
+        if (!result.committed) throw new Error('member_profile_write_aborted');
+        currentMember = { ...currentMember, ...fieldsToSave, profileUpdatedAt: now };
+      }
+
       renderModalCompleteness(currentMember);
       setStatus('Profil enregistré avec succès. · 會員資料已成功儲存。', false);
     } catch (error) {
       console.warn('[member-profile] save failed', error);
       setStatus('Impossible d’enregistrer. Réessayez plus tard. · 無法儲存，請稍後再試。', true);
     } finally {
-      saveButton.disabled = isAdminAccount() || !currentMember;
+      saveButton.disabled = !currentMember;
       saveButton.style.opacity = saveButton.disabled ? '0.5' : '1';
       saveButton.style.cursor = saveButton.disabled ? 'not-allowed' : 'pointer';
       saveButton.innerHTML = originalHtml;
     }
+  }
+
+  function watchOwnAdminProfile(user) {
+    if (ownAdminProfileRef && ownAdminProfileHandler) {
+      ownAdminProfileRef.off('value', ownAdminProfileHandler);
+    }
+    ownAdminProfileRef = null;
+    ownAdminProfileHandler = null;
+    adminProfiles = [];
+
+    if (!user || !user.uid || !isAdminAccount()) {
+      refreshCurrentMember();
+      return;
+    }
+
+    ownAdminProfileRef = firebase.database().ref(`adminProfiles/${user.uid}`);
+    ownAdminProfileHandler = snapshot => {
+      const profile = snapshot.val();
+      adminProfiles = profile ? [{ ...profile, id: user.uid, uid: user.uid }] : [];
+      refreshCurrentMember();
+    };
+    ownAdminProfileRef.on('value', ownAdminProfileHandler, error => {
+      console.warn('[member-profile] admin profile read failed', error);
+      adminProfiles = [];
+      refreshCurrentMember();
+    });
   }
 
   function init() {
@@ -275,6 +362,7 @@
 
     firebase.auth().onAuthStateChanged(user => {
       currentUser = user;
+      watchOwnAdminProfile(user);
       refreshCurrentMember();
     });
     if (typeof subscribeFirebaseData === 'function') {

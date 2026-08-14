@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Pulls paid memberships from HelloAsso and writes both:
- *   - /assoMembers/{memberId} + /assoMemberLookup/{sha256(email)} (v2)
- *   - grp_hub_v2.data.assoMembers (temporary migration compatibility)
+ * Pulls paid memberships from HelloAsso and writes normalized member paths:
+ *   - /assoMembers/{memberId}
+ *   - /assoMemberLookup/{sha256(email)}
  *
  * Triggered manually by .github/workflows/sync-helloasso.yml.
  * Required GitHub Actions secrets:
@@ -131,15 +131,11 @@ function objectToMembers(value) {
 
 async function syncToFirebase(helloAssoMembers) {
   const authQuery = `auth=${encodeURIComponent(FIREBASE_DB_SECRET)}`;
-  const legacyUrl = `${FIREBASE_DB_URL}/grp_hub_v2.json?${authQuery}`;
   const v2Url = `${FIREBASE_DB_URL}/assoMembers.json?${authQuery}`;
   const auditUrl = `${FIREBASE_DB_URL}/assoMemberFieldAudit.json?${authQuery}`;
   const rootUrl = `${FIREBASE_DB_URL}/.json?${authQuery}`;
 
-  const [legacyResponse, v2Response, auditResponse] = await Promise.all([fetch(legacyUrl), fetch(v2Url), fetch(auditUrl)]);
-  if (!legacyResponse.ok) {
-    throw new Error(`Firebase legacy read failed: ${legacyResponse.status} ${await legacyResponse.text()}`);
-  }
+  const [v2Response, auditResponse] = await Promise.all([fetch(v2Url), fetch(auditUrl)]);
   if (!v2Response.ok) {
     throw new Error(`Firebase v2 read failed: ${v2Response.status} ${await v2Response.text()}`);
   }
@@ -147,24 +143,9 @@ async function syncToFirebase(helloAssoMembers) {
     throw new Error(`Firebase audit read failed: ${auditResponse.status} ${await auditResponse.text()}`);
   }
 
-  const raw = await legacyResponse.json();
   const existingV2 = objectToMembers(await v2Response.json());
   const fieldAudit = await auditResponse.json() || {};
-  let dynamicData = {
-    addedMembers: [], announcements: [], jobs: [], sharings: [], meetings: [],
-    expenses: [], surveyVotes: {}, userSurveys: [], assoMembers: []
-  };
-  if (raw && typeof raw.data === 'string') {
-    try {
-      dynamicData = { ...dynamicData, ...JSON.parse(raw.data) };
-    } catch (_) {
-      // Keep safe defaults when a legacy payload is malformed.
-    }
-  }
-  if (!Array.isArray(dynamicData.assoMembers)) dynamicData.assoMembers = [];
-
-  // V2 becomes authoritative after the first successful migration.
-  const baseline = existingV2.length > 0 ? existingV2 : dynamicData.assoMembers;
+  const baseline = existingV2;
   const membersById = new Map(baseline.map(member => [member.id, { ...member }]));
   const memberByEmail = new Map(baseline
     .filter(member => normalizeEmail(member.email))

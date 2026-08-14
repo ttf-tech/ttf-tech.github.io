@@ -11,17 +11,20 @@ const _FB_READ_CONFIG = {
   appId:             '1:461066170665:web:1b090d8e383404c4320738'
 };
 
-// Static WhatsApp-imported seed member count (never changes)
-const SEED_MEMBER_COUNT = 68;
-const PUBLIC_CACHE_KEY = 'ttf_public_data_v2';
+const PUBLIC_CACHE_KEY = 'ttf_public_data_v3';
 
 const _firebaseReadSubscribers = new Set();
 let _firebaseReadStarted = false;
 let _firebaseReadLastData = null;
 let _firebaseReadLastSignature = '';
-let _firebaseReadLegacyDyn = null;
-let _firebaseReadSurveysV4 = null;
-let _firebaseReadVotesV4 = null;
+const _firebaseReadLive = {
+  publicStats: null,
+  announcements: null,
+  jobs: null,
+  surveys: null,
+  surveyVotes: null
+};
+const _firebaseReadReadyKeys = new Set();
 
 function escHtmlRead(s) {
   return String(s)
@@ -36,36 +39,44 @@ function fmtDateRead(iso) {
   return d.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function _makeFirebaseReadData(dyn, source) {
-  const added = Array.isArray(dyn?.addedMembers) ? dyn.addedMembers : [];
+function _recordsFromFirebase(raw) {
+  if (!raw) return [];
+  return Array.isArray(raw)
+    ? raw.filter(Boolean)
+    : Object.entries(raw).map(([id, record]) => ({ id, ...(record || {}) }));
+}
+
+function _sortNewestFirst(records, primaryField) {
+  return [...records].sort((a, b) => {
+    const aTime = new Date(a?.[primaryField] || a?.createdAt || 0).getTime() || 0;
+    const bTime = new Date(b?.[primaryField] || b?.createdAt || 0).getTime() || 0;
+    return bTime - aTime;
+  });
+}
+
+function _makeFirebaseReadData(source) {
+  const surveys = _recordsFromFirebase(_firebaseReadLive.surveys);
   return {
-    memberCount:   SEED_MEMBER_COUNT + added.length,
-    announcements: Array.isArray(dyn?.announcements) ? [...dyn.announcements].reverse() : [],
-    jobs:          Array.isArray(dyn?.jobs)           ? [...dyn.jobs].reverse()          : [],
-    surveyVotes:   (dyn?.surveyVotes && typeof dyn.surveyVotes === 'object') ? dyn.surveyVotes : {},
-    userSurveys:   Array.isArray(dyn?.userSurveys) ? dyn.userSurveys : [],
-    assoMembers:   Array.isArray(dyn?.assoMembers) ? dyn.assoMembers : [],
+    memberCount: Number(_firebaseReadLive.publicStats?.communityMemberCount) || 68,
+    announcements: _sortNewestFirst(_recordsFromFirebase(_firebaseReadLive.announcements), 'date'),
+    jobs: _sortNewestFirst(_recordsFromFirebase(_firebaseReadLive.jobs), 'createdAt'),
+    surveyVotes: (_firebaseReadLive.surveyVotes && typeof _firebaseReadLive.surveyVotes === 'object')
+      ? _firebaseReadLive.surveyVotes
+      : {},
+    userSurveys: surveys.filter(survey => !String(survey.id || '').startsWith('seed_')),
+    // Membership is resolved through the authenticated lookup in admin-config.js.
+    // The public shared reader deliberately never exposes the full member table.
+    assoMembers: [],
     source
   };
 }
 
 function _loadPublicCache() {
   try {
-    let cached = JSON.parse(localStorage.getItem(PUBLIC_CACHE_KEY) || 'null');
-    if (!cached) {
-      const adminCache = JSON.parse(localStorage.getItem('grp_hub_v2_dyn') || 'null');
-      if (adminCache) {
-        const projected = _makeFirebaseReadData(adminCache, 'cache');
-        cached = {
-          memberCount: projected.memberCount,
-          announcements: projected.announcements,
-          jobs: projected.jobs
-        };
-      }
-    }
+    const cached = JSON.parse(localStorage.getItem(PUBLIC_CACHE_KEY) || 'null');
     if (!cached || !Array.isArray(cached.announcements) || !Array.isArray(cached.jobs)) return null;
     return {
-      memberCount: Number.isFinite(cached.memberCount) ? cached.memberCount : SEED_MEMBER_COUNT,
+      memberCount: Number.isFinite(cached.memberCount) ? cached.memberCount : 68,
       announcements: cached.announcements,
       jobs: cached.jobs,
       surveyVotes: (cached.surveyVotes && typeof cached.surveyVotes === 'object') ? cached.surveyVotes : {},
@@ -102,11 +113,7 @@ function _savePublicCache(data) {
 }
 
 function _publishCombinedFirebaseReadData(source) {
-  const data = _makeFirebaseReadData(_firebaseReadLegacyDyn, source);
-  if (_firebaseReadSurveysV4) {
-    data.userSurveys = _firebaseReadSurveysV4.filter(survey => !String(survey.id || '').startsWith('seed_'));
-    data.surveyVotes = _firebaseReadVotesV4 || {};
-  }
+  const data = _makeFirebaseReadData(source);
   _savePublicCache(data);
   _publishFirebaseReadData(data);
 }
@@ -128,20 +135,6 @@ function _publishFirebaseReadData(data) {
   });
 }
 
-async function _refreshFirebaseDataOnce() {
-  if (typeof fetch !== 'function') return;
-  try {
-    const response = await fetch(`${_FB_READ_CONFIG.databaseURL}/grp_hub_v2.json`, { cache: 'no-store' });
-    if (!response.ok) return;
-    const raw = await response.json();
-    if (!raw || typeof raw.data !== 'string') return;
-    const dyn = JSON.parse(raw.data);
-    const freshData = _makeFirebaseReadData(dyn, 'firebase-rest');
-    _savePublicCache(freshData);
-    _publishFirebaseReadData(freshData);
-  } catch (_) {}
-}
-
 // Cache-first shared subscription. Every subscriber on the current page shares
 // one Firebase listener; cached public data renders before the live reply.
 function subscribeFirebaseData(onData) {
@@ -157,7 +150,6 @@ function subscribeFirebaseData(onData) {
 
   if (!_firebaseReadStarted) {
     _firebaseReadStarted = true;
-    _refreshFirebaseDataOnce();
     if (typeof firebase === 'undefined') {
       return function unsubscribeFirebaseData() {
         _firebaseReadSubscribers.delete(onData);
@@ -165,35 +157,28 @@ function subscribeFirebaseData(onData) {
     } else {
       try {
         if (!firebase.apps.length) firebase.initializeApp(_FB_READ_CONFIG);
-        firebase.database().ref('grp_hub_v2').on('value', snap => {
-          const raw = snap.val();
-          if (!raw || typeof raw.data !== 'string') {
-            if (!_firebaseReadLastData) _publishFirebaseReadData(_makeFirebaseReadData(null, 'fallback'));
-            return;
-          }
-          let dyn;
-          try { dyn = JSON.parse(raw.data); } catch (_) { return; }
-          _firebaseReadLegacyDyn = dyn;
-          _publishCombinedFirebaseReadData('firebase');
-        }, error => {
-          console.warn('[firebase-read] sync error', error);
-          if (!_firebaseReadLastData) _publishFirebaseReadData(_makeFirebaseReadData(null, 'fallback'));
+        const refs = {
+          publicStats: firebase.database().ref('publicStats'),
+          announcements: firebase.database().ref('announcements'),
+          jobs: firebase.database().ref('jobs'),
+          surveys: firebase.database().ref('surveys'),
+          surveyVotes: firebase.database().ref('surveyVotes')
+        };
+        Object.entries(refs).forEach(([key, ref]) => {
+          ref.on('value', snap => {
+            _firebaseReadLive[key] = snap.val() || (key === 'publicStats' ? {} : null);
+            _firebaseReadReadyKeys.add(key);
+            if (_firebaseReadReadyKeys.size === Object.keys(refs).length) {
+              _publishCombinedFirebaseReadData('firebase-normalized');
+            }
+          }, error => {
+            console.warn(`[firebase-read] ${key} sync error`, error);
+            if (!_firebaseReadLastData) _publishFirebaseReadData(_makeFirebaseReadData('fallback'));
+          });
         });
-        firebase.database().ref('surveys').on('value', snap => {
-          const raw = snap.val();
-          if (!raw) return;
-          _firebaseReadSurveysV4 = Array.isArray(raw)
-            ? raw.filter(Boolean)
-            : Object.entries(raw).map(([id, survey]) => ({ id, ...(survey || {}) }));
-          _publishCombinedFirebaseReadData('firebase-v4');
-        }, error => console.warn('[firebase-read] surveys sync error', error));
-        firebase.database().ref('surveyVotes').on('value', snap => {
-          _firebaseReadVotesV4 = snap.val() || {};
-          if (_firebaseReadSurveysV4) _publishCombinedFirebaseReadData('firebase-v4');
-        }, error => console.warn('[firebase-read] survey votes sync error', error));
       } catch (e) {
         console.warn('[firebase-read] init error', e);
-        if (!_firebaseReadLastData) _publishFirebaseReadData(_makeFirebaseReadData(null, 'fallback'));
+        if (!_firebaseReadLastData) _publishFirebaseReadData(_makeFirebaseReadData('fallback'));
       }
     }
   }

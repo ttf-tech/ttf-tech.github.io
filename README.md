@@ -40,18 +40,20 @@ ttf-tech.github.io/
 - [Firebase Realtime Database](https://firebase.google.com/products/realtime-database) for live data (members, jobs, events, votes)
 - [Font Awesome](https://fontawesome.com) for icons
 
-## Data model (Firebase `grp_hub_v2`)
+## Firebase data model
 
-All data lives in a single JSON blob under the key `data`:
+Realtime Database uses separate, rule-scoped paths instead of one JSON blob:
 
-| Field           | Description                              |
-|----------------|------------------------------------------|
-| `addedMembers`  | Admin-validated member list              |
-| `announcements` | Events / meetups                         |
-| `jobs`          | Job offers shared by the community       |
-| `surveyVotes`   | Votes per survey per member              |
-| `userSurveys`   | Admin-created surveys (shown on vote page and index once ≥10 votes) |
-| `sharings`      | Resource links                           |
+| Path | Description |
+|---|---|
+| `communityMembers` | Admin-managed community member records |
+| `assoMembers`, `memberProfiles` | Official HelloAsso data and member-editable profiles |
+| `announcements`, `jobs`, `sharings` | Public content managed by admins |
+| `surveys`, `surveyVotes` | Public surveys and authenticated votes |
+| `meetings`, `expenses` | Admin-only internal and accounting data |
+| `publicStats` | Public aggregate counters only |
+
+`grp_hub_v2` is retained only as a locked migration archive.
 
 ## Local development
 

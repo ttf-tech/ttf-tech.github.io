@@ -341,14 +341,12 @@
     messagingSenderId: '461066170665',
     appId:             '1:461066170665:web:1b090d8e383404c4320738'
   };
-  let _legacyFbRef = null;
   let _surveysRef = null;
   let _surveyVotesRef = null;
   let _voteUser = null;
   if (typeof firebase !== 'undefined') {
     try {
       if (!firebase.apps.length) firebase.initializeApp(_FB_CONFIG);
-      _legacyFbRef = firebase.database().ref('grp_hub_v2');
       _surveysRef = firebase.database().ref('surveys');
       _surveyVotesRef = firebase.database().ref('surveyVotes');
     } catch(e) { console.warn('Firebase init error', e); }
@@ -465,7 +463,6 @@
   let _surveyVotes = {};       // { surveyId: { memberName: [optionIds] } }
   let _surveysV4 = [];
   let _surveyV4Ready = false;
-  let _addedMembers = [];      // from Firebase
   let _userSurveys  = [];      // user-created surveys from Firebase (admin → Sondages)
   let _allMembers = [...SEED_MEMBER_NAMES];
   // localStorage = persists across browser sessions (name remembered forever)
@@ -847,22 +844,7 @@
 
   /* ── Firebase listener ─────────────────────────────────────── */
   function initFirebase() {
-    if (!_legacyFbRef || !_surveysRef || !_surveyVotesRef || typeof firebase.auth !== 'function') { renderSurveys(); return; }
-    _legacyFbRef.on('value', snap => {
-      const raw = snap.val();
-      if (raw && typeof raw.data === 'string') {
-        try {
-          const dyn = JSON.parse(raw.data);
-          if (!_surveyV4Ready) _surveyVotes = dyn.surveyVotes || {};
-          _addedMembers = Array.isArray(dyn.addedMembers) ? dyn.addedMembers : [];
-          if (!_surveyV4Ready) _userSurveys = Array.isArray(dyn.userSurveys) ? dyn.userSurveys : [];
-          _allMembers   = [...SEED_MEMBER_NAMES, ..._addedMembers.map(m => m.name).filter(Boolean)];
-        } catch(_) {}
-      }
-      // Always re-derive voted state from Firebase (not sessionStorage)
-      _deriveMyVotesFromFirebase();
-      renderSurveys();
-    });
+    if (!_surveysRef || !_surveyVotesRef || typeof firebase.auth !== 'function') { renderSurveys(); return; }
     _surveysRef.on('value', snap => {
       const raw = snap.val();
       if (!raw) return;

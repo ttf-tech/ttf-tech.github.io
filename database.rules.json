@@ -3,8 +3,59 @@
     ".read": false,
     ".write": false,
     "grp_hub_v2": {
+      ".read": false,
+      ".write": false
+    },
+    "communityMembers": {
+      ".read": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')",
+      ".write": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')",
+      "$memberId": {
+        ".validate": "newData.hasChildren(['id', 'name']) && newData.child('id').val() == $memberId && newData.child('name').isString()"
+      }
+    },
+    "announcements": {
       ".read": true,
-      ".write": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')"
+      ".write": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')",
+      "$announcementId": {
+        ".validate": "newData.hasChildren(['id', 'title', 'date']) && newData.child('id').val() == $announcementId && newData.child('title').isString() && newData.child('date').isString()"
+      }
+    },
+    "jobs": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')",
+      "$jobId": {
+        ".validate": "newData.hasChildren(['id', 'title']) && newData.child('id').val() == $jobId && newData.child('title').isString()"
+      }
+    },
+    "sharings": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')",
+      "$sharingId": {
+        ".validate": "newData.hasChildren(['id', 'title']) && newData.child('id').val() == $sharingId && newData.child('title').isString()"
+      }
+    },
+    "meetings": {
+      ".read": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')",
+      ".write": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')",
+      "$meetingId": {
+        ".validate": "newData.hasChildren(['id', 'title']) && newData.child('id').val() == $meetingId && newData.child('title').isString()"
+      }
+    },
+    "expenses": {
+      ".read": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')",
+      ".write": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')",
+      "$expenseId": {
+        ".validate": "newData.hasChildren(['id', 'type', 'amount']) && newData.child('id').val() == $expenseId && (newData.child('type').val() == 'recette' || newData.child('type').val() == 'depense') && newData.child('amount').isNumber()"
+      }
+    },
+    "publicStats": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')",
+      "communityMemberCount": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+      "announcementCount": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+      "jobCount": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+      "updatedAt": { ".validate": "newData.isString()" },
+      "$other": { ".validate": false }
     },
     "access": {
       "admins": {
@@ -129,6 +180,10 @@
         ".write": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')"
       },
       "phase34Migration": {
+        ".read": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')",
+        ".write": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')"
+      },
+      "phase56Migration": {
         ".read": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')",
         ".write": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')"
       }

@@ -22,11 +22,9 @@
  *     <div class="upgrade-to-asso-banner">…sign-in / adhésion prompt…</div>
  *   Call ttfMemberSignIn() / ttfMemberSignOut() from buttons inside the banner.
  *
- * NOTE — this is UX gating, not a security boundary: the Firebase RTDB data
- * behind subscribeFirebaseData() is currently world-readable, so anything
- * genuinely sensitive (private contact info, paywalled replay links) must be
- * protected by Firebase Realtime Database security rules (require
- * `auth != null`, or a members-only path), not by hiding it with CSS.
+ * NOTE — the UI gate is not itself a security boundary. Sensitive tables are
+ * protected by Firebase Rules; the shared public reader exposes only public
+ * announcements, jobs, survey data and aggregate statistics.
  */
 'use strict';
 

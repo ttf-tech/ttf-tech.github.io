@@ -1,8 +1,6 @@
 /* ── stastic_member.js ───────────────────────────────────────── */
 'use strict';
 
-const STORE_KEY = 'grp_hub_v2';
-
 // ── Firebase shared persistence ────────────────────────────────
 // SETUP (one-time, 5 min):
 //   1. Go to https://console.firebase.google.com → Add project
@@ -23,7 +21,6 @@ const _FB_CONFIG = {
 // Auto-detects whether config has been filled in
 const _FB_READY = typeof firebase !== 'undefined' &&
                   !_FB_CONFIG.apiKey.startsWith('YOUR_');
-let _fbRef = null;
 let _adminProfilesRef = null;
 let _adminProfilesHandler = null;
 let _adminAccessRef = null;
@@ -41,19 +38,19 @@ let _surveysRef = null;
 let _surveysHandler = null;
 let _surveyVotesRef = null;
 let _surveyVotesHandler = null;
-let _surveyV4Ready = false;
+let _surveyV4Ready = true;
 let _surveysV4 = [];
 let _surveyVotesV4 = {};
-let _assoV2Ready = false;
+let _assoV2Ready = true;
 let _assoMembersV2 = [];
 let _assoMembersV2Loaded = false;
 let _assoV2Hydrated = false;
 let _helloAssoSyncSummary = null;
-let _fbSyncDone = false; // true after first Firebase on('value') fires
+const _adminCollectionRefs = {};
+const _adminCollectionHandlers = {};
 if (_FB_READY) {
   try {
     if (!firebase.apps.length) firebase.initializeApp(_FB_CONFIG);
-    _fbRef = firebase.database().ref(STORE_KEY);
     _adminProfilesRef = firebase.database().ref('adminProfiles');
     _adminAccessRef = firebase.database().ref('access/admins');
     _assoMembersV2Ref = firebase.database().ref('assoMembers');
@@ -62,6 +59,9 @@ if (_FB_READY) {
     _helloAssoSyncRef = firebase.database().ref('system/helloAssoSync');
     _surveysRef = firebase.database().ref('surveys');
     _surveyVotesRef = firebase.database().ref('surveyVotes');
+    ['communityMembers', 'announcements', 'jobs', 'sharings', 'meetings', 'expenses'].forEach(path => {
+      _adminCollectionRefs[path] = firebase.database().ref(path);
+    });
   } catch (e) {
     console.warn('[Firebase] init failed, falling back to localStorage', e);
   }
@@ -308,59 +308,19 @@ function inferGoalsFromMotivation(text) {
 // DYNAMIC STATE — only user-created content (Firebase + cache)
 // ══════════════════════════════════════════════════════════════
 
-const _DYN_KEY = STORE_KEY + '_dyn';
-
 function _emptyDynamic() {
   return { addedMembers: [], announcements: [], jobs: [], sharings: [], meetings: [], expenses: [], surveyVotes: {}, userSurveys: [], assoMembers: [] };
 }
 
-// Load dynamic data from localStorage cache (fast, instant)
-// Returns { dyn, savedAt } where savedAt is the timestamp of the last local save
-function loadDynamic() {
-  try {
-    const raw = localStorage.getItem(_DYN_KEY);
-    if (!raw) return { dyn: _emptyDynamic(), savedAt: 0 };
-    const p = JSON.parse(raw);
-    return {
-      savedAt: p.savedAt || 0,
-      dyn: {
-        addedMembers:  Array.isArray(p.addedMembers)  ? p.addedMembers  : [],
-        announcements: Array.isArray(p.announcements) ? p.announcements : [],
-        jobs:          Array.isArray(p.jobs)           ? p.jobs          : [],
-        sharings:      Array.isArray(p.sharings)       ? p.sharings      : [],
-        meetings:      Array.isArray(p.meetings)       ? p.meetings      : [],
-        expenses:      Array.isArray(p.expenses)       ? p.expenses      : [],
-        surveyVotes:   (p.surveyVotes && typeof p.surveyVotes === 'object') ? p.surveyVotes : {},
-        userSurveys:   Array.isArray(p.userSurveys)   ? p.userSurveys   : [],
-        assoMembers:   Array.isArray(p.assoMembers)    ? p.assoMembers   : []
-      }
-    };
-  } catch (_) { return { dyn: _emptyDynamic(), savedAt: 0 }; }
-}
-
-function _saveDynLocal(dyn) {
-  const savedAt = Date.now();
-  localStorage.setItem(_DYN_KEY, JSON.stringify({ ...dyn, savedAt }));
-  return savedAt;
-}
-
 // Merge static seeds + dynamic user data into the shared `state` object
 function rebuildState(dyn) {
-  const votes = dyn.surveyVotes || {};
-  if (!_surveyV4Ready) {
-    state.surveys = SEED_SURVEYS.map(s => ({ ...s, votesByMember: votes[s.id] || {} }))
-      .concat((dyn.userSurveys || []).map(s => ({
-        ...s,
-        votesByMember: votes[s.id] || s.votesByMember || {}
-      })));
-  }
   state.members      = [...SEED_MEMBERS, ...(dyn.addedMembers || [])];
   state.announcements = dyn.announcements || [];
   state.jobs          = dyn.jobs          || [];
   state.sharings      = dyn.sharings      || [];
   state.meetings      = dyn.meetings      || [];
   state.expenses      = dyn.expenses      || [];
-  state.assoMembers   = _assoV2Ready ? _assoMembersV2 : (dyn.assoMembers || []);
+  state.assoMembers   = _assoMembersV2;
 }
 
 // Extract only dynamic user data from state (what gets saved to Firebase)
@@ -380,16 +340,59 @@ function extractDynamic() {
   };
 }
 
-// Save dynamic data to localStorage + Firebase
-function saveState() {
-  const dyn = extractDynamic();
-  _saveDynLocal(dyn);
-  _fbWrite(dyn);
+function _recordsToMap(records) {
+  return Object.fromEntries((records || []).filter(record => record?.id).map(record => [record.id, record]));
+}
+
+function _recordsFromSnapshot(snapshot) {
+  const raw = snapshot.val();
+  if (!raw) return [];
+  return Array.isArray(raw)
+    ? raw.filter(Boolean)
+    : Object.entries(raw).map(([id, record]) => ({ id, ...(record || {}) }));
+}
+
+function applyNormalizedAdminCollection(path, records) {
+  if (path === 'communityMembers') state.members = [...SEED_MEMBERS, ...records];
+  else state[path] = records;
+  renderKPIs();
+  const activePane = document.querySelector('.tab-pane.active')?.dataset?.tab;
+  if (path === 'communityMembers' && activePane === 'members') renderMembers();
+  if (path === 'announcements') renderAnnouncements();
+  if (path === 'jobs') renderJobs();
+  if (path === 'sharings' && activePane === 'sharing') renderSharings();
+  if (path === 'meetings' && activePane === 'meetings') renderMeetings();
+  if (path === 'expenses' && activePane === 'comptable') renderComptable();
+}
+
+async function persistNormalizedCollection(path, records) {
+  const ref = _adminCollectionRefs[path];
+  if (!ref) throw new Error(`Firebase collection unavailable: ${path}`);
+  await ref.set(_recordsToMap(records));
+}
+
+async function persistPublicStats() {
+  const addedCount = state.members.filter(member => !String(member.id || '').startsWith('seed_m_')).length;
+  await firebase.database().ref('publicStats').update({
+    communityMemberCount: SEED_MEMBERS.length + addedCount,
+    announcementCount: state.announcements.length,
+    jobCount: state.jobs.length,
+    updatedAt: new Date().toISOString()
+  });
+}
+
+function persistCollectionWithFeedback(path, records, updateStats = false) {
+  const work = persistNormalizedCollection(path, records);
+  return (updateStats ? work.then(() => persistPublicStats()) : work).catch(error => {
+    console.warn(`[Firebase] ${path} save failed`, error);
+    showToast('Enregistrement Firebase impossible.', 5000);
+    return null;
+  });
 }
 
 // ── Shared state object (always has seeds, dynamic parts filled immediately from cache)
 const state = { members: [], surveys: [], sharings: [], meetings: [], expenses: [], announcements: [], jobs: [], assoMembers: [], adminProfiles: [], memberProfiles: [], assoFieldAudit: {}, adminAccess: [] };
-rebuildState(loadDynamic().dyn); // instant render from localStorage cache
+rebuildState(_emptyDynamic());
 
 // ensureSeed is now a no-op — seeds are always applied via rebuildState()
 function ensureSeed() {}
@@ -1136,29 +1139,19 @@ async function saveAssoMember() {
   };
 
   const savedMember = { ...(existing || {}), id: _assoModalId || uid(), ...member };
-  if (_assoV2Ready) {
-    try {
-      const saved = await _writeAssoMemberV2(savedMember, existing?.email, existing);
-      const officialIndex = _assoMembersV2.findIndex(item => item.id === savedMember.id);
-      if (officialIndex >= 0) _assoMembersV2[officialIndex] = saved.official;
-      else _assoMembersV2.push(saved.official);
-      const profileIndex = state.memberProfiles.findIndex(item => item.memberId === savedMember.id);
-      if (profileIndex >= 0) state.memberProfiles[profileIndex] = saved.profile;
-      else state.memberProfiles.push(saved.profile);
-      state.assoMembers = _assoMembersV2;
-    } catch (error) {
-      console.warn('[Firebase] Asso member save failed', error);
-      showToast('Enregistrement Firebase impossible · Firebase 儲存失敗', 5000);
-      return;
-    }
-  } else {
-    const dyn = extractDynamic();
-    const idx = dyn.assoMembers.findIndex(x => x.id === savedMember.id);
-    if (idx >= 0) dyn.assoMembers[idx] = savedMember;
-    else dyn.assoMembers.push(savedMember);
-    rebuildState(dyn);
-    _saveDynLocal(dyn);
-    _fbWrite(dyn);
+  try {
+    const saved = await _writeAssoMemberV2(savedMember, existing?.email, existing);
+    const officialIndex = _assoMembersV2.findIndex(item => item.id === savedMember.id);
+    if (officialIndex >= 0) _assoMembersV2[officialIndex] = saved.official;
+    else _assoMembersV2.push(saved.official);
+    const profileIndex = state.memberProfiles.findIndex(item => item.memberId === savedMember.id);
+    if (profileIndex >= 0) state.memberProfiles[profileIndex] = saved.profile;
+    else state.memberProfiles.push(saved.profile);
+    state.assoMembers = _assoMembersV2;
+  } catch (error) {
+    console.warn('[Firebase] Asso member save failed', error);
+    showToast('Enregistrement Firebase impossible · Firebase 儲存失敗', 5000);
+    return;
   }
   showToast(_assoModalId ? 'Membre Asso mis à jour · 協會成員已更新' : 'Membre Asso ajouté · 協會成員已新增');
   closeAssoMemberModal();
@@ -1175,21 +1168,15 @@ async function deleteAssoMember() {
   const removedMember = dyn.assoMembers[idx];
   dyn.assoMembers.splice(idx, 1);
 
-  if (_assoV2Ready) {
-    try {
-      await _deleteAssoMemberV2(removedMember);
-      _assoMembersV2 = _assoMembersV2.filter(item => item.id !== removedMember.id);
-      state.memberProfiles = state.memberProfiles.filter(item => item.memberId !== removedMember.id);
-      state.assoMembers = _assoMembersV2;
-    } catch (error) {
-      console.warn('[Firebase] Asso member delete failed', error);
-      showToast('Suppression Firebase impossible · Firebase 刪除失敗', 5000);
-      return;
-    }
-  } else {
-    rebuildState(dyn);
-    _saveDynLocal(dyn);
-    _fbWrite(dyn);
+  try {
+    await _deleteAssoMemberV2(removedMember);
+    _assoMembersV2 = _assoMembersV2.filter(item => item.id !== removedMember.id);
+    state.memberProfiles = state.memberProfiles.filter(item => item.memberId !== removedMember.id);
+    state.assoMembers = _assoMembersV2;
+  } catch (error) {
+    console.warn('[Firebase] Asso member delete failed', error);
+    showToast('Suppression Firebase impossible · Firebase 刪除失敗', 5000);
+    return;
   }
   closeAssoMemberModal();
   renderAssoMembers();
@@ -1422,7 +1409,10 @@ async function toggleSurveyStatus(sid) {
       showToast('Mise à jour impossible · 更新失敗');
       return;
     }
-  } else saveState();
+  } else {
+    showToast('Firebase indisponible.');
+    return;
+  }
   renderSurveys();
   renderKPIs();
   showToast(survey.status === 'open' ? 'Sondage ré-ouvert.' : 'Sondage clôturé.');
@@ -1441,8 +1431,8 @@ async function deleteSurvey(sid) {
       return;
     }
   } else {
-    state.surveys.splice(idx, 1);
-    saveState();
+    showToast('Firebase indisponible.');
+    return;
   }
   renderSurveys();
   renderKPIs();
@@ -1514,8 +1504,8 @@ async function handleCreateSurvey() {
       return;
     }
   } else {
-    state.surveys.unshift({ ...survey, votesByMember: {} });
-    saveState();
+    showToast('Firebase indisponible.');
+    return;
   }
 
   // Reset form
@@ -1639,8 +1629,8 @@ async function submitVote() {
       return;
     }
   } else {
-    survey.votesByMember[name] = checked;
-    saveState();
+    showToast('Firebase indisponible.');
+    return;
   }
   closeVoteModal();
   renderSurveys();
@@ -1743,8 +1733,7 @@ function saveMember() {
   }
 
   rebuildState(dyn);
-  _saveDynLocal(dyn);
-  _fbWrite(dyn);
+  persistCollectionWithFeedback('communityMembers', dyn.addedMembers, true);
   closeMemberModal();
   renderMembers();
   renderKPIs();
@@ -1760,8 +1749,7 @@ function deleteMember() {
   dyn.addedMembers.splice(idx, 1);
 
   rebuildState(dyn);
-  _saveDynLocal(dyn);
-  _fbWrite(dyn);
+  persistCollectionWithFeedback('communityMembers', dyn.addedMembers, true);
   closeMemberModal();
   renderMembers();
   renderKPIs();
@@ -1983,7 +1971,7 @@ function saveAnnc() {
     showToast('Annonce ajoutée ! · 公告已新增！');
   }
 
-  saveState();
+  persistCollectionWithFeedback('announcements', state.announcements, true);
   closeAnncModal();
   renderAnnouncements();
 }
@@ -1993,7 +1981,7 @@ function deleteAnnc() {
   if (!confirm('Supprimer cette annonce ? · 確定刪除此公告？')) return;
   const idx = state.announcements.findIndex(x => x.id === _anncModalId);
   if (idx >= 0) state.announcements.splice(idx, 1);
-  saveState();
+  persistCollectionWithFeedback('announcements', state.announcements, true);
   closeAnncModal();
   renderAnnouncements();
   showToast('Annonce supprimée · 公告已刪除');
@@ -2228,7 +2216,7 @@ function saveJob() {
     showToast('Offre ajoutée · 職缺已新增');
   }
 
-  saveState();
+  persistCollectionWithFeedback('jobs', state.jobs, true);
   closeJobModal();
   renderJobs();
 }
@@ -2238,7 +2226,7 @@ function deleteJob() {
   if (!confirm('Supprimer cette offre ? · 確定刪除此職缺？')) return;
   const idx = (state.jobs || []).findIndex(x => x.id === _jobModalId);
   if (idx >= 0) state.jobs.splice(idx, 1);
-  saveState();
+  persistCollectionWithFeedback('jobs', state.jobs, true);
   closeJobModal();
   renderJobs();
   showToast('Offre supprimée · 職缺已刪除');
@@ -2312,7 +2300,7 @@ function renderSharings() {
       const sh = state.sharings.find(s => s.id === ta.dataset.sid);
       if (sh && sh.notes !== ta.value) {
         sh.notes = ta.value;
-        saveState();
+        persistCollectionWithFeedback('sharings', state.sharings);
         showToast('Notes sauvegardées.', 1500);
       }
     });
@@ -2509,7 +2497,7 @@ function saveSharing() {
     showToast('Partage ajouté !');
   }
 
-  saveState();
+  persistCollectionWithFeedback('sharings', state.sharings);
   closeSharingModal();
   renderSharings();
 }
@@ -2519,7 +2507,7 @@ function deleteSharing() {
   if (!confirm('Supprimer ce partage ?')) return;
   const idx = state.sharings.findIndex(s => s.id === _sharingModalId);
   if (idx >= 0) state.sharings.splice(idx, 1);
-  saveState();
+  persistCollectionWithFeedback('sharings', state.sharings);
   closeSharingModal();
   renderSharings();
   showToast('Partage supprimé.');
@@ -2635,7 +2623,7 @@ function saveMeeting() {
     state.meetings.unshift({ id: uid(), title, date: new Date(date).toISOString(), secretary, attendees, points, docUrl, createdAt: new Date().toISOString() });
     showToast('Réunion ajoutée !');
   }
-  saveState();
+  persistCollectionWithFeedback('meetings', state.meetings);
   closeMeetingModal();
   renderMeetings();
 }
@@ -2644,7 +2632,7 @@ function deleteMeeting() {
   if (!confirm('Supprimer cette réunion ?')) return;
   const idx = state.meetings.findIndex(m => m.id === _meetingModalId);
   if (idx >= 0) state.meetings.splice(idx, 1);
-  saveState();
+  persistCollectionWithFeedback('meetings', state.meetings);
   closeMeetingModal();
   renderMeetings();
   showToast('Réunion supprimée.');
@@ -2834,7 +2822,7 @@ function saveExpense() {
     state.expenses.unshift({ id:uid(), type, date:new Date(date).toISOString(), amount:parseFloat(amount), category, description, fileUrl, fileName, createdAt:new Date().toISOString() });
     showToast('Transaction ajoutée !');
   }
-  saveState();
+  persistCollectionWithFeedback('expenses', state.expenses);
   closeExpenseModal();
   renderComptable();
 }
@@ -2905,7 +2893,7 @@ function deleteExpense() {
   if (!confirm('Supprimer cette transaction ?')) return;
   const idx = state.expenses.findIndex(x => x.id === _expenseModalId);
   if (idx >= 0) state.expenses.splice(idx, 1);
-  saveState();
+  persistCollectionWithFeedback('expenses', state.expenses);
   closeExpenseModal();
   renderComptable();
   showToast('Transaction supprimée.');
@@ -2917,7 +2905,7 @@ function exportJSON() {
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = `grp-hub-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `ttf-firebase-backup-${new Date().toISOString().slice(0, 10)}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -2933,7 +2921,7 @@ function handleImport(evt) {
   const file = evt.target.files?.[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const data = JSON.parse(reader.result);
       if (!data || typeof data !== 'object') throw new Error('Format invalide');
@@ -2944,10 +2932,20 @@ function handleImport(evt) {
       if (Array.isArray(data.announcements)) dyn.announcements = data.announcements;
       if (Array.isArray(data.jobs))          dyn.jobs          = data.jobs;
       if (Array.isArray(data.sharings))      dyn.sharings      = data.sharings;
+      if (Array.isArray(data.meetings))      dyn.meetings      = data.meetings;
+      if (Array.isArray(data.expenses))      dyn.expenses      = data.expenses;
       if (data.surveyVotes)                  dyn.surveyVotes   = data.surveyVotes;
       if (Array.isArray(data.userSurveys))   dyn.userSurveys   = data.userSurveys;
       rebuildState(dyn);
-      saveState();
+      await Promise.all([
+        persistNormalizedCollection('communityMembers', dyn.addedMembers),
+        persistNormalizedCollection('announcements', dyn.announcements),
+        persistNormalizedCollection('jobs', dyn.jobs),
+        persistNormalizedCollection('sharings', dyn.sharings),
+        persistNormalizedCollection('meetings', dyn.meetings),
+        persistNormalizedCollection('expenses', dyn.expenses)
+      ]);
+      await persistPublicStats();
       setTab('dashboard');
       renderKPIs();
       showToast('Import réussi !');
@@ -2958,117 +2956,6 @@ function handleImport(evt) {
     }
   };
   reader.readAsText(file);
-}
-
-// ── Firebase real-time listener ────────────────────────────────
-// Strategy: every local save stamps a `savedAt` ms timestamp into localStorage
-// and into Firebase ({ ts, data }). The listener only applies remote data when
-// Firebase ts > local savedAt — i.e. genuinely newer data from another user.
-// This correctly handles: own-write echoes, stale old data without ts, and
-// real updates from other users.
-
-function _fbWrite(dyn) {
-  if (!_fbRef) return;
-  _fbRef.transaction(current => {
-    const empty = { addedMembers:[], announcements:[], jobs:[], surveyVotes:{}, sharings:[], userSurveys:[], assoMembers:[] };
-    let remoteDyn = empty;
-    if (current && typeof current.data === 'string') {
-      try { remoteDyn = JSON.parse(current.data); } catch(_) {}
-    }
-
-    // ── surveyVotes merge ────────────────────────────────────────
-    // Start from ALL remote votes (covers surveys not yet in local state,
-    // e.g. during cold-start before first Firebase sync).
-    // Then apply local votes on top — admin-submitted vote wins for same key.
-    const mergedVotes = Object.assign({}, remoteDyn.surveyVotes || {});
-    if (!_surveyV4Ready) {
-      for (const [sid, localVotes] of Object.entries(dyn.surveyVotes || {})) {
-        mergedVotes[sid] = Object.assign({}, mergedVotes[sid] || {}, localVotes);
-      }
-    }
-
-    // ── userSurveys merge ────────────────────────────────────────
-    // Once synced, local state is authoritative (honours admin deletions).
-    // During cold-start, also preserve remote surveys admin doesn't know yet.
-    let mergedSurveys;
-    if (_surveyV4Ready) {
-      mergedSurveys = remoteDyn.userSurveys || [];
-    } else if (_fbSyncDone) {
-      mergedSurveys = dyn.userSurveys || [];
-    } else {
-      const localIds = new Set((dyn.userSurveys || []).map(s => s.id));
-      mergedSurveys = [
-        ...(dyn.userSurveys || []),
-        ...(remoteDyn.userSurveys || []).filter(s => !localIds.has(s.id))
-      ];
-    }
-
-    // Keep userSurveys[i].votesByMember in sync with the merged votes
-    const syncedSurveys = mergedSurveys.map(s => ({
-      ...s,
-      votesByMember: mergedVotes[s.id] || s.votesByMember || {}
-    }));
-
-    // Always produce a ts strictly > the current Firebase ts so the stale-write
-    // guard rule (".write": "newData.ts > data.ts") never blocks a legitimate save.
-    const ts = Math.max(Date.now(), ((current && current.ts) || 0) + 1);
-    return { ts, data: JSON.stringify({
-      ...dyn,
-      surveyVotes: mergedVotes,
-      userSurveys: syncedSurveys,
-      assoMembers: _assoV2Ready ? (remoteDyn.assoMembers || []) : (dyn.assoMembers || [])
-    }) };
-                                    }).catch(e => {
-    console.warn('[Firebase] save error', e);
-    showToast('⚠️ Firebase sync failed — data saved locally only. Check database rules.', 5000);
-  });
-}
-
-function initFirebase() {
-  if (!_fbRef) return;
-
-  _fbRef.on('value', snapshot => {
-    _fbSyncDone = true; // first Firebase reply received — local state is now considered synced
-    const raw = snapshot.val();
-    let dyn = null;
-
-    if (raw && typeof raw.data === 'string') {
-      const localSavedAt = loadDynamic().savedAt;
-      const fbTs = raw.ts || 0;
-      if (localSavedAt > 0 && fbTs <= localSavedAt) return; // our local data is same or newer, skip (fresh browsers always apply Firebase data)
-      try { dyn = JSON.parse(raw.data); } catch (_) { console.warn('[Firebase] parse error'); }
-    } else if (raw && typeof raw === 'object' && Array.isArray(raw.members)) {
-      // Old full-state format: migrate once to new dynamic-only format
-      dyn = {
-        addedMembers:  (raw.members  || []).filter(m => !m.id.startsWith('seed_m_')),
-        announcements: raw.announcements || [],
-        jobs:          raw.jobs          || [],
-        sharings:      raw.sharings      || [],
-        surveyVotes:   Object.fromEntries(
-                         (raw.surveys || []).map(s => [s.id, s.votesByMember || {}])
-                       ),
-        userSurveys:   (raw.surveys || []).filter(s => !s.isLegacy)
-      };
-      _saveDynLocal(dyn);
-      _fbWrite(dyn);
-      showToast('Données migrées ✓');
-    }
-
-    if (dyn) {
-      rebuildState(dyn);
-      _saveDynLocal(dyn); // update local cache with the newer remote data
-    }
-
-    renderKPIs();
-    renderAnnouncements();
-    renderJobs();
-    const activePane = document.querySelector('.tab-pane.active')?.dataset?.tab;
-    if (activePane === 'members') renderMembers();
-    if (activePane === 'asso')    renderAssoMembers();
-    if (activePane === 'surveys') renderSurveys();
-    if (activePane === 'sharing') renderSharings();
-    if (dyn && dyn.lastAssoSync) handleLastAssoSync(dyn.lastAssoSync);
-  });
 }
 
 function initAdminProfiles() {
@@ -3084,6 +2971,10 @@ function initAdminProfiles() {
     if (_helloAssoSyncHandler) _helloAssoSyncRef.off('value', _helloAssoSyncHandler);
     if (_surveysHandler) _surveysRef.off('value', _surveysHandler);
     if (_surveyVotesHandler) _surveyVotesRef.off('value', _surveyVotesHandler);
+    Object.entries(_adminCollectionHandlers).forEach(([path, handler]) => {
+      if (handler && _adminCollectionRefs[path]) _adminCollectionRefs[path].off('value', handler);
+      delete _adminCollectionHandlers[path];
+    });
     _adminProfilesHandler = null;
     _adminAccessHandler = null;
     _assoMembersV2Handler = null;
@@ -3096,12 +2987,12 @@ function initAdminProfiles() {
     state.adminAccess = [];
     state.memberProfiles = [];
     state.assoFieldAudit = {};
-    _assoV2Ready = false;
+    _assoV2Ready = true;
     _assoMembersV2 = [];
     _assoMembersV2Loaded = false;
     _assoV2Hydrated = false;
     _helloAssoSyncSummary = null;
-    _surveyV4Ready = false;
+    _surveyV4Ready = true;
     _surveysV4 = [];
     _surveyVotesV4 = {};
 
@@ -3113,6 +3004,12 @@ function initAdminProfiles() {
       if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
       return;
     }
+
+    Object.entries(_adminCollectionRefs).forEach(([path, ref]) => {
+      const handler = snapshot => applyNormalizedAdminCollection(path, _recordsFromSnapshot(snapshot));
+      _adminCollectionHandlers[path] = handler;
+      ref.on('value', handler, error => console.warn(`[Firebase] ${path} read failed`, error));
+    });
 
     _adminProfilesHandler = snapshot => {
       const raw = snapshot.val() || {};
@@ -3184,16 +3081,10 @@ function initAdminProfiles() {
       _assoMembersV2 = Array.isArray(raw)
         ? raw.filter(Boolean)
         : Object.entries(raw).map(([id, member]) => ({ id, ...(member || {}) }));
-      const expectedCount = Number(_helloAssoSyncSummary?.totalStored);
-      const migrationComplete = Number.isFinite(expectedCount) && expectedCount === _assoMembersV2.length;
-      if (_assoV2Ready && (_assoV2Hydrated || migrationComplete)) {
-        _assoV2Hydrated = true;
-        state.assoMembers = _assoMembersV2;
-        const dyn = extractDynamic();
-        _saveDynLocal(dyn);
-        if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
-        renderKPIs();
-      }
+      _assoV2Hydrated = true;
+      state.assoMembers = _assoMembersV2;
+      if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
+      renderKPIs();
     };
     _assoMembersV2Ref.on('value', _assoMembersV2Handler, error => {
       console.warn('[Firebase] v2 Asso members read failed', error);
@@ -3202,17 +3093,8 @@ function initAdminProfiles() {
     _helloAssoSyncHandler = snapshot => {
       const summary = snapshot.val();
       _helloAssoSyncSummary = summary || null;
-      _assoV2Ready = !!summary && summary.schemaVersion >= 2;
-      const expectedCount = Number(summary?.totalStored);
-      const migrationComplete = Number.isFinite(expectedCount) && expectedCount === _assoMembersV2.length;
-      if (_assoV2Ready && _assoMembersV2Loaded && (_assoV2Hydrated || migrationComplete)) {
-        _assoV2Hydrated = true;
-        state.assoMembers = _assoMembersV2;
-        const dyn = extractDynamic();
-        _saveDynLocal(dyn);
-        if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
-        renderKPIs();
-      }
+      _assoV2Ready = true;
+      if (summary) handleLastAssoSync(summary);
     };
     _helloAssoSyncRef.on('value', _helloAssoSyncHandler, error => {
       console.warn('[Firebase] HelloAsso v2 marker read failed', error);
@@ -3222,7 +3104,6 @@ function initAdminProfiles() {
 
 // ── Init ───────────────────────────────────────────────────────
 function init() {
-  initFirebase(); // connects Firebase listener if configured; no-op otherwise
   initAdminProfiles();
   renderKPIs();
 

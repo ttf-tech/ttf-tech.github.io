@@ -1217,11 +1217,9 @@
   }
 
   subscribeFirebaseData(function(data) {
-    const now = Date.now();
-    const upcomingCount = data.announcements.filter(a => a.date && new Date(a.date) > now).length;
     setFirebaseText(document.getElementById('kpi-members'), data.memberCount);
     setFirebaseText(document.getElementById('kpi-jobs'), data.jobs.length);
-    setFirebaseText(document.getElementById('kpi-events'), upcomingCount);
+    setFirebaseText(document.getElementById('kpi-events'), data.announcements.length);
     renderEventsPreview(data.announcements);
     renderJobsPreview(data.jobs);
     updateActivityStrip(data);

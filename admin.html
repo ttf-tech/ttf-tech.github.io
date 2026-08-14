@@ -554,7 +554,7 @@
             在法臺灣科技業互助團 🇹🇼🇫🇷 · Sondages communautaires
           </span>
           <span class="sm-survey-banner-badges">
-            <span class="sm-badge sm-badge-anon"><i class="fas fa-eye-slash"></i> Anonyme</span>
+            <span class="sm-badge sm-badge-anonymous"><i class="fas fa-user-shield"></i> Anonyme ou nominatif</span>
             <span class="sm-badge sm-badge-open"><i class="fas fa-lock-open"></i> Ouvert à tous</span>
           </span>
         </div>
@@ -562,8 +562,8 @@
           <div class="sm-survey-rule">
             <i class="fas fa-shield-alt"></i>
             <div>
-              <strong>隱私保護 · Confidentialité</strong>
-              <span>所有問卷均為匿名 · Tous les sondages sont anonymes — vos réponses ne sont jamais associées à votre nom.</span>
+              <strong>回覆顯示方式 · Visibilité des réponses</strong>
+              <span>每份問卷可選匿名或記名，請以問卷卡片上的標籤為準；只有記名問卷會顯示投票者姓名。 · Chaque sondage peut être anonyme ou nominatif : consultez le badge de la carte. Seuls les sondages nominatifs affichent les noms des votants.</span>
             </div>
           </div>
           <div class="sm-survey-rule">
@@ -577,6 +577,13 @@
       </div>
       </div>
       <!-- /Survey info banner -->
+
+      <div class="sm-survey-sortbar">
+        <button type="button" id="survey-sort-btn" class="sm-survey-sort-btn" aria-label="切換問卷排序順序 · Changer l’ordre des sondages">
+          <i class="fas fa-arrow-down-wide-short" aria-hidden="true"></i>
+          <span id="survey-sort-label">Nouveau → ancien · 新到舊</span>
+        </button>
+      </div>
 
       <div class="sm-surveys-wrap" id="surveys-list">
         <!-- Injected by JS -->

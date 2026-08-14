@@ -411,6 +411,37 @@
   display: grid;
   gap: 1.25rem;
 }
+.sm-survey-sortbar {
+  max-width: 900px;
+  margin: 1rem auto -0.75rem;
+  padding: 0 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+}
+.sm-survey-sort-btn {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #0a2d42;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, transform 0.1s;
+}
+.sm-survey-sort-btn:hover {
+  background: #f8fafc;
+  border-color: #0a2d42;
+  transform: translateY(-1px);
+}
+.sm-survey-sort-btn:focus-visible {
+  outline: 3px solid rgba(10,45,66,0.2);
+  outline-offset: 2px;
+}
 .sm-survey-card {
   background: #fff;
   border-radius: 14px;
@@ -454,9 +485,10 @@
 .sm-badge-open    { background: #d1fae5; color: #065f46; }
 .sm-badge-closed  { background: #f1f5f9; color: #475569; }
 .sm-badge-multi   { background: #dbeafe; color: #1d4ed8; }
-.sm-badge-single  { background: #ede9fe; color: #5b21b6; }
+.sm-badge-single  { background: #dbeafe; color: #1d4ed8; }
 .sm-badge-legacy  { background: #fef3c7; color: #92400e; }
 .sm-badge-anon    { background: #f0fdf4; color: #15803d; }
+.sm-badge-anonymous { background: #f1f5f9; color: #475569; }
 .sm-badge-named   { background: #fef9c3; color: #713f12; }
 
 /* ── Option bars ─────────────────────────────────────────────── */
@@ -496,19 +528,10 @@
 .sm-bar-fill {
   height: 100%;
   border-radius: 99px;
-  background: linear-gradient(90deg, #1a5f7a, #0a2d42);
+  background: #6366f1;
   transition: width 0.35s ease;
   min-width: 2px;
 }
-.sm-bar-fill.color-1 { background: linear-gradient(90deg, #1d4ed8, #3b82f6); }
-.sm-bar-fill.color-2 { background: linear-gradient(90deg, #059669, #10b981); }
-.sm-bar-fill.color-3 { background: linear-gradient(90deg, #d97706, #f59e0b); }
-.sm-bar-fill.color-4 { background: linear-gradient(90deg, #7c3aed, #a78bfa); }
-.sm-bar-fill.color-5 { background: linear-gradient(90deg, #be123c, #f43f5e); }
-.sm-bar-fill.color-6 { background: linear-gradient(90deg, #0e7490, #22d3ee); }
-.sm-bar-fill.color-7 { background: linear-gradient(90deg, #15803d, #4ade80); }
-.sm-bar-fill.color-8 { background: linear-gradient(90deg, #b45309, #fbbf24); }
-.sm-bar-fill.color-0 { background: linear-gradient(90deg, #1a5f7a, #38bdf8); }
 
 .sm-option-voters {
   font-size: 0.65rem;

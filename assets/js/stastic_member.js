@@ -41,6 +41,7 @@ let _surveyVotesHandler = null;
 let _surveyV4Ready = true;
 let _surveysV4 = [];
 let _surveyVotesV4 = {};
+let _surveySortNewestFirst = true;
 let _assoV2Ready = true;
 let _assoMembersV2 = [];
 let _assoMembersV2Loaded = false;
@@ -1293,9 +1294,49 @@ function handleLastAssoSync(sync) {
 }
 
 // ── Surveys tab ────────────────────────────────────────────────
+const SURVEY_ACCENTS = {
+  seed_s1_tech: '#1d4ed8',
+  seed_s2_invest: '#0e7490',
+  seed_s3_city: '#7c3aed',
+  seed_s4_status: '#059669'
+};
+
+function surveyAccent(survey) {
+  return SURVEY_ACCENTS[survey?.id] || '#6366f1';
+}
+
+function surveyCreatedTime(survey) {
+  const time = Date.parse(survey?.createdAt || '');
+  return Number.isFinite(time) ? time : 0;
+}
+
+function sortedSurveys(surveys) {
+  const direction = _surveySortNewestFirst ? -1 : 1;
+  return [...surveys].sort((a, b) => {
+    const dateDifference = surveyCreatedTime(a) - surveyCreatedTime(b);
+    if (dateDifference !== 0) return dateDifference * direction;
+    return String(a?.id || '').localeCompare(String(b?.id || '')) * direction;
+  });
+}
+
+function updateSurveySortButton() {
+  const button = document.getElementById('survey-sort-btn');
+  const label = document.getElementById('survey-sort-label');
+  const icon = button?.querySelector('i');
+  if (!button || !label || !icon) return;
+  label.textContent = _surveySortNewestFirst
+    ? 'Nouveau → ancien · 新到舊'
+    : 'Ancien → nouveau · 舊到新';
+  icon.className = `fas ${_surveySortNewestFirst ? 'fa-arrow-down-wide-short' : 'fa-arrow-up-wide-short'}`;
+  button.title = _surveySortNewestFirst
+    ? '目前為新到舊；點擊改為舊到新'
+    : '目前為舊到新；點擊改為新到舊';
+}
+
 function renderSurveys() {
   const container = document.getElementById('surveys-list');
   if (!container) return;
+  updateSurveySortButton();
 
   if (state.surveys.length === 0) {
     container.innerHTML = `
@@ -1307,7 +1348,7 @@ function renderSurveys() {
     return;
   }
 
-  container.innerHTML = state.surveys.map(survey => buildSurveyCard(survey)).join('');
+  container.innerHTML = sortedSurveys(state.surveys).map(survey => buildSurveyCard(survey)).join('');
 
   // Bind action buttons
   container.querySelectorAll('[data-action="vote"]').forEach(btn => {
@@ -1325,12 +1366,11 @@ function buildSurveyCard(survey) {
   const counts = computeCounts(survey);
   const total  = Object.values(counts).reduce((a, b) => a + b, 0);
   const isOpen = survey.status === 'open';
+  const accent = surveyAccent(survey);
 
-  const optBars = survey.options.map((opt, i) => {
+  const optBars = survey.options.map(opt => {
     const count = counts[opt.id] || 0;
     const pct   = total > 0 ? Math.round((count / total) * 100) : 0;
-    const colorCls = 'color-' + (i % 9);
-
     let votersHtml = '';
     if (!survey.isLegacy && survey.privacy === 'show_voters') {
       const voters = Object.entries(survey.votesByMember || {})
@@ -1348,7 +1388,7 @@ function buildSurveyCard(survey) {
           <span class="sm-option-count">${count} <span style="font-weight:400;color:#94a3b8;">(${pct}%)</span></span>
         </div>
         <div class="sm-bar-track">
-          <div class="sm-bar-fill ${colorCls}" style="width:${pct}%;"></div>
+          <div class="sm-bar-fill" style="width:${pct}%;background:${accent};"></div>
         </div>
         ${votersHtml}
       </div>`;
@@ -1367,7 +1407,7 @@ function buildSurveyCard(survey) {
     : `<span style="font-size:0.68rem;color:#94a3b8;margin-right:auto;">${liveVoters} votant${liveVoters !== 1 ? 's' : ''} · ${total} vote${total !== 1 ? 's' : ''}</span>`;
 
   return `
-    <div class="sm-survey-card">
+    <div class="sm-survey-card" style="border-top:3px solid ${accent};">
       <div class="sm-survey-header">
         <div class="sm-survey-title">${escHtml(survey.title)}</div>
         ${survey.titleFr ? `<div class="sm-survey-title-fr">${escHtml(survey.titleFr)}</div>` : ''}
@@ -1380,7 +1420,7 @@ function buildSurveyCard(survey) {
           <span class="sm-badge ${survey.type === 'multi' ? 'sm-badge-multi' : 'sm-badge-single'}">
             ${survey.type === 'multi' ? 'Choix multiple' : 'Choix unique'}
           </span>
-          <span class="sm-badge ${survey.privacy === 'show_voters' ? 'sm-badge-named' : 'sm-badge-anon'}">
+          <span class="sm-badge ${survey.privacy === 'show_voters' ? 'sm-badge-named' : 'sm-badge-anonymous'}">
             <i class="fas ${survey.privacy === 'show_voters' ? 'fa-eye' : 'fa-eye-slash'}"></i>
             ${survey.privacy === 'show_voters' ? 'Noms visibles' : 'Anonyme'}
           </span>
@@ -3129,6 +3169,14 @@ function init() {
   document.querySelectorAll('.sm-tab').forEach(btn => {
     btn.addEventListener('click', () => setTab(btn.dataset.tab));
   });
+
+  const surveySortBtn = document.getElementById('survey-sort-btn');
+  if (surveySortBtn) {
+    surveySortBtn.addEventListener('click', () => {
+      _surveySortNewestFirst = !_surveySortNewestFirst;
+      renderSurveys();
+    });
+  }
 
   // Default tab
   setTab('dashboard');

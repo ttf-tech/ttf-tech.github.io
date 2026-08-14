@@ -24,6 +24,15 @@
   <style>
     /* Sidebar styles: assets/css/layout.css */
 
+    :root {
+      --vote-brand: #0a2d42;
+      --vote-brand-hover: #0f3d5c;
+      --vote-edit: #475569;
+      --vote-edit-hover: #334155;
+      --vote-success: #059669;
+      --vote-theme-user: #6366f1;
+    }
+
     /* ── Page header ─────────────────────────────────────────── */
     .vote-page-header {
       background: linear-gradient(160deg, #eef4fb 0%, #ffffff 60%);
@@ -81,6 +90,18 @@
 
     /* ── Survey cards ─────────────────────────────────────────── */
     .surveys-wrap { max-width: 860px; margin: 1.5rem auto 2rem; padding: 0 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+    .survey-sortbar {
+      max-width: 860px; margin: 1rem auto -0.75rem; padding: 0 1.5rem;
+      display: flex; justify-content: flex-end;
+    }
+    .survey-sort-btn {
+      min-height: 40px; display: inline-flex; align-items: center; gap: 0.45rem;
+      padding: 0.45rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 99px;
+      background: #fff; color: var(--vote-brand); font-size: 0.72rem; font-weight: 700;
+      cursor: pointer; transition: background 0.12s, border-color 0.12s, transform 0.1s;
+    }
+    .survey-sort-btn:hover { background: #f8fafc; border-color: var(--vote-brand); transform: translateY(-1px); }
+    .survey-sort-btn:focus-visible { outline: 3px solid rgba(10,45,66,0.2); outline-offset: 2px; }
 
     .survey-card {
       background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden;
@@ -98,8 +119,11 @@
       font-size: 0.6rem; font-weight: 700; padding: 0.15rem 0.55rem;
       border-radius: 99px; display: inline-block; margin-bottom: 0.3rem;
     }
-    .badge-open   { background: #dcfce7; color: #166534; }
-    .badge-type   { background: #dbeafe; color: #1e40af; }
+    .badge-open      { background: #dcfce7; color: #166534; }
+    .badge-closed    { background: #f1f5f9; color: #64748b; }
+    .badge-type      { background: #dbeafe; color: #1e40af; }
+    .badge-named     { background: #fef9c3; color: #854d0e; margin-left: 0.3rem; }
+    .badge-anonymous { background: #f1f5f9; color: #475569; margin-left: 0.3rem; }
     .survey-card-title    { font-size: 0.95rem; font-weight: 800; color: #0f172a; line-height: 1.3; }
     .survey-card-title-fr { font-size: 0.75rem; color: #64748b; margin-top: 0.1rem; font-style: italic; }
     .survey-card-desc     { font-size: 0.7rem; color: #94a3b8; margin-top: 0.2rem; }
@@ -115,8 +139,8 @@
     .survey-opt-bar { height: 100%; border-radius: 99px; transition: width 0.4s ease; min-width: 0; }
     .survey-opt-pct { font-size: 0.68rem; color: #94a3b8; min-width: 38px; text-align: right; }
     .survey-opt-count { font-size: 0.65rem; color: #cbd5e1; min-width: 28px; text-align: right; }
-    .survey-opt-row.my-vote .survey-opt-label { color: #059669; font-weight: 700; }
-    .survey-opt-row.my-vote .survey-opt-pct   { color: #059669; font-weight: 700; }
+    .survey-opt-row.my-vote .survey-opt-label { color: var(--vote-success); font-weight: 700; }
+    .survey-opt-row.my-vote .survey-opt-pct   { color: var(--vote-success); font-weight: 700; }
 
     /* Footer row */
     .survey-card-footer {
@@ -125,16 +149,18 @@
     }
     .survey-voted-badge {
       display: inline-flex; align-items: center; gap: 0.3rem;
-      font-size: 0.7rem; font-weight: 600; color: #059669;
+      font-size: 0.7rem; font-weight: 600; color: var(--vote-success);
     }
     .vote-btn {
       display: inline-flex; align-items: center; gap: 0.4rem;
       padding: 0.4rem 1rem; border-radius: 99px;
-      background: #0a2d42; color: #fff;
+      background: var(--vote-brand); color: #fff;
       font-size: 0.75rem; font-weight: 700; border: none; cursor: pointer;
       transition: background 0.12s, transform 0.1s;
     }
-    .vote-btn:hover { background: #0f3d5c; transform: translateY(-1px); }
+    .vote-btn:hover { background: var(--vote-brand-hover); transform: translateY(-1px); }
+    .vote-btn-edit { background: var(--vote-edit); }
+    .vote-btn-edit:hover { background: var(--vote-edit-hover); }
     .vote-btn:disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; transform: none; }
 
     /* ── Vote modal ───────────────────────────────────────────── */
@@ -195,10 +221,10 @@
     }
     .vm-submit-btn {
       padding: 0.5rem 1.25rem; border-radius: 8px; border: none;
-      background: #059669; color: #fff; font-size: 0.78rem; font-weight: 700; cursor: pointer;
+      background: var(--vote-brand); color: #fff; font-size: 0.78rem; font-weight: 700; cursor: pointer;
       display: flex; align-items: center; gap: 0.35rem; transition: background 0.12s;
     }
-    .vm-submit-btn:hover { background: #047857; }
+    .vm-submit-btn:hover { background: var(--vote-brand-hover); }
     .vm-submit-btn:disabled { background: #94a3b8; cursor: not-allowed; }
     .vm-error { font-size: 0.72rem; color: #be123c; margin-top: 0.5rem; }
   </style>
@@ -263,6 +289,13 @@
           <div class="member-note">Les résultats sont visibles par tous · 結果對所有人公開。選擇或新增會員名稱後即可投票。</div>
         </div>
       </div>
+    </div>
+
+    <div class="survey-sortbar">
+      <button type="button" id="survey-sort-btn" class="survey-sort-btn" aria-label="切換問卷排序順序 · Changer l’ordre des sondages">
+        <i class="fas fa-arrow-down-wide-short" aria-hidden="true"></i>
+        <span id="survey-sort-label">Nouveau → ancien · 新到舊</span>
+      </button>
     </div>
 
     <!-- Survey cards -->
@@ -377,12 +410,13 @@
     'Shuhan Chang (Shelly)','Sun','Sylvia','Tachun Lin','Terry TAN','Tina','Vivi N',
     'W','Wallace','Wan-Erh (Annie)','Wen','Wen (2)','Wentzu 文慈','Yih-Dar',
     'Yochen Shih','Yu Ting Chao','Yu-Chuan Cheng','Yuhsin','Yun-Hsuan',
-    'ZHANG ZUO AN (Joanne)','Zoe (lo-yi) Wu','Zoe T','Brett','Tess'
+    'ZHANG ZUO AN (Joanne)','Zoe (lo-yi) Wu','Zoe T','Brett'
   ];
 
   const SURVEYS = [
     {
       id: 'seed_s1_tech',
+      createdAt: '2026-01-15T13:44:00.000Z',
       color: '#1d4ed8',
       colorBg: '#dbeafe',
       icon: 'fa-code',
@@ -411,6 +445,7 @@
     },
     {
       id: 'seed_s2_invest',
+      createdAt: '2024-10-01T10:00:00.000Z',
       color: '#0e7490',
       colorBg: '#e0f2fe',
       icon: 'fa-chart-line',
@@ -431,6 +466,7 @@
     },
     {
       id: 'seed_s3_city',
+      createdAt: '2026-01-15T13:42:00.000Z',
       color: '#7c3aed',
       colorBg: '#ede9fe',
       icon: 'fa-map-marker-alt',
@@ -454,6 +490,7 @@
     },
     {
       id: 'seed_s4_status',
+      createdAt: '2026-01-15T13:35:00.000Z',
       color: '#059669',
       colorBg: '#dcfce7',
       icon: 'fa-briefcase',
@@ -491,6 +528,7 @@
   let _selectedOptions = [];
   let _nameValid       = false;
   let _creatingNewMember = false;
+  let _surveySortNewestFirst = true;
 
   const voteOptions = vote => Array.isArray(vote) ? vote : (Array.isArray(vote?.options) ? vote.options : []);
   const voteName = (key, vote) => vote?.displayName || key;
@@ -651,6 +689,34 @@
     return Object.keys(_surveyVotes[survey.id] || {}).length;
   }
 
+  function surveyCreatedTime(survey) {
+    const time = Date.parse(survey?.createdAt || '');
+    return Number.isFinite(time) ? time : 0;
+  }
+
+  function sortedSurveys(surveys) {
+    const direction = _surveySortNewestFirst ? -1 : 1;
+    return [...surveys].sort((a, b) => {
+      const dateDifference = surveyCreatedTime(a) - surveyCreatedTime(b);
+      if (dateDifference !== 0) return dateDifference * direction;
+      return String(a?.id || '').localeCompare(String(b?.id || '')) * direction;
+    });
+  }
+
+  function updateSurveySortButton() {
+    const button = document.getElementById('survey-sort-btn');
+    const label = document.getElementById('survey-sort-label');
+    const icon = button?.querySelector('i');
+    if (!button || !label || !icon) return;
+    label.textContent = _surveySortNewestFirst
+      ? 'Nouveau → ancien · 新到舊'
+      : 'Ancien → nouveau · 舊到新';
+    icon.className = `fas ${_surveySortNewestFirst ? 'fa-arrow-down-wide-short' : 'fa-arrow-up-wide-short'}`;
+    button.title = _surveySortNewestFirst
+      ? '目前為新到舊；點擊改為舊到新'
+      : '目前為舊到新；點擊改為新到舊';
+  }
+
   function renderUserSurveyCard(survey) {
     const counts   = computeUserCounts(survey);
     const total    = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -660,8 +726,8 @@
     const isOpen   = survey.status === 'open';
     const typeLabel = survey.type === 'multi' ? 'Choix multiple · 可複選' : 'Choix unique · 單選';
     const privacyLabel = survey.privacy === 'show_voters'
-      ? '<span class="survey-card-badge badge-type" style="background:#fef9c3;color:#854d0e;margin-left:0.3rem;"><i class="fas fa-eye" style="margin-right:0.2rem;"></i>Noms visibles</span>'
-      : '<span class="survey-card-badge badge-type" style="background:#f1f5f9;color:#475569;margin-left:0.3rem;"><i class="fas fa-eye-slash" style="margin-right:0.2rem;"></i>Anonyme</span>';
+      ? '<span class="survey-card-badge badge-named"><i class="fas fa-eye" style="margin-right:0.2rem;"></i>Noms visibles</span>'
+      : '<span class="survey-card-badge badge-anonymous"><i class="fas fa-eye-slash" style="margin-right:0.2rem;"></i>Anonyme</span>';
 
     const bars = (survey.options || []).map(opt => {
       const cnt = counts[opt.id] || 0;
@@ -679,7 +745,7 @@
       return `
         <div class="survey-opt-row${isMyVote ? ' my-vote' : ''}">
           <div class="survey-opt-label">${escHtmlRead(opt.label || opt.id)}${isMyVote ? ' <i class="fas fa-check" style="font-size:0.6rem;"></i>' : ''}</div>
-          <div class="survey-opt-bar-wrap"><div class="survey-opt-bar" style="width:${pct}%;background:${isMyVote ? '#059669' : '#6366f1'};"></div></div>
+          <div class="survey-opt-bar-wrap"><div class="survey-opt-bar" style="width:${pct}%;background:${isMyVote ? 'var(--vote-success)' : 'var(--vote-theme-user)'};"></div></div>
           <div class="survey-opt-pct">${pct}%</div>
           <div class="survey-opt-count">${cnt}</div>
         </div>${voterNames}`;
@@ -689,19 +755,19 @@
       ? `<span style="font-size:0.7rem;color:#94a3b8;font-style:italic;">Sondage clôturé · 已結束</span>`
       : hasVoted
         ? `<span class="survey-voted-badge"><i class="fas fa-check-circle"></i> Votre vote enregistré · 已投票</span>
-           <button class="vote-btn" style="background:#475569;" onclick="openVoteModalUser('${survey.id}')">
+           <button class="vote-btn vote-btn-edit" onclick="openVoteModalUser('${survey.id}')">
              <i class="fas fa-edit"></i> Modifier · 修改投票
            </button>`
         : `<span style="font-size:0.7rem;color:#94a3b8;">Résultats visibles par tous · 結果對所有人公開</span>
-           <button class="vote-btn" style="background:#6366f1;" onclick="openVoteModalUser('${survey.id}')">
+           <button class="vote-btn" onclick="openVoteModalUser('${survey.id}')">
              <i class="fas fa-poll"></i> Voter · 投票
            </button>`;
 
     return `
-      <div class="survey-card" id="card-${survey.id}" style="border-top:3px solid #6366f1;">
+      <div class="survey-card" id="card-${survey.id}" style="border-top:3px solid var(--vote-theme-user);">
         <div class="survey-card-head">
           <div class="survey-card-left">
-            <span class="survey-card-badge badge-open" style="background:#ede9fe;color:#6366f1;">
+            <span class="survey-card-badge ${isOpen ? 'badge-open' : 'badge-closed'}">
               <i class="fas fa-poll" style="margin-right:0.2rem;"></i>
               ${isOpen ? 'Ouvert · 開放投票' : 'Clôturé · 已結束'}
             </span>
@@ -725,16 +791,11 @@
   function renderSurveys() {
     const container = document.getElementById('surveys-container');
     if (!container) return;
-    const seedHtml = activeSeedSurveys().map(s => renderSurveyCard(s)).join('');
-    const userHtml = _userSurveys.length > 0
-      ? `<div style="margin-top:0.5rem;padding:0.4rem 0;border-top:2px dashed #e2e8f0;display:flex;align-items:center;gap:0.5rem;">
-           <span style="font-size:0.7rem;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.06em;">
-             <i class="fas fa-plus-circle" style="margin-right:0.3rem;"></i>Nouvelles questions · 新增問卷
-           </span>
-         </div>`
-        + _userSurveys.map(s => renderUserSurveyCard(s)).join('')
-      : '';
-    container.innerHTML = seedHtml + userHtml;
+    const surveys = sortedSurveys([...activeSeedSurveys(), ..._userSurveys]);
+    container.innerHTML = surveys.map(survey =>
+      seedSurveyIds.has(survey.id) ? renderSurveyCard(survey) : renderUserSurveyCard(survey)
+    ).join('');
+    updateSurveySortButton();
   }
 
   function renderSurveyCard(survey) {
@@ -750,7 +811,7 @@
       const cnt = counts[opt.id] || 0;
       const pct = total > 0 ? Math.round(cnt / total * 100) : 0;
       const isMyVote = myVote.includes(opt.id);
-      const barColor = isMyVote ? '#059669' : survey.color;
+      const barColor = isMyVote ? 'var(--vote-success)' : survey.color;
       return `
         <div class="survey-opt-row${isMyVote ? ' my-vote' : ''}">
           <div class="survey-opt-label">${opt.label}${isMyVote ? ' <i class="fas fa-check" style="font-size:0.6rem;"></i>' : ''}</div>
@@ -766,7 +827,7 @@
       ? `<span style="font-size:0.7rem;color:#94a3b8;font-style:italic;">Sondage clôturé · 已結束</span>`
       : hasVoted
       ? `<span class="survey-voted-badge"><i class="fas fa-check-circle"></i> Votre vote enregistré · 已投票</span>
-         <button class="vote-btn" style="background:#475569;" onclick="openVoteModal('${survey.id}')">
+         <button class="vote-btn vote-btn-edit" onclick="openVoteModal('${survey.id}')">
            <i class="fas fa-edit"></i> Modifier · 修改投票
          </button>`
       : `<span style="font-size:0.7rem;color:#94a3b8;">Résultats visibles par tous · 結果對所有人公開</span>
@@ -775,10 +836,10 @@
          </button>`;
 
     return `
-      <div class="survey-card" id="card-${survey.id}">
+      <div class="survey-card" id="card-${survey.id}" style="border-top:3px solid ${survey.color};">
         <div class="survey-card-head">
           <div class="survey-card-left">
-            <span class="survey-card-badge badge-open" style="background:${survey.colorBg};color:${survey.color};">
+            <span class="survey-card-badge ${isOpen ? 'badge-open' : 'badge-closed'}">
               <i class="fas ${survey.icon}" style="margin-right:0.2rem;"></i> ${isOpen ? 'Ouvert · 開放投票' : 'Clôturé · 已結束'}
             </span>
             <span class="survey-card-badge badge-type" style="margin-left:0.3rem;">${typeLabel}</span>
@@ -1116,6 +1177,10 @@
 
   /* ── Event bindings ─────────────────────────────────────────── */
   document.getElementById('vm-name')?.addEventListener('input', e => validateName(e.target.value));
+  document.getElementById('survey-sort-btn')?.addEventListener('click', () => {
+    _surveySortNewestFirst = !_surveySortNewestFirst;
+    renderSurveys();
+  });
   document.getElementById('vm-member-select')?.addEventListener('change', e => {
     if (e.target.value === '__new__') {
       beginNewMember();

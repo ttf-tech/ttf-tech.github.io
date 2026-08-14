@@ -116,7 +116,7 @@
           "votedAt": { ".validate": "newData.isString() && newData.val().length <= 50" },
           "updatedAt": { ".validate": "newData.isString() && newData.val().length <= 50" },
           "options": {
-            ".validate": "newData.numChildren() > 0 && newData.numChildren() <= 20",
+            ".validate": "newData.hasChildren(['0'])",
             "$optionIndex": { ".validate": "newData.isString() && newData.val().length <= 200" }
           },
           "$other": { ".validate": false }

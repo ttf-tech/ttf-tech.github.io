@@ -1,25 +1,19 @@
 #!/usr/bin/env node
 /**
- * Pulls paid "Adhésion" memberships from the HelloAsso API and merges them
- * into the same `assoMembers` list that assets/js/member-gate.js checks and
- * that admin.html's "Asso Membres" tab already manages.
+ * Pulls paid memberships from HelloAsso and writes both:
+ *   - /assoMembers/{memberId} + /assoMemberLookup/{sha256(email)} (v2)
+ *   - grp_hub_v2.data.assoMembers (temporary migration compatibility)
  *
- * Triggered manually via .github/workflows/sync-helloasso.yml (the admin
- * dashboard's "Sync Asso" button opens that workflow's "Run workflow" page —
- * GitHub Actions secrets only, nothing here is ever committed or shipped to
- * the browser). Requires these repo secrets (Settings → Secrets and
- * variables → Actions):
- *   HELLOASSO_CLIENT_ID       HelloAsso API client ID
- *   HELLOASSO_CLIENT_SECRET   HelloAsso API client secret
- *   FIREBASE_DB_SECRET        Firebase RTDB legacy secret (Project Settings
- *                             → Service accounts → Database secrets). This
- *                             grants full read/write regardless of the
- *                             `.write` rules — treat it like a password.
+ * Triggered manually by .github/workflows/sync-helloasso.yml.
+ * Required GitHub Actions secrets:
+ *   HELLOASSO_CLIENT_ID
+ *   HELLOASSO_CLIENT_SECRET
+ *   FIREBASE_DB_SECRET
  * Optional overrides: HELLOASSO_ORG_SLUG, FIREBASE_DB_URL.
- *
- * No npm dependencies — Node 20's built-in fetch is enough.
  */
 'use strict';
+
+const { createHash } = require('node:crypto');
 
 const HELLOASSO_CLIENT_ID     = process.env.HELLOASSO_CLIENT_ID;
 const HELLOASSO_CLIENT_SECRET = process.env.HELLOASSO_CLIENT_SECRET;
@@ -29,16 +23,31 @@ const FIREBASE_DB_SECRET      = process.env.FIREBASE_DB_SECRET;
 
 function requireEnv() {
   const missing = ['HELLOASSO_CLIENT_ID', 'HELLOASSO_CLIENT_SECRET', 'FIREBASE_DB_SECRET']
-    .filter(k => !process.env[k]);
+    .filter(key => !process.env[key]);
   if (missing.length) {
     console.error(`Missing required secret(s): ${missing.join(', ')}`);
     process.exit(1);
   }
 }
 
-// ── HelloAsso: OAuth2 client_credentials ────────────────────────
+function normalizeEmail(value) {
+  return (value || '').trim().toLowerCase();
+}
+
+function hashEmail(email) {
+  return createHash('sha256').update(normalizeEmail(email)).digest('hex');
+}
+
+function isActiveMembership(joinedAt) {
+  if (!joinedAt) return true;
+  const joinedTime = new Date(joinedAt).getTime();
+  if (!Number.isFinite(joinedTime)) return false;
+  const ageDays = (Date.now() - joinedTime) / 86400000;
+  return ageDays >= 0 && ageDays <= 365;
+}
+
 async function getHelloAssoToken() {
-  const res = await fetch('https://api.helloasso.com/oauth2/token', {
+  const response = await fetch('https://api.helloasso.com/oauth2/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -47,12 +56,12 @@ async function getHelloAssoToken() {
       client_secret: HELLOASSO_CLIENT_SECRET
     })
   });
-  if (!res.ok) throw new Error(`HelloAsso auth failed: ${res.status} ${await res.text()}`);
-  const json = await res.json();
-  return json.access_token;
+  if (!response.ok) {
+    throw new Error(`HelloAsso auth failed: ${response.status} ${await response.text()}`);
+  }
+  return (await response.json()).access_token;
 }
 
-// ── HelloAsso: paginate through all Membership-form orders ──────
 async function fetchAllMembershipOrders(token) {
   const orders = [];
   const pageSize = 100;
@@ -64,9 +73,11 @@ async function fetchAllMembershipOrders(token) {
     url.searchParams.set('pageIndex', String(pageIndex));
     url.searchParams.set('sortOrder', 'Desc');
 
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) throw new Error(`HelloAsso orders fetch failed: ${res.status} ${await res.text()}`);
-    const json = await res.json();
+    const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!response.ok) {
+      throw new Error(`HelloAsso orders fetch failed: ${response.status} ${await response.text()}`);
+    }
+    const json = await response.json();
     const data = Array.isArray(json.data) ? json.data : [];
     orders.push(...data);
     if (data.length < pageSize) break;
@@ -76,109 +87,186 @@ async function fetchAllMembershipOrders(token) {
 
 function findCustomField(customFields, pattern) {
   if (!Array.isArray(customFields)) return '';
-  const f = customFields.find(cf => pattern.test(cf.name || ''));
-  return f ? String(f.answer || '').trim() : '';
+  const field = customFields.find(item => pattern.test(item.name || ''));
+  return field ? String(field.answer || '').trim() : '';
 }
 
-// ── Flatten HelloAsso orders → assoMembers-shaped records ────────
 function extractMembersFromOrders(orders) {
-  const members = [];
+  const membersByEmail = new Map();
   for (const order of orders) {
     const payer = order.payer || {};
     const items = Array.isArray(order.items) ? order.items : [];
     for (const item of items) {
       const user = item.user || {};
-      const email = (user.email || payer.email || '').trim().toLowerCase();
+      const email = normalizeEmail(user.email || payer.email);
       if (!email) continue;
 
       const firstName = user.firstName || payer.firstName || '';
-      const lastName  = user.lastName  || payer.lastName  || '';
-      const name = `${firstName} ${lastName}`.trim() || email.split('@')[0];
-
-      members.push({
+      const lastName  = user.lastName || payer.lastName || '';
+      const member = {
         email,
-        name,
-        city:         payer.city || '',
-        phone:        findCustomField(item.customFields, /t[ée]l[ée]phone|\btel\b|phone/i),
-        linkedin:     findCustomField(item.customFields, /linkedin/i),
-        expertise:    findCustomField(item.customFields, /domaine.*expertise|expertise/i),
-        motivation:   findCustomField(item.customFields, /pourquoi devenir|motivation/i),
+        name: `${firstName} ${lastName}`.trim() || email.split('@')[0],
+        city: payer.city || '',
+        phone: findCustomField(item.customFields, /t[eé]l[eé]phone|\btel\b|phone/i),
+        linkedin: findCustomField(item.customFields, /linkedin/i),
+        expertise: findCustomField(item.customFields, /domaine.*expertise|expertise/i),
+        motivation: findCustomField(item.customFields, /pourquoi devenir|motivation/i),
         helloassoRef: `order-${order.id}-item-${item.id}`,
-        joinedAt:     order.date ? new Date(order.date).toISOString() : new Date().toISOString()
-      });
+        joinedAt: order.date ? new Date(order.date).toISOString() : new Date().toISOString()
+      };
+      const existing = membersByEmail.get(email);
+      if (!existing || new Date(member.joinedAt) > new Date(existing.joinedAt)) {
+        membersByEmail.set(email, member);
+      }
     }
   }
-  return members;
+  return [...membersByEmail.values()];
 }
 
-// ── Merge into the site's single Firebase RTDB blob ──────────────
-// Same shape as assets/js/firebase-read.js reads and stastic_member.js
-// writes: { ts, data: JSON.stringify(dynState) } under `grp_hub_v2`.
-//
-// Always writes — even when 0 members are found — and always stamps
-// `dyn.lastAssoSync = { ts, added, updated, total, message }`. That's what
-// makes the browser-side "Sync Asso" button reliable: admin.html's existing
-// real-time Firebase listener fires on every run (not just ones that changed
-// assoMembers), so it can show this exact `message` back to the admin
-// instead of guessing from a timeout.
-async function syncToFirebase(members) {
-  const dataUrl = `${FIREBASE_DB_URL}/grp_hub_v2.json?auth=${FIREBASE_DB_SECRET}`;
+function objectToMembers(value) {
+  if (!value || typeof value !== 'object') return [];
+  if (Array.isArray(value)) return value.filter(Boolean);
+  return Object.entries(value).map(([id, member]) => ({ id, ...(member || {}) }));
+}
 
-  const res = await fetch(dataUrl);
-  if (!res.ok) throw new Error(`Firebase read failed: ${res.status} ${await res.text()}`);
-  const raw = await res.json();
+async function syncToFirebase(helloAssoMembers) {
+  const authQuery = `auth=${encodeURIComponent(FIREBASE_DB_SECRET)}`;
+  const legacyUrl = `${FIREBASE_DB_URL}/grp_hub_v2.json?${authQuery}`;
+  const v2Url = `${FIREBASE_DB_URL}/assoMembers.json?${authQuery}`;
+  const rootUrl = `${FIREBASE_DB_URL}/.json?${authQuery}`;
 
-  let dyn = {
-    addedMembers: [], announcements: [], jobs: [], sharings: [],
-    meetings: [], expenses: [], surveyVotes: {}, userSurveys: [], assoMembers: []
+  const [legacyResponse, v2Response] = await Promise.all([fetch(legacyUrl), fetch(v2Url)]);
+  if (!legacyResponse.ok) {
+    throw new Error(`Firebase legacy read failed: ${legacyResponse.status} ${await legacyResponse.text()}`);
+  }
+  if (!v2Response.ok) {
+    throw new Error(`Firebase v2 read failed: ${v2Response.status} ${await v2Response.text()}`);
+  }
+
+  const raw = await legacyResponse.json();
+  const existingV2 = objectToMembers(await v2Response.json());
+  let dynamicData = {
+    addedMembers: [], announcements: [], jobs: [], sharings: [], meetings: [],
+    expenses: [], surveyVotes: {}, userSurveys: [], assoMembers: []
   };
   if (raw && typeof raw.data === 'string') {
-    try { dyn = { ...dyn, ...JSON.parse(raw.data) }; } catch (_) { /* keep defaults */ }
-  }
-  if (!Array.isArray(dyn.assoMembers)) dyn.assoMembers = [];
-
-  let added = 0, updated = 0;
-  for (const m of members) {
-    const idx = dyn.assoMembers.findIndex(x => (x.email || '').trim().toLowerCase() === m.email);
-    if (idx >= 0) {
-      dyn.assoMembers[idx] = { ...dyn.assoMembers[idx], ...m };
-      updated++;
-    } else {
-      dyn.assoMembers.push({
-        id: `ha_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
-        intro: '', job: '', goals: [],
-        ...m
-      });
-      added++;
+    try {
+      dynamicData = { ...dynamicData, ...JSON.parse(raw.data) };
+    } catch (_) {
+      // Keep safe defaults when a legacy payload is malformed.
     }
   }
+  if (!Array.isArray(dynamicData.assoMembers)) dynamicData.assoMembers = [];
 
-  const message = members.length === 0
-    ? '目前 HelloAsso 尚無會員繳費紀錄，無需同步 · No HelloAsso payments to sync yet'
-    : `已新增 ${added} 位、更新 ${updated} 位會員 · ${added} added, ${updated} updated`;
+  // V2 becomes authoritative after the first successful migration.
+  const baseline = existingV2.length > 0 ? existingV2 : dynamicData.assoMembers;
+  const membersWithoutEmail = baseline.filter(member => !normalizeEmail(member.email));
+  const membersByEmail = new Map(
+    baseline
+      .filter(member => normalizeEmail(member.email))
+      .map(member => [normalizeEmail(member.email), { ...member }])
+  );
 
-  dyn.lastAssoSync = { ts: Date.now(), added, updated, total: members.length, message };
+  let added = 0;
+  let updated = 0;
+  const syncedAt = new Date().toISOString();
+  for (const incoming of helloAssoMembers) {
+    const email = normalizeEmail(incoming.email);
+    const existing = membersByEmail.get(email);
+    const id = existing?.id || `ha_${hashEmail(email).slice(0, 20)}`;
+    membersByEmail.set(email, {
+      id,
+      intro: '',
+      job: '',
+      goals: [],
+      ...(existing || {}),
+      ...incoming,
+      email,
+      city: incoming.city || existing?.city || '',
+      phone: incoming.phone || existing?.phone || '',
+      linkedin: incoming.linkedin || existing?.linkedin || '',
+      expertise: incoming.expertise || existing?.expertise || '',
+      motivation: incoming.motivation || existing?.motivation || '',
+      status: isActiveMembership(incoming.joinedAt) ? 'active' : 'inactive',
+      syncedAt
+    });
+    if (existing) updated++;
+    else added++;
+  }
 
+  // Preserve admin-created members not returned by HelloAsso.
+  const finalMembers = [...membersByEmail.values(), ...membersWithoutEmail].map(member => ({
+    ...member,
+    id: member.id,
+    email: normalizeEmail(member.email),
+    status: isActiveMembership(member.joinedAt) ? 'active' : 'inactive'
+  }));
+  const memberMap = Object.fromEntries(finalMembers.map(member => [member.id, member]));
+  const lookupMap = Object.fromEntries(finalMembers
+    .filter(member => member.email)
+    .map(member => [hashEmail(member.email), {
+      email: member.email,
+      memberId: member.id,
+      active: member.status === 'active',
+      joinedAt: member.joinedAt || '',
+      updatedAt: syncedAt
+    }]));
+
+  const message = helloAssoMembers.length === 0
+    ? '尚無 HelloAsso 會員付款資料 · No HelloAsso payments to sync yet'
+    : `已新增 ${added} 位、更新 ${updated} 位 · ${added} added, ${updated} updated`;
+  const syncSummary = {
+    schemaVersion: 2,
+    ts: Date.now(),
+    added,
+    updated,
+    totalFromHelloAsso: helloAssoMembers.length,
+    totalStored: finalMembers.length,
+    message
+  };
+
+  dynamicData.assoMembers = finalMembers;
+  dynamicData.lastAssoSync = syncSummary;
   const ts = Math.max(Date.now(), ((raw && raw.ts) || 0) + 1);
-  const putRes = await fetch(dataUrl, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ts, data: JSON.stringify(dyn) })
-  });
-  if (!putRes.ok) throw new Error(`Firebase write failed: ${putRes.status} ${await putRes.text()}`);
 
-  console.log(`HelloAsso sync done — ${message}`);
+  // One atomic root PATCH keeps the new paths and compatibility blob aligned.
+  const writeResponse = await fetch(rootUrl, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      grp_hub_v2: { ts, data: JSON.stringify(dynamicData) },
+      assoMembers: memberMap,
+      assoMemberLookup: lookupMap,
+      'system/helloAssoSync': syncSummary
+    })
+  });
+  if (!writeResponse.ok) {
+    throw new Error(`Firebase write failed: ${writeResponse.status} ${await writeResponse.text()}`);
+  }
+
+  console.log(`HelloAsso sync done — ${message}; ${finalMembers.length} stored in v2`);
 }
 
-(async () => {
+async function main() {
   requireEnv();
   try {
-    const token   = await getHelloAssoToken();
-    const orders  = await fetchAllMembershipOrders(token);
+    const token = await getHelloAssoToken();
+    const orders = await fetchAllMembershipOrders(token);
     const members = extractMembersFromOrders(orders);
     await syncToFirebase(members);
-  } catch (e) {
-    console.error('[sync-helloasso] failed:', e.message);
+  } catch (error) {
+    console.error('[sync-helloasso] failed:', error.message);
     process.exit(1);
   }
-})();
+}
+
+module.exports = {
+  normalizeEmail,
+  hashEmail,
+  isActiveMembership,
+  extractMembersFromOrders,
+  objectToMembers,
+  syncToFirebase
+};
+
+if (require.main === module) main();

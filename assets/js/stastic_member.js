@@ -26,12 +26,27 @@ const _FB_READY = typeof firebase !== 'undefined' &&
 let _fbRef = null;
 let _adminProfilesRef = null;
 let _adminProfilesHandler = null;
+let _adminAccessRef = null;
+let _adminAccessHandler = null;
+let _adminDataAuthVersion = 0;
+let _assoMembersV2Ref = null;
+let _assoMembersV2Handler = null;
+let _helloAssoSyncRef = null;
+let _helloAssoSyncHandler = null;
+let _assoV2Ready = false;
+let _assoMembersV2 = [];
+let _assoMembersV2Loaded = false;
+let _assoV2Hydrated = false;
+let _helloAssoSyncSummary = null;
 let _fbSyncDone = false; // true after first Firebase on('value') fires
 if (_FB_READY) {
   try {
     if (!firebase.apps.length) firebase.initializeApp(_FB_CONFIG);
     _fbRef = firebase.database().ref(STORE_KEY);
     _adminProfilesRef = firebase.database().ref('adminProfiles');
+    _adminAccessRef = firebase.database().ref('access/admins');
+    _assoMembersV2Ref = firebase.database().ref('assoMembers');
+    _helloAssoSyncRef = firebase.database().ref('system/helloAssoSync');
   } catch (e) {
     console.warn('[Firebase] init failed, falling back to localStorage', e);
   }
@@ -302,7 +317,7 @@ function rebuildState(dyn) {
   state.sharings      = dyn.sharings      || [];
   state.meetings      = dyn.meetings      || [];
   state.expenses      = dyn.expenses      || [];
-  state.assoMembers   = dyn.assoMembers   || [];
+  state.assoMembers   = _assoV2Ready ? _assoMembersV2 : (dyn.assoMembers || []);
 }
 
 // Extract only dynamic user data from state (what gets saved to Firebase)
@@ -330,7 +345,7 @@ function saveState() {
 }
 
 // ── Shared state object (always has seeds, dynamic parts filled immediately from cache)
-const state = { members: [], surveys: [], sharings: [], meetings: [], expenses: [], announcements: [], jobs: [], assoMembers: [], adminProfiles: [] };
+const state = { members: [], surveys: [], sharings: [], meetings: [], expenses: [], announcements: [], jobs: [], assoMembers: [], adminProfiles: [], adminAccess: [] };
 rebuildState(loadDynamic().dyn); // instant render from localStorage cache
 
 // ensureSeed is now a no-op — seeds are always applied via rebuildState()
@@ -768,9 +783,13 @@ function renderAssoMembers() {
   const query   = (document.getElementById('asso-search')?.value   || '').toLowerCase();
   const cityFlt = (document.getElementById('asso-city-filter')?.value || '');
 
-  const adminEmails = (typeof ADMIN_EMAILS !== 'undefined' && Array.isArray(ADMIN_EMAILS))
+  const bootstrapAdminEmails = (typeof ADMIN_EMAILS !== 'undefined' && Array.isArray(ADMIN_EMAILS))
     ? ADMIN_EMAILS.map(email => email.trim().toLowerCase())
     : [];
+  const roleAdminEmails = (state.adminAccess || [])
+    .filter(record => record.active === true && record.email)
+    .map(record => record.email.trim().toLowerCase());
+  const adminEmails = [...new Set([...roleAdminEmails, ...bootstrapAdminEmails])];
   const adminEmailSet = new Set(adminEmails);
   const adminProfileMap = new Map(
     (state.adminProfiles || []).map(profile => [(profile.email || '').trim().toLowerCase(), profile])
@@ -942,7 +961,55 @@ function closeAssoMemberModal() {
   document.getElementById('asso-member-modal')?.classList.add('hidden');
 }
 
-function saveAssoMember() {
+function _isAssoMembershipActive(joinedAt) {
+  if (!joinedAt) return true;
+  const joinedTime = new Date(joinedAt).getTime();
+  if (!Number.isFinite(joinedTime)) return false;
+  const ageDays = (Date.now() - joinedTime) / 86400000;
+  return ageDays >= 0 && ageDays <= 365;
+}
+
+async function _writeAssoMemberV2(member, previousEmail) {
+  if (!_assoV2Ready || !member?.id || typeof ttfHashAssoEmail !== 'function') return;
+  const email = (member.email || '').trim().toLowerCase();
+  const previous = (previousEmail || '').trim().toLowerCase();
+  const active = _isAssoMembershipActive(member.joinedAt);
+  const updates = {
+    [`assoMembers/${member.id}`]: {
+      ...member,
+      email,
+      status: active ? 'active' : 'inactive'
+    }
+  };
+
+  if (previous && previous !== email) {
+    const previousHash = await ttfHashAssoEmail(previous);
+    if (previousHash) updates[`assoMemberLookup/${previousHash}`] = null;
+  }
+  if (email) {
+    const emailHash = await ttfHashAssoEmail(email);
+    if (emailHash) {
+      updates[`assoMemberLookup/${emailHash}`] = {
+        email,
+        memberId: member.id,
+        active,
+        joinedAt: member.joinedAt || '',
+        updatedAt: new Date().toISOString()
+      };
+    }
+  }
+  await firebase.database().ref().update(updates);
+}
+
+async function _deleteAssoMemberV2(member) {
+  if (!_assoV2Ready || !member?.id || typeof ttfHashAssoEmail !== 'function') return;
+  const updates = { [`assoMembers/${member.id}`]: null };
+  const emailHash = await ttfHashAssoEmail(member.email || '');
+  if (emailHash) updates[`assoMemberLookup/${emailHash}`] = null;
+  await firebase.database().ref().update(updates);
+}
+
+async function saveAssoMember() {
   const name = document.getElementById('am-name')?.value.trim();
   if (!name) { showToast('Le nom est obligatoire · 姓名為必填'); return; }
 
@@ -972,34 +1039,56 @@ function saveAssoMember() {
   };
 
   const dyn = extractDynamic();
+  let savedMember;
   if (_assoModalId) {
     const idx = dyn.assoMembers.findIndex(x => x.id === _assoModalId);
-    if (idx >= 0) dyn.assoMembers[idx] = { ...dyn.assoMembers[idx], ...member };
+    if (idx >= 0) {
+      dyn.assoMembers[idx] = { ...dyn.assoMembers[idx], ...member };
+      savedMember = dyn.assoMembers[idx];
+    }
     showToast('Membre Asso mis à jour · 協會成員已更新');
   } else {
-    dyn.assoMembers.push({ id: uid(), ...member });
+    savedMember = { id: uid(), ...member };
+    dyn.assoMembers.push(savedMember);
     showToast('Membre Asso ajouté · 協會成員已新增');
   }
 
+  if (!savedMember) return;
+
+  if (_assoV2Ready) _assoMembersV2 = dyn.assoMembers;
   rebuildState(dyn);
   _saveDynLocal(dyn);
   _fbWrite(dyn);
+  try {
+    await _writeAssoMemberV2(savedMember, existing?.email);
+  } catch (error) {
+    console.warn('[Firebase] v2 Asso member save failed', error);
+    showToast('新會員路徑同步失敗，舊資料仍已保存 · V2 sync failed', 5000);
+  }
   closeAssoMemberModal();
   renderAssoMembers();
 }
 
-function deleteAssoMember() {
+async function deleteAssoMember() {
   if (!_assoModalId) return;
   if (!confirm('Supprimer ce membre officiel ? · 確定刪除此協會成員？')) return;
 
   const dyn = extractDynamic();
   const idx = dyn.assoMembers.findIndex(x => x.id === _assoModalId);
   if (idx < 0) return;
+  const removedMember = dyn.assoMembers[idx];
   dyn.assoMembers.splice(idx, 1);
 
+  if (_assoV2Ready) _assoMembersV2 = dyn.assoMembers;
   rebuildState(dyn);
   _saveDynLocal(dyn);
   _fbWrite(dyn);
+  try {
+    await _deleteAssoMemberV2(removedMember);
+  } catch (error) {
+    console.warn('[Firebase] v2 Asso member delete failed', error);
+    showToast('新會員路徑刪除失敗，請稍後重試 · V2 delete failed', 5000);
+  }
   closeAssoMemberModal();
   renderAssoMembers();
   showToast('Membre supprimé · 已刪除');
@@ -2823,16 +2912,30 @@ function initFirebase() {
 }
 
 function initAdminProfiles() {
-  if (!_adminProfilesRef || typeof firebase.auth !== 'function') return;
-  firebase.auth().onAuthStateChanged(user => {
+  if (!_adminProfilesRef || !_adminAccessRef || !_assoMembersV2Ref ||
+      !_helloAssoSyncRef || typeof firebase.auth !== 'function') return;
+  firebase.auth().onAuthStateChanged(async user => {
+    const authVersion = ++_adminDataAuthVersion;
     if (_adminProfilesHandler) _adminProfilesRef.off('value', _adminProfilesHandler);
+    if (_adminAccessHandler) _adminAccessRef.off('value', _adminAccessHandler);
+    if (_assoMembersV2Handler) _assoMembersV2Ref.off('value', _assoMembersV2Handler);
+    if (_helloAssoSyncHandler) _helloAssoSyncRef.off('value', _helloAssoSyncHandler);
     _adminProfilesHandler = null;
+    _adminAccessHandler = null;
+    _assoMembersV2Handler = null;
+    _helloAssoSyncHandler = null;
     state.adminProfiles = [];
+    state.adminAccess = [];
+    _assoV2Ready = false;
+    _assoMembersV2 = [];
+    _assoMembersV2Loaded = false;
+    _assoV2Hydrated = false;
+    _helloAssoSyncSummary = null;
 
-    const email = (user?.email || '').trim().toLowerCase();
-    const allowed = (typeof ADMIN_EMAILS !== 'undefined' && Array.isArray(ADMIN_EMAILS))
-      ? ADMIN_EMAILS.some(adminEmail => adminEmail.trim().toLowerCase() === email)
+    const allowed = user && typeof ttfResolveAdminAccess === 'function'
+      ? await ttfResolveAdminAccess(user)
       : false;
+    if (authVersion !== _adminDataAuthVersion) return;
     if (!user || !allowed) {
       if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
       return;
@@ -2847,6 +2950,57 @@ function initAdminProfiles() {
     };
     _adminProfilesRef.on('value', _adminProfilesHandler, error => {
       console.warn('[Firebase] adminProfiles read failed', error);
+    });
+
+    _adminAccessHandler = snapshot => {
+      const raw = snapshot.val() || {};
+      state.adminAccess = Array.isArray(raw)
+        ? raw.filter(Boolean)
+        : Object.entries(raw).map(([uid, record]) => ({ uid, ...(record || {}) }));
+      if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
+    };
+    _adminAccessRef.on('value', _adminAccessHandler, error => {
+      console.warn('[Firebase] admin access read failed', error);
+    });
+
+    _assoMembersV2Handler = snapshot => {
+      const raw = snapshot.val() || {};
+      _assoMembersV2Loaded = true;
+      _assoMembersV2 = Array.isArray(raw)
+        ? raw.filter(Boolean)
+        : Object.entries(raw).map(([id, member]) => ({ id, ...(member || {}) }));
+      const expectedCount = Number(_helloAssoSyncSummary?.totalStored);
+      const migrationComplete = Number.isFinite(expectedCount) && expectedCount === _assoMembersV2.length;
+      if (_assoV2Ready && (_assoV2Hydrated || migrationComplete)) {
+        _assoV2Hydrated = true;
+        state.assoMembers = _assoMembersV2;
+        const dyn = extractDynamic();
+        _saveDynLocal(dyn);
+        if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
+        renderKPIs();
+      }
+    };
+    _assoMembersV2Ref.on('value', _assoMembersV2Handler, error => {
+      console.warn('[Firebase] v2 Asso members read failed', error);
+    });
+
+    _helloAssoSyncHandler = snapshot => {
+      const summary = snapshot.val();
+      _helloAssoSyncSummary = summary || null;
+      _assoV2Ready = !!summary && summary.schemaVersion >= 2;
+      const expectedCount = Number(summary?.totalStored);
+      const migrationComplete = Number.isFinite(expectedCount) && expectedCount === _assoMembersV2.length;
+      if (_assoV2Ready && _assoMembersV2Loaded && (_assoV2Hydrated || migrationComplete)) {
+        _assoV2Hydrated = true;
+        state.assoMembers = _assoMembersV2;
+        const dyn = extractDynamic();
+        _saveDynLocal(dyn);
+        if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
+        renderKPIs();
+      }
+    };
+    _helloAssoSyncRef.on('value', _helloAssoSyncHandler, error => {
+      console.warn('[Firebase] HelloAsso v2 marker read failed', error);
     });
   });
 }

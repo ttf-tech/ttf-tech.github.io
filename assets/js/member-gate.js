@@ -2,9 +2,9 @@
  * Gates public-page content behind Google Sign-In + membership check.
  *
  * A visitor counts as an "Adhésion member" if either:
- *   1. Their email is in ADMIN_EMAILS (assets/js/admin-config.js) — temporary
- *      stand-in until real HelloAsso-paid members exist, so staff can test
- *      gated blocks. Safe to remove once real members are onboarded.
+ *   1. Their Firebase UID is active in `access/admins`. ADMIN_EMAILS remains
+ *      only as a temporary bootstrap for administrators who have not created
+ *      their UID role record yet.
  *   2. Their email matches an entry in the `assoMembers` list (Firebase RTDB,
  *      same data the admin dashboard's "Asso Membres" tab manages) with a
  *      `joinedAt` less than MEMBER_GATE_VALID_DAYS old.
@@ -45,9 +45,13 @@ const _MG_FB_CONFIG = {
 
 let _mgUser = null;
 let _mgAssoMembers = [];
+let _mgOwnAssoMember = null;
 let _mgAuthResolved = false;
 let _mgMembershipResolved = false;
 let _mgHasSignInHint = false;
+let _mgAdminAccess = false;
+let _mgAdminAccessResolved = false;
+let _mgAdminCheckVersion = 0;
 
 function _mgNorm(email) {
   return (email || '').trim().toLowerCase();
@@ -55,8 +59,9 @@ function _mgNorm(email) {
 
 function _mgIsAdmin(email) {
   const norm = _mgNorm(email);
-  const admins = (typeof ADMIN_EMAILS !== 'undefined') ? ADMIN_EMAILS : [];
-  return !!norm && admins.some(admin => _mgNorm(admin) === norm);
+  if (!norm || !_mgUser || _mgNorm(_mgUser.email) !== norm) return false;
+  if (_mgAdminAccessResolved) return _mgAdminAccess;
+  return typeof ttfHasAdminAccess === 'function' ? ttfHasAdminAccess(_mgUser) : false;
 }
 
 function _mgLoadSignInHint() {
@@ -87,6 +92,8 @@ function ttfIsAdhesionMember(email) {
 
   if (_mgIsAdmin(norm)) return true;
 
+  if (_mgOwnAssoMember && _mgNorm(_mgOwnAssoMember.email) === norm) return true;
+
   return _mgAssoMembers.some(m => {
     if (_mgNorm(m.email) !== norm) return false;
     if (!m.joinedAt) return true; // no date on record — don't lock them out
@@ -98,7 +105,8 @@ function ttfIsAdhesionMember(email) {
 function _mgApplyToDom() {
   const isAdmin = _mgIsAdmin(_mgUser && _mgUser.email);
   const restoringAuth = _mgHasSignInHint && !_mgAuthResolved;
-  const checkingMembership = !!_mgUser && !isAdmin && !_mgMembershipResolved;
+  const checkingMembership = !!_mgUser &&
+    (!_mgAdminAccessResolved || (!isAdmin && !_mgMembershipResolved));
   const isRestoring = restoringAuth || checkingMembership;
   const hasAccess = !isRestoring && ttfIsAdhesionMember(_mgUser && _mgUser.email);
 
@@ -126,12 +134,31 @@ function ttfMemberGateInit() {
   _mgHasSignInHint = _mgLoadSignInHint();
   _mgApplyToDom();
 
-  firebase.auth().onAuthStateChanged(function (user) {
+  firebase.auth().onAuthStateChanged(async function (user) {
+    const checkVersion = ++_mgAdminCheckVersion;
     _mgUser = user;
+    _mgOwnAssoMember = null;
     _mgAuthResolved = true;
+    _mgAdminAccess = false;
+    _mgAdminAccessResolved = !user;
     _mgHasSignInHint = !!user;
     _mgSaveSignInHint(user);
     _mgApplyToDom();
+
+    if (user) {
+      _mgAdminAccess = typeof ttfResolveAdminAccess === 'function'
+        ? await ttfResolveAdminAccess(user)
+        : false;
+      if (checkVersion !== _mgAdminCheckVersion) return;
+      _mgAdminAccessResolved = true;
+
+      if (!_mgAdminAccess && typeof ttfResolveAssoMembership === 'function') {
+        const membership = await ttfResolveAssoMembership(user);
+        if (checkVersion !== _mgAdminCheckVersion) return;
+        _mgOwnAssoMember = membership?.active ? membership.member : null;
+      }
+      _mgApplyToDom();
+    }
   });
 
   if (typeof subscribeFirebaseData === 'function') {

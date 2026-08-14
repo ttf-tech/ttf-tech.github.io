@@ -13,7 +13,7 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Sync HelloAsso adhésions into Firebase
+      - name: Sync HelloAsso memberships into Firebase v2
         env:
           HELLOASSO_CLIENT_ID:     ${{ secrets.HELLOASSO_CLIENT_ID }}
           HELLOASSO_CLIENT_SECRET: ${{ secrets.HELLOASSO_CLIENT_SECRET }}

@@ -30,22 +30,21 @@
 
   let currentUser = null;
   let assoMembers = [];
+  let ownAssoV2 = null;
   let adminProfiles = [];
   let currentMember = null;
   let currentProfileSource = null;
   let ownAdminProfileRef = null;
   let ownAdminProfileHandler = null;
   let returnFocusTo = null;
+  let currentAdminAccess = false;
+  let adminCheckVersion = 0;
 
   const byId = id => document.getElementById(id);
   const norm = value => (value || '').trim().toLowerCase();
   const hasText = value => String(value || '').trim().length > 0;
   const isAdminAccount = () => {
-    if (!currentUser || !norm(currentUser.email)) return false;
-    const admins = (typeof ADMIN_EMAILS !== 'undefined' && Array.isArray(ADMIN_EMAILS))
-      ? ADMIN_EMAILS
-      : [];
-    return admins.some(email => norm(email) === norm(currentUser.email));
+    return !!currentUser && currentAdminAccess === true;
   };
 
   function missingFields(profile) {
@@ -89,9 +88,10 @@
 
   function refreshCurrentMember() {
     const signedInEmail = norm(currentUser && currentUser.email);
-    const ownAssoRecord = signedInEmail
+    const legacyAssoRecord = signedInEmail
       ? assoMembers.find(member => norm(member.email) === signedInEmail)
       : null;
+    const ownAssoRecord = ownAssoV2 || legacyAssoRecord;
     const ownAdminRecord = signedInEmail
       ? adminProfiles.find(profile => norm(profile.email) === signedInEmail)
       : null;
@@ -110,7 +110,10 @@
       };
       currentProfileSource = 'admin';
     } else if (ownAssoRecord && isActiveMember(ownAssoRecord)) {
-      currentMember = ownAssoRecord;
+      currentMember = {
+        ...ownAssoRecord,
+        _storageSource: ownAssoV2 ? 'v2' : 'legacy'
+      };
       currentProfileSource = 'asso';
     } else {
       currentMember = null;
@@ -283,31 +286,43 @@
         if (!result.committed) throw new Error('admin_profile_write_aborted');
         currentMember = { ...result.snapshot.val(), id: user.uid, uid: user.uid };
       } else {
-        const ref = firebase.database().ref('grp_hub_v2');
-        const result = await ref.transaction(current => {
-          if (!current || typeof current.data !== 'string') return;
+        if (currentMember._storageSource === 'v2' && currentMember.id) {
+          const memberRef = firebase.database().ref(`assoMembers/${currentMember.id}`);
+          const result = await memberRef.transaction(existing => {
+            if (!existing || norm(existing.email) !== email) return;
+            return { ...existing, ...fieldsToSave, profileUpdatedAt: now };
+          });
+          if (!result.committed) throw new Error('member_profile_v2_write_aborted');
+          ownAssoV2 = { ...result.snapshot.val(), id: currentMember.id };
+          currentMember = { ...ownAssoV2, _storageSource: 'v2' };
+        } else {
+          const ref = firebase.database().ref('grp_hub_v2');
+          const result = await ref.transaction(current => {
+            if (!current || typeof current.data !== 'string') return;
 
-          let dynamicData;
-          try { dynamicData = JSON.parse(current.data); } catch (_) { return; }
-          if (!Array.isArray(dynamicData.assoMembers)) return;
+            let dynamicData;
+            try { dynamicData = JSON.parse(current.data); } catch (_) { return; }
+            if (!Array.isArray(dynamicData.assoMembers)) return;
 
-          const assoIndex = dynamicData.assoMembers.findIndex(member => norm(member.email) === email);
-          if (assoIndex < 0 || (!isAdmin && !isActiveMember(dynamicData.assoMembers[assoIndex]))) return;
+            const assoIndex = dynamicData.assoMembers.findIndex(member => norm(member.email) === email);
+            if (assoIndex < 0 || (!isAdmin && !isActiveMember(dynamicData.assoMembers[assoIndex]))) return;
 
-          dynamicData.assoMembers[assoIndex] = {
-            ...dynamicData.assoMembers[assoIndex],
-            ...fieldsToSave,
-            profileUpdatedAt: now
-          };
-          const ts = Math.max(Date.now(), (current.ts || 0) + 1);
-          return { ...current, ts, data: JSON.stringify(dynamicData) };
-        });
-        if (!result.committed) throw new Error('member_profile_write_aborted');
-        currentMember = { ...currentMember, ...fieldsToSave, profileUpdatedAt: now };
+            dynamicData.assoMembers[assoIndex] = {
+              ...dynamicData.assoMembers[assoIndex],
+              ...fieldsToSave,
+              profileUpdatedAt: now
+            };
+            const ts = Math.max(Date.now(), (current.ts || 0) + 1);
+            return { ...current, ts, data: JSON.stringify(dynamicData) };
+          });
+          if (!result.committed) throw new Error('member_profile_write_aborted');
+          currentMember = { ...currentMember, ...fieldsToSave, profileUpdatedAt: now };
+        }
       }
 
       renderModalCompleteness(currentMember);
       setStatus('Profil enregistré avec succès. · 會員資料已成功儲存。', false);
+      closeModal();
     } catch (error) {
       console.warn('[member-profile] save failed', error);
       setStatus('Impossible d’enregistrer. Réessayez plus tard. · 無法儲存，請稍後再試。', true);
@@ -360,10 +375,27 @@
       if (event.key === 'Escape') closeModal();
     });
 
-    firebase.auth().onAuthStateChanged(user => {
+    firebase.auth().onAuthStateChanged(async user => {
+      const checkVersion = ++adminCheckVersion;
       currentUser = user;
+      currentAdminAccess = false;
+      ownAssoV2 = null;
       watchOwnAdminProfile(user);
       refreshCurrentMember();
+
+      if (user) {
+        currentAdminAccess = typeof ttfResolveAdminAccess === 'function'
+          ? await ttfResolveAdminAccess(user)
+          : false;
+        if (checkVersion !== adminCheckVersion) return;
+        if (!currentAdminAccess && typeof ttfResolveAssoMembership === 'function') {
+          const membership = await ttfResolveAssoMembership(user);
+          if (checkVersion !== adminCheckVersion) return;
+          ownAssoV2 = membership?.active ? membership.member : null;
+        }
+        watchOwnAdminProfile(user);
+        refreshCurrentMember();
+      }
     });
     if (typeof subscribeFirebaseData === 'function') {
       subscribeFirebaseData(data => {

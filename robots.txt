@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /database.rules.json
+Disallow: /firebase.json
+Disallow: /scripts/
+
+Sitemap: https://ttf-tech.github.io/sitemap.xml

@@ -305,6 +305,39 @@
       .content-form .form-full { grid-column: 1; }
       .content-cta-card { padding: 1.5rem 1.25rem; }
     }
+
+    /* Contributeurs panel */
+    .contrib-panel {
+      background: #eef3f7; border-radius: 18px; padding: 2rem 2.25rem;
+      display: flex; flex-wrap: wrap; gap: 2rem; align-items: center;
+    }
+    .contrib-text { flex: 1; min-width: 220px; }
+    .contrib-eyebrow {
+      font-size: 0.7rem; font-weight: 800; color: #1d4ed8;
+      text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem;
+    }
+    .contrib-title { font-size: 1.6rem; font-weight: 900; color: #0f172a; margin-bottom: 0.6rem; line-height: 1.15; }
+    .contrib-desc { font-size: 0.82rem; color: #475569; line-height: 1.55; max-width: 320px; }
+    .contrib-card { flex: 1.2; min-width: 280px; display: grid; grid-template-columns: 1fr 1fr; }
+    .contrib-cell { padding: 1rem 1.5rem; border-top: 1px solid #cbd5e1; }
+    .contrib-cell:nth-child(1), .contrib-cell:nth-child(2) { border-top: none; }
+    .contrib-cell:nth-child(odd) { border-right: 1px solid #cbd5e1; }
+    .contrib-label {
+      font-size: 0.62rem; font-weight: 700; color: #64748b;
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem;
+    }
+    .contrib-name {
+      font-size: 1.15rem; font-weight: 800; color: #0f172a; text-decoration: underline;
+      text-decoration-color: #94a3b8; text-underline-offset: 3px;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .contrib-name:hover { color: #1d4ed8; }
+    .contrib-name i { font-size: 0.85rem; color: #0a66c2; }
+    @media (max-width: 620px) {
+      .contrib-card { grid-template-columns: 1fr; }
+      .contrib-cell:nth-child(odd) { border-right: none; }
+      .contrib-cell:nth-child(2) { border-top: 1px solid #cbd5e1; }
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen">
@@ -527,6 +560,35 @@
           </div>
         </div>
 
+      </div>
+    </section>
+
+    <!-- ── CONTRIBUTEURS ───────────────────────────────────────────── -->
+    <section class="assoc-section">
+      <div class="contrib-panel">
+        <div class="contrib-text">
+          <div class="contrib-eyebrow">Contributeurs</div>
+          <h2 class="contrib-title">Les artisans du site.</h2>
+          <p class="contrib-desc">Une équipe bénévole conçoit, développe et assure le lien avec Taïwan pour la présence numérique de l'association.</p>
+        </div>
+        <div class="contrib-card">
+          <div class="contrib-cell">
+            <div class="contrib-label">Architecture du portail</div>
+            <a class="contrib-name" href="https://www.linkedin.com/in/yating-h-a9b1a221/" target="_blank" rel="noopener me">Yating <i class="fab fa-linkedin"></i></a>
+          </div>
+          <div class="contrib-cell">
+            <div class="contrib-label">Développement full stack</div>
+            <a class="contrib-name" href="https://www.linkedin.com/in/hsucheng-huang/" target="_blank" rel="noopener me">Aloma <i class="fab fa-linkedin"></i></a>
+          </div>
+          <div class="contrib-cell">
+            <div class="contrib-label">Secrétariat de liaison Taipei</div>
+            <a class="contrib-name" href="https://www.linkedin.com/in/wanchi-zoe-tsai/" target="_blank" rel="noopener me">Zoe <i class="fab fa-linkedin"></i></a>
+          </div>
+          <div class="contrib-cell">
+            <div class="contrib-label">Connexion Taipei</div>
+            <a class="contrib-name" href="https://www.linkedin.com/in/wallace-lin-7704039b/" target="_blank" rel="noopener me">Wallace <i class="fab fa-linkedin"></i></a>
+          </div>
+        </div>
       </div>
     </section>
 

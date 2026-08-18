@@ -18,7 +18,36 @@
   <link rel="stylesheet" href="assets/css/stastic_member.css">
   <link rel="stylesheet" href="assets/css/layout.css">
 
+  <!-- Structured data: credits site architecture & development to their authors on LinkedIn -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "name": "Yating Chatiron",
+        "alternateName": "Yating Hsu",
+        "jobTitle": "Site Portal Resource Architect",
+        "sameAs": ["https://www.linkedin.com/in/yating-h-a9b1a221/"]
+      },
+      {
+        "@type": "Person",
+        "name": "Hsucheng Huang",
+        "jobTitle": "Full Stack Developer",
+        "sameAs": ["https://www.linkedin.com/in/hsucheng-huang/"]
+      }
+    ]
+  }
+  </script>
+
   <style>
+    .credit-linkedin {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; border-radius: 4px;
+      color: #0a66c2; margin: 0 0.15rem; font-size: 0.85rem;
+      vertical-align: -2px;
+    }
+    .credit-linkedin:hover { color: #004182; }
     /* Sidebar styles: assets/css/layout.css */
 
     .page-header { padding: 1.75rem 1.5rem 1.5rem; }
@@ -218,7 +247,12 @@
           <strong>Code source :</strong> <a href="https://github.com/ttf-tech/ttf-tech.github.io" target="_blank" rel="noopener" style="color:#0369a1;">github.com/ttf-tech/ttf-tech.github.io</a> (open source · 開源)<br>
           <strong>Base de données :</strong> Firebase Realtime Database — Google Ireland Ltd. · 網站資料庫（會員、活動、投票等資料）<br>
           <strong>Authentification :</strong> Google SSO via Firebase Authentication · 管理後台採用 Google 帳號單一登入<br>
-          <strong>Architecture &amp; développement :</strong> Conçu et développé par <a href="https://www.linkedin.com/in/yating-h-a9b1a221/" target="_blank" rel="noopener" style="color:#0369a1;">Yating Chatiron (Hsu)</a> · 網站架構與開發
+          <strong>Architecture du portail :</strong> Conçue par Yating Chatiron (Hsu)
+          <a class="credit-linkedin" href="https://www.linkedin.com/in/yating-h-a9b1a221/" target="_blank" rel="noopener me" aria-label="Profil LinkedIn de Yating Chatiron"><i class="fab fa-linkedin"></i></a>
+          · 網站入口架構規劃<br>
+          <strong>Développement full stack :</strong> Développé par Hsucheng Huang
+          <a class="credit-linkedin" href="https://www.linkedin.com/in/hsucheng-huang/" target="_blank" rel="noopener me" aria-label="Profil LinkedIn de Hsucheng Huang"><i class="fab fa-linkedin"></i></a>
+          · 全端開發
         </div>
       </div>
 

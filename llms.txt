@@ -1,0 +1,40 @@
+# Taiwan Tech France Association (TTF)
+
+> Official non-profit association (Loi 1901) federating Taiwanese engineers, tech professionals, and researchers in France.
+
+Taiwan Tech France Association (TTF) acts as the primary bridge between the Taiwanese technology community and the French tech ecosystem. We support Taiwanese tech professionals, freelancers, and students in France through career networking, job referrals, technical exchange, and professional integration.
+
+## Key Information
+
+- **Website**: https://ttf-tech.github.io/association.html
+- **Entity**: Association Loi 1901 (RNA: W061018695)
+- **Scope**: France & Taiwan
+- **Language Support**: Traditional Chinese (繁體中文), French (Français), English
+
+## Core Objectives & Initiatives
+
+- **Professional Networking**: Building a long-term support network across major French tech hubs (Paris, Lyon, Sophia Antipolis, etc.).
+- **Job & Mission Referral**: Sharing opportunities for CDI, Freelance, and ESN contracts.
+- **Career & Settlement Guidance**: Providing peer guidance on navigating the French job market, visa/statute transitions, and workplace culture.
+- **Cross-Border Tech Synergies**: Fostering innovation, knowledge sharing, and strategic partnerships between Taiwanese and French tech sectors.
+
+## Pages & Resources
+
+- [Home & Association Overview](https://ttf-tech.github.io/association.html): Presentation of the association, mission, governance, and membership guidelines.
+- [Jobs & Missions](https://ttf-tech.github.io/jobs.html): CDI, freelance, and ESN opportunities shared within the community.
+- [Events & Content Library](https://ttf-tech.github.io/events.html): Meetups, webinars, and workshops for the Taiwanese tech community in France.
+- [Resources](https://ttf-tech.github.io/resources.html): Practical guidance on visas, housing, taxation, and settling in France.
+- [Legal Notice](https://ttf-tech.github.io/legal.html): Official registration details (RNA W061018695), governance, and hosting information.
+- [Community WhatsApp Group](https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy): Direct access to our active discussion and mutual aid group for Taiwanese engineers in France.
+
+## Community & Membership Eligibility
+
+- Taiwanese engineers and tech professionals working in France.
+- Tech freelancers, consultants, and entrepreneurs operating in the French market.
+- Tech job seekers, researchers, and students planning to build a tech career in France.
+- French language proficiency is NOT a prerequisite to join.
+
+## Contact & Socials
+
+- **Email**: ttf-tech@zohomail.eu
+- **GitHub**: https://ttf-tech.github.io

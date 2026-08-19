@@ -214,6 +214,42 @@
 
     /* Bottom spacing */
     .page-bottom { height: 2.5rem; }
+
+    @media (max-width: 640px) {
+      .page-header { padding: 1.25rem 1rem; }
+      .coffee-banner,
+      .topic-bar,
+      .events-section { padding-left: 1rem; padding-right: 1rem; }
+      .coffee-card { padding: 1.25rem 1rem; gap: 1rem; }
+      .coffee-left { min-width: 0; }
+      .coffee-actions { width: 100%; }
+      .coffee-book-btn {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+        text-align: center;
+        white-space: normal;
+      }
+      .coffee-note { width: 100%; text-align: left; }
+      .topic-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 0.4rem;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+      }
+      .topic-chip { min-height: 40px; }
+      .events-section { margin-top: 1.25rem; }
+      .section-title { align-items: flex-start; line-height: 1.4; }
+      .ev-date-col { min-width: 48px; padding: 0.65rem 0.4rem; }
+      .ev-body { padding: 0.8rem; }
+      .ev-upcoming-badge,
+      .ev-past-badge { margin-left: 0; }
+      .ev-actions { align-items: stretch; }
+      .ev-btn { min-height: 40px; justify-content: center; }
+      .speakers-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen">

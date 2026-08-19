@@ -55,6 +55,32 @@
       outline: 3px solid #fde68a;
       outline-offset: 3px;
     }
+
+    @media (max-width: 640px) {
+      #auth-overlay { padding: 1.25rem; box-sizing: border-box; }
+      #auth-overlay > div { min-width: 0; }
+      #signin-btn { width: 100%; min-height: 44px; justify-content: center; }
+      .site-dashboard-hero-inner { padding: 1.5rem 1rem 1rem !important; }
+      .site-dashboard-hero-logo { height: 88px !important; }
+      .site-dashboard-hero-actions {
+        display: grid !important;
+        grid-template-columns: 1fr;
+        gap: 0.65rem;
+      }
+      .site-dashboard-hero-actions > * {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+        text-align: center;
+      }
+      #asso-member-modal .sm-modal-body > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+      }
+      #comptable-summary,
+      .comptable-list-wrap { padding-left: 1rem !important; padding-right: 1rem !important; }
+      #export-csv-dropdown { left: 0; right: auto !important; max-width: calc(100vw - 6.5rem); }
+    }
   </style>
 
   <script>
@@ -167,12 +193,12 @@
   <main role="main" class="flex-1 ml-16">
 
     <!-- ── DARK HEADER ───────────────────────────────────────── -->
-    <div style="background: linear-gradient(160deg, #eef4fb 0%, #ffffff 60%); border-bottom: 1px solid #e2e8f0;">
-      <div class="max-w-screen-xl mx-auto px-5 pt-8 pb-4">
+    <div class="site-dashboard-hero" style="background: linear-gradient(160deg, #eef4fb 0%, #ffffff 60%); border-bottom: 1px solid #e2e8f0;">
+      <div class="site-dashboard-hero-inner max-w-screen-xl mx-auto px-5 pt-8 pb-4">
 
         <!-- ── Hero: community identity ──────────────────────── -->
         <div class="text-center" style="margin-bottom:1.5rem;">
-          <img src="logo.png" alt="Taiwan Tech France" style="height:120px;width:auto;margin:0 auto 0.5rem;display:block;filter:drop-shadow(0 2px 8px rgba(15,23,42,0.12));">
+          <img class="site-dashboard-hero-logo" src="logo.png" alt="Taiwan Tech France" style="height:120px;width:auto;margin:0 auto 0.5rem;display:block;filter:drop-shadow(0 2px 8px rgba(15,23,42,0.12));">
           <div style="font-size:0.95rem;color:rgba(7,57,129,0.65);margin-top:0.35rem;">
             在法臺灣科技社群 · Communauté tech taïwanaise en France
           </div>
@@ -199,7 +225,7 @@
         </div>
 
         <!-- ── CTAs ──────────────────────────────────────────── -->
-        <div class="flex flex-wrap gap-3 justify-center" style="margin-bottom:1.5rem;">
+        <div class="site-dashboard-hero-actions flex flex-wrap gap-3 justify-center" style="margin-bottom:1.5rem;">
           <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener"
              class="sm-hero-cta-primary">
             <i class="fab fa-whatsapp"></i> Join WhatsApp · 加入群組
@@ -773,7 +799,7 @@
         </div>
       </div>
 
-      <div style="max-width:960px;margin:0 auto;padding:0 1.5rem 2rem;">
+      <div class="comptable-list-wrap" style="max-width:960px;margin:0 auto;padding:0 1.5rem 2rem;">
         <div id="expense-list"><!-- Injected by JS --></div>
       </div>
 

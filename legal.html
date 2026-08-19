@@ -151,6 +151,37 @@
       padding: 1rem 1.25rem; font-size: 0.75rem; color: #64748b; line-height: 1.6;
     }
     .hosting-note strong { color: #0f172a; }
+
+    @media (max-width: 640px) {
+      .page-header { padding: 1.25rem 1rem; }
+      .legal-wrap { margin-top: 1.25rem; padding: 0 1rem; }
+      .rna-hero {
+        align-items: flex-start;
+        gap: 0.9rem;
+        padding: 1.2rem 1rem;
+      }
+      .rna-number { font-size: 1.25rem; overflow-wrap: anywhere; }
+      .rna-verify {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 44px;
+        margin-left: 0;
+        justify-content: center;
+        text-align: center;
+      }
+      .legal-section-title { align-items: flex-start; line-height: 1.45; }
+      .legal-card { padding: 0.85rem 1rem; }
+      .legal-row {
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 0.65rem 0;
+      }
+      .legal-key { min-width: 0; }
+      .legal-val,
+      .hosting-note { overflow-wrap: anywhere; }
+      .why-grid { grid-template-columns: 1fr; }
+      .why-card { padding: 0.85rem; }
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen">

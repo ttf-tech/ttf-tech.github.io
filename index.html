@@ -362,6 +362,168 @@
       .idx-content-form .form-full { grid-column: 1; }
       .index-content-card { padding: 1.5rem 1.25rem; }
     }
+
+    @media (max-width: 640px) {
+      .site-dashboard-hero-inner { padding: 1.5rem 1rem !important; }
+      .site-dashboard-hero-logo { height: 88px !important; }
+      .site-dashboard-hero-actions {
+        display: grid !important;
+        grid-template-columns: 1fr;
+        gap: 0.65rem;
+      }
+      .site-dashboard-hero-actions > *,
+      .site-dashboard-hero-actions .sm-hero-cta-primary,
+      .site-dashboard-hero-actions .sm-hero-cta-secondary,
+      .site-dashboard-hero-actions .upgrade-to-asso-banner.inline-btn {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+        text-align: center;
+        white-space: normal;
+      }
+      .pub-section,
+      .activity-strip,
+      .pub-stats-wrap,
+      .about-section,
+      .pub-join,
+      .form-sep,
+      .index-partner-wrap,
+      .index-content-wrap { padding-left: 1rem; padding-right: 1rem; }
+      .pub-section-head,
+      .pub-stats-head { align-items: flex-start; gap: 0.75rem; }
+      .pub-section-title,
+      .pub-stats-title { line-height: 1.4; }
+      .pub-section-viewall { min-height: 40px; flex-shrink: 0; }
+      .pub-event-card { gap: 0.75rem; padding: 0.8rem; }
+      .activity-strip,
+      .pub-stats-grid,
+      .about-cards-grid { grid-template-columns: 1fr; }
+      .pub-stat-card,
+      .activity-card { min-width: 0; }
+      .pub-stat-card-head { align-items: flex-start; }
+      .about-welcome { align-items: flex-start; }
+      .about-coffee-strip {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1.1rem;
+        padding: 1.35rem 1rem 1rem;
+        border-radius: 16px;
+      }
+      .about-coffee-strip::before {
+        top: 0.85rem;
+        right: 0.75rem;
+        transform: none;
+        font-size: 3.5rem;
+        opacity: 0.08;
+      }
+      .about-coffee-strip-left,
+      .pub-join-text { min-width: 0; }
+      .about-coffee-strip-left { width: 100%; }
+      .about-coffee-strip-eyebrow {
+        max-width: calc(100% - 3rem);
+        margin-bottom: 0.65rem;
+        line-height: 1.45;
+      }
+      .about-coffee-strip-title {
+        max-width: calc(100% - 1rem);
+        margin-bottom: 0.65rem;
+        font-size: 1.08rem;
+        line-height: 1.4;
+      }
+      .about-coffee-strip-desc {
+        margin-bottom: 1rem;
+        font-size: 0.78rem;
+        line-height: 1.7;
+        color: rgba(255,255,255,0.78);
+      }
+      .about-coffee-strip-desc > span {
+        display: block;
+        margin-top: 0.55rem;
+        padding-top: 0.55rem;
+        border-top: 1px solid rgba(255,255,255,0.12);
+        line-height: 1.65;
+      }
+      .about-coffee-chips {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.45rem;
+      }
+      .about-coffee-chip {
+        display: flex;
+        align-items: center;
+        min-width: 0;
+        padding: 0.4rem 0.55rem;
+        border-radius: 8px;
+        font-size: 0.67rem;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+      .about-coffee-strip > .restricted-asso-content {
+        width: 100%;
+      }
+      .about-coffee-strip-cta {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+        text-align: center;
+        white-space: normal;
+      }
+      .about-coffee-strip > .upgrade-to-asso-banner.inline-dark {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: none !important;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255,255,255,0.16);
+        gap: 0.75rem;
+      }
+      .about-coffee-strip > .upgrade-to-asso-banner.inline-dark > div:last-child {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 0.5rem !important;
+      }
+      .about-coffee-strip .upgrade-to-asso-signin-btn,
+      .about-coffee-strip .upgrade-to-asso-join-btn {
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        min-height: 44px;
+        padding: 0.6rem 0.7rem;
+        justify-content: center;
+        white-space: normal;
+        text-align: center;
+      }
+      .pub-join-card { padding: 1.5rem 1rem; gap: 1.25rem; }
+      .pub-join-actions { width: 100%; }
+      .pub-join-actions > * {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+        text-align: center;
+      }
+      .form-sep { gap: 0.5rem; }
+      .form-sep-pill {
+        max-width: calc(100% - 2rem);
+        white-space: normal;
+        text-align: center;
+        line-height: 1.4;
+      }
+      .index-partner-card,
+      .index-content-card { padding: 1.5rem 1rem; }
+      .form-input,
+      .form-select { min-height: 44px; }
+      .form-submit,
+      .content-submit-idx {
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+      }
+      #qr-modal > div { max-height: calc(100dvh - 2rem); overflow-y: auto; }
+      #qr-close-btn { width: 44px !important; height: 44px !important; }
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 flex flex-col min-h-screen">
@@ -375,11 +537,11 @@
   <main class="flex-1 ml-16">
 
     <!-- ── HERO ────────────────────────────────────────────────── -->
-    <div style="background: linear-gradient(160deg, #eef4fb 0%, #ffffff 60%); border-bottom: 1px solid #e2e8f0;">
-      <div class="max-w-screen-xl mx-auto px-5 pt-8 pb-6">
+    <div class="site-dashboard-hero" style="background: linear-gradient(160deg, #eef4fb 0%, #ffffff 60%); border-bottom: 1px solid #e2e8f0;">
+      <div class="site-dashboard-hero-inner max-w-screen-xl mx-auto px-5 pt-8 pb-6">
 
         <div class="text-center" style="margin-bottom:1.5rem;">
-          <img src="logo.png" alt="Taiwan Tech France" style="height:120px;width:auto;margin:0 auto 0.5rem;display:block;filter:drop-shadow(0 2px 8px rgba(15,23,42,0.12));">
+          <img class="site-dashboard-hero-logo" src="logo.png" alt="Taiwan Tech France" style="height:120px;width:auto;margin:0 auto 0.5rem;display:block;filter:drop-shadow(0 2px 8px rgba(15,23,42,0.12));">
           <div style="font-size:0.95rem;color:rgba(7,57,129,0.65);margin-top:0.35rem;">
             在法臺灣科技社群 · Communauté tech taïwanaise en France
           </div>
@@ -404,7 +566,7 @@
           </div>
         </div>
 
-        <div class="flex flex-wrap gap-3 justify-center">
+        <div class="site-dashboard-hero-actions flex flex-wrap gap-3 justify-center">
           <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener"
              class="sm-hero-cta-primary">
             <i class="fab fa-whatsapp"></i> Join WhatsApp · 加入群組

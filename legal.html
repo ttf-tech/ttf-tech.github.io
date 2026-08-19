@@ -78,7 +78,13 @@
     .page-header { padding: 1.75rem 1.5rem 1.5rem; }
     .page-header-inner { max-width: 720px; }
 
-    .legal-wrap { max-width: 720px; margin: 1.75rem auto 3rem; padding: 0 1.5rem; }
+    .legal-wrap {
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 760px;
+      margin: 1.75rem auto 3rem;
+      padding: 0 1.5rem;
+    }
 
     /* RNA hero card */
     .rna-hero {
@@ -106,7 +112,7 @@
     .rna-verify:hover { background: #15803d; }
 
     /* Legal sections */
-    .legal-section { margin-bottom: 1.5rem; }
+    .legal-section { min-width: 0; margin-bottom: 1.5rem; }
     .legal-section-title {
       font-size: 0.72rem; font-weight: 800; color: #0f172a;
       text-transform: uppercase; letter-spacing: 0.07em;
@@ -115,8 +121,10 @@
       display: flex; align-items: center; gap: 0.45rem;
     }
     .legal-card {
-      background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+      min-width: 0; overflow: hidden;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
       padding: 1.1rem 1.25rem;
+      box-shadow: 0 3px 12px rgba(15,23,42,0.04);
     }
     .legal-row {
       display: flex; gap: 1rem; padding: 0.5rem 0;
@@ -128,15 +136,19 @@
       text-transform: uppercase; letter-spacing: 0.05em;
       min-width: 130px; flex-shrink: 0; padding-top: 0.05rem;
     }
-    .legal-val { font-size: 0.82rem; color: #0f172a; line-height: 1.5; }
+    .legal-val {
+      min-width: 0; font-size: 0.82rem; color: #0f172a; line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
     .legal-val a { color: #0369a1; text-decoration: none; }
     .legal-val a:hover { text-decoration: underline; }
 
     /* Why RNA section */
-    .why-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 0.65rem; }
+    .why-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 0.75rem; }
     .why-card {
-      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
-      padding: 0.9rem 1rem; display: flex; align-items: flex-start; gap: 0.65rem;
+      min-width: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+      padding: 1rem; display: flex; align-items: flex-start; gap: 0.65rem;
+      box-shadow: 0 3px 12px rgba(15,23,42,0.04);
     }
     .why-icon {
       width: 32px; height: 32px; border-radius: 8px; display: flex;
@@ -147,10 +159,23 @@
 
     /* Hosting notice */
     .hosting-note {
-      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
-      padding: 1rem 1.25rem; font-size: 0.75rem; color: #64748b; line-height: 1.6;
+      min-width: 0; overflow: hidden;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 14px;
+      padding: 0.55rem 1.25rem; font-size: 0.78rem; color: #475569; line-height: 1.6;
+      box-shadow: 0 3px 12px rgba(15,23,42,0.04);
     }
     .hosting-note strong { color: #0f172a; }
+    .hosting-row {
+      min-width: 0; padding: 0.65rem 0; border-bottom: 1px solid #f1f5f9;
+      overflow-wrap: anywhere;
+    }
+    .hosting-row:last-child { border-bottom: 0; }
+    .hosting-row a { color: #0369a1; text-decoration: none; }
+    .hosting-row a:hover { text-decoration: underline; }
+
+    @media (max-width: 760px) {
+      .why-grid { grid-template-columns: 1fr; }
+    }
 
     @media (max-width: 640px) {
       .page-header { padding: 1.25rem 1rem; }
@@ -179,8 +204,16 @@
       .legal-key { min-width: 0; }
       .legal-val,
       .hosting-note { overflow-wrap: anywhere; }
-      .why-grid { grid-template-columns: 1fr; }
       .why-card { padding: 0.85rem; }
+      .hosting-note { padding: 0.35rem 1rem; }
+    }
+
+    @media (max-width: 320px) {
+      .page-header { padding: 1rem 0.75rem; }
+      .legal-wrap { padding: 0 0.75rem; }
+      .rna-hero { padding: 1rem 0.8rem; }
+      .rna-icon { width: 44px; height: 44px; border-radius: 12px; }
+      .legal-card { padding: 0.75rem 0.8rem; }
     }
   </style>
 </head>
@@ -272,7 +305,6 @@
               · 台北聯絡秘書
             </div>
           </div>
-          </div>
         </div>
       </div>
 
@@ -307,16 +339,20 @@
           Hébergement · 網站託管
         </div>
         <div class="hosting-note">
-          <strong>Hébergeur :</strong> GitHub Pages — GitHub, Inc. · 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA<br>
-          <strong>Code source :</strong> <a href="https://github.com/ttf-tech/ttf-tech.github.io" target="_blank" rel="noopener" style="color:#0369a1;">github.com/ttf-tech/ttf-tech.github.io</a> (open source · 開源)<br>
-          <strong>Base de données :</strong> Firebase Realtime Database — Google Ireland Ltd. · 網站資料庫（會員、活動、投票等資料）<br>
-          <strong>Authentification :</strong> Google SSO via Firebase Authentication · 管理後台採用 Google 帳號單一登入<br>
-          <strong>Architecture du portail :</strong> Conçue par Yating Chatiron (Hsu)
-          <a class="credit-linkedin" href="https://www.linkedin.com/in/yating-h-a9b1a221/" target="_blank" rel="noopener me" aria-label="Profil LinkedIn de Yating Chatiron"><i class="fab fa-linkedin"></i></a>
-          · 網站入口架構規劃<br>
-          <strong>Développement full stack :</strong> Développé par Hsucheng Huang
-          <a class="credit-linkedin" href="https://www.linkedin.com/in/hsucheng-huang/" target="_blank" rel="noopener me" aria-label="Profil LinkedIn de Hsucheng Huang"><i class="fab fa-linkedin"></i></a>
-          · 全端開發
+          <div class="hosting-row"><strong>Hébergeur :</strong> GitHub Pages — GitHub, Inc. · 88 Colin P Kelly Jr St, San Francisco, CA 94107, USA</div>
+          <div class="hosting-row"><strong>Code source :</strong> <a href="https://github.com/ttf-tech/ttf-tech.github.io" target="_blank" rel="noopener">github.com/ttf-tech/ttf-tech.github.io</a> (open source · 開源)</div>
+          <div class="hosting-row"><strong>Base de données :</strong> Firebase Realtime Database — Google Ireland Ltd. · 網站資料庫（會員、活動、投票等資料）</div>
+          <div class="hosting-row"><strong>Authentification :</strong> Google SSO via Firebase Authentication · 管理後台採用 Google 帳號單一登入</div>
+          <div class="hosting-row">
+            <strong>Architecture du portail :</strong> Conçue par Yating Chatiron (Hsu)
+            <a class="credit-linkedin" href="https://www.linkedin.com/in/yating-h-a9b1a221/" target="_blank" rel="noopener me" aria-label="Profil LinkedIn de Yating Chatiron"><i class="fab fa-linkedin"></i></a>
+            · 網站入口架構規劃
+          </div>
+          <div class="hosting-row">
+            <strong>Développement full stack :</strong> Développé par Hsucheng Huang
+            <a class="credit-linkedin" href="https://www.linkedin.com/in/hsucheng-huang/" target="_blank" rel="noopener me" aria-label="Profil LinkedIn de Hsucheng Huang"><i class="fab fa-linkedin"></i></a>
+            · 全端開發
+          </div>
         </div>
       </div>
 

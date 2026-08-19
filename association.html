@@ -350,6 +350,73 @@
       .contrib-cell:nth-child(odd) { border-right: none; }
       .contrib-cell:nth-child(2) { border-top: 1px solid #cbd5e1; }
     }
+
+    @media (max-width: 640px) {
+      .page-inner,
+      .assoc-section,
+      .cta-wrap,
+      .form-sep,
+      .partner-cta-wrap,
+      .content-cta-wrap { padding-left: 1rem; padding-right: 1rem; }
+      .page-hero { padding: 1.5rem 1rem; }
+      .page-hero h1 { font-size: 1.4rem; line-height: 1.25; }
+      .founding-pill { line-height: 1.35; }
+      .assoc-section { margin-top: 1.5rem; }
+      .assoc-section-title { align-items: flex-start; line-height: 1.45; }
+      .benefits-grid,
+      .volunteer-grid,
+      .partner-grid { grid-template-columns: 1fr; }
+      .endorsement-card { padding: 1.2rem 1rem; }
+      .endorsement-header { align-items: flex-start; }
+      .office-address { overflow-wrap: anywhere; }
+      .benefit-card,
+      .volunteer-card,
+      .partner-card { padding: 0.9rem; }
+      .contrib-panel { padding: 1.25rem 1rem; gap: 1.25rem; }
+      .contrib-text,
+      .contrib-card { min-width: 0; width: 100%; }
+      .contrib-title { font-size: 1.25rem; }
+      .contrib-desc { max-width: none; }
+      .contrib-cell { padding: 0.85rem 0.5rem; }
+      .tl-step { gap: 0.75rem; }
+      .tl-active-pill { display: flex; width: fit-content; margin: 0.3rem 0 0; }
+      .cta-card,
+      .partner-cta-card,
+      .content-cta-card {
+        padding: 1.5rem 1rem;
+        gap: 1.25rem;
+      }
+      .cta-text { min-width: 0; }
+      .cta-actions { width: 100%; }
+      .cta-btn-primary,
+      .cta-btn-secondary,
+      .cta-btn-adhesion {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+        text-align: center;
+      }
+      .form-sep { gap: 0.5rem; }
+      .form-sep-pill {
+        max-width: calc(100% - 2rem);
+        white-space: normal;
+        text-align: center;
+        line-height: 1.4;
+      }
+      .partner-form,
+      .content-form { grid-template-columns: 1fr; }
+      .partner-form .form-full,
+      .content-form .form-full { grid-column: 1; }
+      .form-input,
+      .form-select { min-height: 44px; }
+      .form-submit,
+      .content-submit {
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+      }
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen">

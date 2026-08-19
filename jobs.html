@@ -139,6 +139,42 @@
       background: #fff; border: 1px dashed #e2e8f0; border-radius: 12px;
     }
     .jobs-empty i { display: block; font-size: 2rem; opacity: 0.2; margin-bottom: 0.5rem; }
+
+    @media (max-width: 640px) {
+      .page-header { padding: 1.25rem 1rem; }
+      .filter-bar,
+      .jobs-wrap { padding-left: 1rem; padding-right: 1rem; }
+      .filter-search-wrap { min-height: 44px; box-sizing: border-box; }
+      .jobs-count { white-space: normal; text-align: right; }
+      .filter-row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 0.35rem;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+      }
+      .filter-row-label {
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        align-self: stretch;
+        display: inline-flex;
+        align-items: center;
+        background: #f3f4f6;
+      }
+      .fchip { min-height: 40px; }
+      .job-card-head { padding: 0.75rem 0.85rem 0; }
+      .job-card-body { padding: 0.4rem 0.85rem 0.9rem; }
+      .job-status-open,
+      .job-status-closed { margin-left: 0; }
+      .job-date { width: 100%; margin-left: 0; }
+      .job-expand-btn,
+      .job-cv-btn { min-height: 40px; }
+      .upgrade-to-asso-banner[style] {
+        margin-left: 1rem !important;
+        margin-right: 1rem !important;
+      }
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen">

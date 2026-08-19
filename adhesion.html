@@ -299,6 +299,116 @@
 
     /* overflow-x safety for compare table on mobile */
     .compare-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .compare-mobile { display: none; }
+
+    @media (max-width: 640px) {
+      .page-inner,
+      .adh-section,
+      .cta-wrap { padding-left: 1rem; padding-right: 1rem; }
+      .page-hero { padding: 1.5rem 1rem; }
+      .page-hero h1 { font-size: 1.4rem; line-height: 1.25; }
+      .hero-pill { line-height: 1.35; }
+      .adh-section { margin-top: 1.5rem; }
+      .section-title { align-items: flex-start; line-height: 1.45; }
+      .type-grid,
+      .pricing-grid { grid-template-columns: 1fr; }
+      .type-card,
+      .price-card { padding: 1.2rem 1rem; }
+      .compare-scroll { display: none; }
+      .compare-mobile { display: grid; gap: 0.75rem; }
+      .compare-mobile-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 1rem;
+        background: #fff;
+      }
+      .compare-mobile-card.shared {
+        border-color: #86efac;
+        background: linear-gradient(145deg, #f0fdf4 0%, #fff 75%);
+      }
+      .compare-mobile-card.official {
+        border-color: #c4b5fd;
+        background: linear-gradient(145deg, #faf5ff 0%, #fff 75%);
+      }
+      .compare-mobile-card.price {
+        border-color: #cbd5e1;
+        background: #f8fafc;
+      }
+      .compare-mobile-head {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.7rem;
+        margin-bottom: 0.75rem;
+      }
+      .compare-mobile-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 0.9rem;
+      }
+      .shared .compare-mobile-icon { background: #dcfce7; color: #15803d; }
+      .official .compare-mobile-icon { background: #ede9fe; color: #7c3aed; }
+      .price .compare-mobile-icon { background: #e2e8f0; color: #475569; }
+      .compare-mobile-title { font-size: 0.86rem; font-weight: 800; color: #0f172a; line-height: 1.35; }
+      .compare-mobile-sub { margin-top: 0.1rem; font-size: 0.68rem; color: #64748b; line-height: 1.4; }
+      .compare-mobile-list { display: grid; gap: 0.55rem; margin: 0; padding: 0; list-style: none; }
+      .compare-mobile-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        color: #334155;
+        font-size: 0.76rem;
+        line-height: 1.5;
+      }
+      .compare-mobile-list li > i { margin-top: 0.2rem; color: #16a34a; flex-shrink: 0; }
+      .official .compare-mobile-list li > i { color: #7c3aed; }
+      .compare-mobile-list small { display: block; color: #94a3b8; font-size: 0.66rem; }
+      .compare-mobile-list .vote-note { color: #b45309; font-weight: 600; }
+      .compare-price-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.65rem 0;
+        border-top: 1px solid #e2e8f0;
+      }
+      .compare-price-row:first-of-type { border-top: none; padding-top: 0; }
+      .compare-price-row:last-child { padding-bottom: 0; }
+      .compare-price-label { min-width: 0; font-size: 0.75rem; font-weight: 700; color: #334155; }
+      .compare-price-label small { display: block; margin-top: 0.1rem; color: #94a3b8; font-weight: 500; }
+      .compare-price-value {
+        flex-shrink: 0;
+        border-radius: 99px;
+        padding: 0.3rem 0.65rem;
+        background: #e2e8f0;
+        color: #475569;
+        font-size: 0.7rem;
+        font-weight: 800;
+      }
+      .compare-price-value.official { background: #ede9fe; color: #7c3aed; }
+      .official-reg-card,
+      .finance-card,
+      .notice-card { padding: 1.2rem 1rem; }
+      .official-reg-body,
+      .finance-body { min-width: 0; }
+      .reg-item { gap: 0.6rem; padding: 0.65rem; }
+      .step-row { gap: 0.9rem; }
+      .cta-card { padding: 1.5rem 1rem; gap: 1.25rem; }
+      .cta-text { min-width: 0; }
+      .cta-actions { width: 100%; }
+      .cta-btn-primary,
+      .cta-btn-secondary {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+        text-align: center;
+      }
+    }
 
   </style>
 </head>
@@ -377,6 +487,58 @@
         Comparaison détaillée · 詳細比較
       </div>
 
+      <div class="compare-mobile">
+        <div class="compare-mobile-card shared">
+          <div class="compare-mobile-head">
+            <span class="compare-mobile-icon"><i class="fas fa-check-double"></i></span>
+            <div>
+              <div class="compare-mobile-title">Inclus pour tous · 雙方都有</div>
+              <div class="compare-mobile-sub">Participant communauté et membre officiel</div>
+            </div>
+          </div>
+          <ul class="compare-mobile-list">
+            <li><i class="fas fa-check-circle"></i><span>Accès au groupe WhatsApp<small>加入 WhatsApp 社群</small></span></li>
+            <li><i class="fas fa-check-circle"></i><span>Participation aux événements ouverts<small>參加開放活動</small></span></li>
+          </ul>
+        </div>
+
+        <div class="compare-mobile-card official">
+          <div class="compare-mobile-head">
+            <span class="compare-mobile-icon"><i class="fas fa-certificate"></i></span>
+            <div>
+              <div class="compare-mobile-title">Avantages Adhésion · 正式會員額外享有</div>
+              <div class="compare-mobile-sub">En plus de tous les avantages communautaires</div>
+            </div>
+          </div>
+          <ul class="compare-mobile-list">
+            <li><i class="fas fa-plus-circle"></i><span>Ressources membres<small>會員限定資源（簡報、活動錄影）</small></span></li>
+            <li><i class="fas fa-plus-circle"></i><span>Coffee Chat &amp; CV review<small>會員限定交流與履歷討論</small></span></li>
+            <li><i class="fas fa-plus-circle"></i><span>Droit de vote à l'assemblée générale<small>年度大會投票權</small><small class="vote-note">Profil complet requis avant l'AG · 大會前須補齊會員資料</small></span></li>
+            <li><i class="fas fa-plus-circle"></i><span>Inscription officielle OCAC<small>協助登記海外僑務委員會</small></span></li>
+            <li><i class="fas fa-plus-circle"></i><span>Inscription au Bureau français de Taipei<small>登記於法國台灣辦事處</small></span></li>
+            <li><i class="fas fa-plus-circle"></i><span>Éligibilité aux subventions événements<small>活動補助申請資格</small></span></li>
+            <li><i class="fas fa-plus-circle"></i><span>Finances &amp; gouvernance<small>參與財務討論與協會決策</small></span></li>
+          </ul>
+        </div>
+
+        <div class="compare-mobile-card price">
+          <div class="compare-mobile-head">
+            <span class="compare-mobile-icon"><i class="fas fa-coins"></i></span>
+            <div>
+              <div class="compare-mobile-title">Cotisation annuelle · 年費比較</div>
+              <div class="compare-mobile-sub">Une différence simple et transparente</div>
+            </div>
+          </div>
+          <div class="compare-price-row">
+            <div class="compare-price-label">Participant communauté<small>社群參與者</small></div>
+            <span class="compare-price-value">Gratuit · 免費</span>
+          </div>
+          <div class="compare-price-row">
+            <div class="compare-price-label">Membre Adhésion<small>正式協會會員</small></div>
+            <span class="compare-price-value official">5–10 € / an</span>
+          </div>
+        </div>
+      </div>
       <div class="compare-scroll">
         <div class="compare-wrap">
           <table class="compare-table">

@@ -45,3 +45,61 @@
 .page-header-inner { margin: 0 auto; }
 .page-header h1 { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.2rem; }
 .page-header p  { font-size: 0.8rem; color: rgba(7,57,129,0.6); }
+
+/* ── Shared mobile layout ───────────────────────────────────── */
+@media (max-width: 640px) {
+  #app-sidebar {
+    width: 3.5rem;
+    padding: 0.75rem 0;
+  }
+  .sidebar-logo {
+    width: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .sidebar-nav {
+    gap: 0.45rem;
+    padding: 0 0.35rem 0.25rem;
+  }
+  .sidebar-link {
+    box-sizing: border-box;
+    width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0.35rem 0.2rem;
+    font-size: 1rem;
+  }
+  .sidebar-link span {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 0.48rem;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+  }
+  body > main.ml-16 {
+    min-width: 0;
+    margin-left: 3.5rem;
+  }
+  .site-footer {
+    margin-left: 3.5rem;
+    padding: 1.25rem 1rem;
+  }
+  .site-footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .site-footer-copy {
+    text-align: left;
+  }
+  .site-footer-links {
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+  }
+  .page-header h1 {
+    font-size: 1.2rem;
+    line-height: 1.3;
+  }
+  .page-header p {
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+}

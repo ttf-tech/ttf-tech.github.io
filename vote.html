@@ -239,6 +239,45 @@
     .vm-submit-btn:hover { background: var(--vote-brand-hover); }
     .vm-submit-btn:disabled { background: #94a3b8; cursor: not-allowed; }
     .vm-error { font-size: 0.72rem; color: #be123c; margin-top: 0.5rem; }
+
+    @media (max-width: 640px) {
+      .vote-page-header { padding: 1.25rem 1rem; }
+      .vote-page-header h1 { font-size: 1.2rem; line-height: 1.3; }
+      .member-required-banner,
+      .survey-sortbar,
+      .surveys-wrap { padding-left: 1rem; padding-right: 1rem; }
+      .member-required-card { padding: 1rem; gap: 0.9rem; }
+      .member-required-left { min-width: 0; }
+      .survey-sort-btn { min-height: 44px; }
+      .survey-card-head { padding: 0.9rem 1rem 0.7rem; flex-wrap: wrap; }
+      .survey-resp-count { width: 100%; text-align: left; }
+      .survey-card-results { padding: 0.8rem 1rem; }
+      .survey-opt-row { flex-wrap: wrap; gap: 0.35rem 0.5rem; }
+      .survey-opt-label { width: 100%; min-width: 0; }
+      .survey-opt-bar-wrap { min-width: 100px; }
+      .survey-card-footer {
+        padding: 0.75rem 1rem;
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .vote-btn { min-height: 44px; justify-content: center; }
+      .vote-modal-overlay { align-items: flex-end; padding: 0.5rem; }
+      .vote-modal-box { max-height: calc(100dvh - 1rem); border-radius: 14px; }
+      .vote-modal-head { padding: 0.8rem 1rem; }
+      .vote-modal-close {
+        width: 44px;
+        height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .vote-modal-body { padding: 1rem; }
+      .vm-input { min-height: 44px; box-sizing: border-box; }
+      .vm-option { min-height: 44px; }
+      .vm-footer { flex-direction: column-reverse; }
+      .vm-cancel-btn,
+      .vm-submit-btn { width: 100%; min-height: 44px; justify-content: center; }
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen">

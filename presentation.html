@@ -133,9 +133,45 @@
     }
 
     @media (max-width: 600px) {
+      .hero { padding: 2rem 1rem 1.5rem; }
+      .hero-flag { font-size: 2.75rem; margin-bottom: 0.75rem; }
       .hero-title { font-size: 1.4rem; }
-      .hero-cta-stats { margin-left: 0; margin-top: 0.5rem; }
-      .stat-item { min-width: 50%; }
+      .hero-sub { font-size: 0.88rem; margin-bottom: 1rem; }
+      .hero-desc { font-size: 0.84rem; line-height: 1.65; margin-bottom: 1.5rem; }
+      .hero-cta,
+      .hero-cta-stats {
+        box-sizing: border-box;
+        width: 100%;
+        min-height: 44px;
+        justify-content: center;
+        margin-left: 0;
+        text-align: center;
+      }
+      .stats-bar { margin-top: 1.5rem !important; }
+      .stat-item {
+        box-sizing: border-box;
+        min-width: 50%;
+        padding: 0.9rem 0.5rem;
+      }
+      .stat-item:nth-child(2n) { border-right: none; }
+      .stat-item:nth-child(-n + 2) { border-bottom: 1px solid rgba(7,57,129,0.1); }
+      .stat-value { font-size: 1.5rem; }
+      .section { padding: 2rem 1rem; }
+      .section-sub { margin-bottom: 1.25rem; }
+      .cards-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+      .card { padding: 1.1rem; }
+      .join-item { align-items: flex-start; padding: 0.9rem 1rem; }
+      .whatsapp-section { padding: 2rem 1rem; }
+      .whatsapp-section h2 { font-size: 1.2rem; line-height: 1.35; }
+      .whatsapp-section > a {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 320px;
+        min-height: 44px;
+        justify-content: center;
+        text-align: center;
+      }
+      footer { padding: 1.25rem 1rem; line-height: 1.6; }
     }
   </style>
 </head>

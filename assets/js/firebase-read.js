@@ -11,7 +11,10 @@ const _FB_READ_CONFIG = {
   appId:             '1:461066170665:web:1b090d8e383404c4320738'
 };
 
-const PUBLIC_CACHE_KEY = 'ttf_public_data_v3';
+const PUBLIC_CACHE_KEY = 'ttf_public_data_v4';
+
+// v3 could contain member-only sharing URLs. Remove it instead of migrating it.
+try { localStorage.removeItem('ttf_public_data_v3'); } catch (_) {}
 
 const _firebaseReadSubscribers = new Set();
 let _firebaseReadStarted = false;
@@ -23,8 +26,7 @@ const _firebaseReadLive = {
   announcements: null,
   jobs: null,
   surveys: null,
-  surveyVotes: null,
-  sharings: null
+  surveyVotes: null
 };
 const _firebaseReadReadyKeys = new Set();
 
@@ -108,7 +110,6 @@ function _makeFirebaseReadData(source) {
     memberCount: communityMemberCount,
     announcements: _sortNewestFirst(_recordsFromFirebase(_firebaseReadLive.announcements), 'date'),
     jobs: _sortNewestFirst(_recordsFromFirebase(_firebaseReadLive.jobs), 'createdAt'),
-    sharings: _sortNewestFirst(_recordsFromFirebase(_firebaseReadLive.sharings), 'date'),
     surveyVotes: (_firebaseReadLive.surveyVotes && typeof _firebaseReadLive.surveyVotes === 'object')
       ? _firebaseReadLive.surveyVotes
       : {},
@@ -130,7 +131,6 @@ function _loadPublicCache() {
       jobs: cached.jobs,
       surveyVotes: (cached.surveyVotes && typeof cached.surveyVotes === 'object') ? cached.surveyVotes : {},
       userSurveys: Array.isArray(cached.userSurveys) ? cached.userSurveys : [],
-      sharings: Array.isArray(cached.sharings) ? cached.sharings : [],
       assoMembers: [],
       source: 'cache'
     };
@@ -157,8 +157,7 @@ function _savePublicCache(data) {
       announcements: data.announcements,
       jobs: data.jobs,
       surveyVotes: anonymousVotes,
-      userSurveys: publicSurveys,
-      sharings: data.sharings
+      userSurveys: publicSurveys
     }));
   } catch (_) {}
 }
@@ -176,8 +175,7 @@ function _publishFirebaseReadData(data) {
     jobs: data.jobs,
     surveyVotes: data.surveyVotes,
     userSurveys: data.userSurveys,
-    assoMembers: data.assoMembers,
-    sharings: data.sharings
+    assoMembers: data.assoMembers
   });
   if (signature === _firebaseReadLastSignature) return;
   _firebaseReadLastSignature = signature;
@@ -215,8 +213,7 @@ function subscribeFirebaseData(onData) {
           announcements: firebase.database().ref('announcements'),
           jobs: firebase.database().ref('jobs'),
           surveys: firebase.database().ref('surveys'),
-          surveyVotes: firebase.database().ref('surveyVotes'),
-          sharings: firebase.database().ref('sharings')
+          surveyVotes: firebase.database().ref('surveyVotes')
         };
         Object.entries(refs).forEach(([key, ref]) => {
           ref.on('value', snap => {

@@ -2309,8 +2309,33 @@ const TAG_COLORS = {
   'Autre':    { bg: '#f1f5f9', color: '#475569' }
 };
 
+function toYoutubeEmbedUrl(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, '').replace(/^m\./, '');
+    let videoId = null;
+    if (host === 'youtu.be') {
+      videoId = u.pathname.slice(1).split('/')[0];
+    } else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+      if (u.pathname === '/watch') {
+        videoId = u.searchParams.get('v');
+      } else {
+        const m = u.pathname.match(/^\/(embed|shorts|live)\/([^/]+)/);
+        if (m) videoId = m[2];
+      }
+    }
+    if (!videoId) return null;
+    return `https://www.youtube-nocookie.com/embed/${videoId}`;
+  } catch (_) {
+    return null;
+  }
+}
+
 function toEmbedUrl(url) {
   if (!url) return null;
+  const ytEmbed = toYoutubeEmbedUrl(url);
+  if (ytEmbed) return ytEmbed;
   try {
     const u = new URL(url);
     // Google Drive file: .../file/d/ID/view → .../file/d/ID/preview
@@ -2376,14 +2401,13 @@ function renderSharings() {
   // Embed toggle buttons
   container.querySelectorAll('[data-action="toggle-embed"]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const sid = btn.dataset.sid;
-      const frameWrap = document.getElementById('embed-' + sid);
+      const frameWrap = document.getElementById('embed-' + btn.dataset.target);
       if (!frameWrap) return;
       const isHidden = frameWrap.style.display === 'none' || !frameWrap.style.display;
       frameWrap.style.display = isHidden ? 'block' : 'none';
       btn.innerHTML = isHidden
-        ? '<i class="fas fa-compress-alt"></i> Masquer l\'aperçu'
-        : '<i class="fas fa-expand-alt"></i> Aperçu';
+        ? '<i class="fas fa-compress-alt"></i> Masquer'
+        : `<i class="fas ${btn.dataset.icon}"></i> ${btn.dataset.label}`;
     });
   });
 }
@@ -2410,12 +2434,12 @@ function buildSharingCard(sh) {
   if (sh.docUrl) {
     const embedUrl = toEmbedUrl(sh.docUrl);
     const embedBtn = embedUrl
-      ? `<button class="sm-sharing-embed-toggle" data-action="toggle-embed" data-sid="${sh.id}">
+      ? `<button class="sm-sharing-embed-toggle" data-action="toggle-embed" data-target="doc-${sh.id}" data-icon="fa-expand-alt" data-label="Aperçu">
            <i class="fas fa-expand-alt"></i> Aperçu
          </button>`
       : '';
     const embedFrame = embedUrl
-      ? `<div id="embed-${sh.id}" class="sm-sharing-embed-frame" style="display:none;">
+      ? `<div id="embed-doc-${sh.id}" class="sm-sharing-embed-frame" style="display:none;">
            <iframe src="${escHtml(embedUrl)}" allowfullscreen loading="lazy"></iframe>
          </div>`
       : '';
@@ -2425,6 +2449,34 @@ function buildSharingCard(sh) {
         <div class="sm-sharing-doc-row">
           <a class="sm-sharing-doc-btn" href="${escHtml(sh.docUrl)}" target="_blank" rel="noopener">
             <i class="fas fa-external-link-alt"></i> Ouvrir le document
+          </a>
+          ${embedBtn}
+        </div>
+        ${embedFrame}
+      </div>`;
+  }
+
+  // Video replay section
+  let videoSection = '';
+  if (sh.videoUrl) {
+    const ytEmbedUrl = toYoutubeEmbedUrl(sh.videoUrl);
+    const embedBtn = ytEmbedUrl
+      ? `<button class="sm-sharing-embed-toggle" data-action="toggle-embed" data-target="video-${sh.id}" data-icon="fa-play-circle" data-label="Regarder">
+           <i class="fas fa-play-circle"></i> Regarder
+         </button>`
+      : '';
+    const embedFrame = ytEmbedUrl
+      ? `<div id="embed-video-${sh.id}" class="sm-sharing-embed-frame" style="display:none;">
+           <iframe src="${escHtml(ytEmbedUrl)}" allowfullscreen loading="lazy"
+                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+         </div>`
+      : '';
+    videoSection = `
+      <div class="sm-sharing-section">
+        <div class="sm-sharing-section-label"><i class="fab fa-youtube"></i> Replay vidéo</div>
+        <div class="sm-sharing-doc-row">
+          <a class="sm-sharing-doc-btn" href="${escHtml(sh.videoUrl)}" target="_blank" rel="noopener">
+            <i class="fas fa-external-link-alt"></i> Ouvrir sur YouTube
           </a>
           ${embedBtn}
         </div>
@@ -2452,6 +2504,7 @@ function buildSharingCard(sh) {
         <div class="sm-sharing-title">${escHtml(sh.title)}</div>
         ${descHtml}
       </div>
+      ${videoSection}
       ${docSection}
       ${notesSection}
       <div class="sm-sharing-footer">
@@ -2504,6 +2557,7 @@ function _fillSharingForm(sh) {
   set('sh-tag',  sh.tag || '');
   set('sh-desc', sh.description || '');
   set('sh-doc',  sh.docUrl || '');
+  set('sh-video', sh.videoUrl || '');
 }
 
 function _clearSharingForm() {
@@ -2517,6 +2571,7 @@ function _clearSharingForm() {
   set('sh-tag', '');
   set('sh-desc', '');
   set('sh-doc', '');
+  set('sh-video', '');
 }
 
 function closeSharingModal() {
@@ -2534,9 +2589,10 @@ function saveSharing() {
   if (!date)  { showToast('Veuillez saisir une date.'); return; }
   if (!host)  { showToast('Veuillez saisir un hôte.'); return; }
 
-  const docUrl = get('sh-doc');
-  const tag    = get('sh-tag');
-  const desc   = get('sh-desc');
+  const docUrl   = get('sh-doc');
+  const videoUrl = get('sh-video');
+  const tag      = get('sh-tag');
+  const desc     = get('sh-desc');
 
   if (_sharingModalId) {
     const sh = state.sharings.find(s => s.id === _sharingModalId);
@@ -2547,6 +2603,7 @@ function saveSharing() {
       sh.tag         = tag;
       sh.description = desc;
       sh.docUrl      = docUrl;
+      sh.videoUrl    = videoUrl;
     }
     showToast('Partage mis à jour.');
   } else {
@@ -2558,6 +2615,7 @@ function saveSharing() {
       tag,
       description: desc,
       docUrl,
+      videoUrl,
       notes:       '',
       createdAt:   new Date().toISOString()
     });

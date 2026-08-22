@@ -27,6 +27,12 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="assets/js/admin-config.js"></script>
+  <script src="assets/js/admin-access.js"></script>
+  <script src="assets/js/asso-member-access.js"></script>
   <link rel="stylesheet" href="assets/css/stastic_member.css">
   <link rel="stylesheet" href="assets/css/layout.css">
 
@@ -57,19 +63,6 @@
     }
     .res-card-title { font-size: 0.82rem; font-weight: 700; color: #0f172a; margin-bottom: 0.15rem; }
     .res-card-desc  { font-size: 0.72rem; color: #64748b; line-height: 1.4; }
-    .res-coming {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.25rem;
-      font-size: 0.72rem; color: #94a3b8; font-style: italic; padding: 0.75rem 1rem;
-      background: #f8fafc; border: 1px dashed #e2e8f0; border-radius: 8px;
-    }
-    .res-coming-text { flex: 1; min-width: 220px; }
-
-    .helloasso-button-wrap { flex-shrink: 0; width: 100%; max-width: 280px; }
-    .helloasso-button-caption {
-      font-size: 0.65rem; font-weight: 700; font-style: normal; color: #4c1d95;
-      text-align: center; margin-bottom: 0.35rem;
-    }
-    .helloasso-button-wrap iframe { width: 100%; height: 70px; border: none; display: block; }
 
     @media (max-width: 640px) {
       .page-header { padding: 1.25rem 1rem; }
@@ -81,9 +74,6 @@
       .res-card > div:last-child { min-width: 0; }
       .res-card-title,
       .res-card-desc { overflow-wrap: anywhere; }
-      .res-coming { align-items: stretch; padding: 0.9rem; }
-      .res-coming-text { min-width: 0; }
-      .helloasso-button-wrap { max-width: none; }
     }
   </style>
 </head>
@@ -256,19 +246,29 @@
       <!-- Slides & Replays (community contributed) -->
       <div class="res-section">
         <div class="res-section-title"><i class="fas fa-file-powerpoint" style="color:#dc2626;"></i>Slides &amp; Replays · 簡報與回放</div>
-        <div class="res-coming">
-          <div class="res-coming-text">
-            Les slides et replays des webinaires passés seront ajoutés ici par la communauté.<br>
-            過去 webinar 的簡報與錄影連結將由社群成員陸續補充。<br><br>
-            <span style="color:#b45309;font-style:normal;font-weight:700;">
-              <i class="fas fa-lock" style="margin-right:0.3rem;"></i>Accès réservé aux membres Adhésion · 僅限 Adhésion 會員存取
-            </span>
+
+        <div class="restricted-asso-content" style="display:none;">
+          <div id="sharing-list-public" style="display:grid;gap:1rem;"></div>
+        </div>
+
+        <div class="upgrade-to-asso-banner">
+          <div class="upgrade-to-asso-banner-text">
+            <div class="upgrade-to-asso-banner-title">
+              <i class="fas fa-lock"></i> Réservé aux membres Adhésion · 僅限 Adhésion 會員
+            </div>
+            <div class="upgrade-to-asso-banner-desc">
+              Les slides et replays des webinaires passés sont réservés aux membres officiels (cotisation HelloAsso).<br>
+              過去 webinar 的簡報與錄影僅限已繳費的正式會員查看。
+            </div>
           </div>
-          <div class="helloasso-button-wrap">
-            <div class="helloasso-button-caption">正式加入 · Adhésion officielle</div>
-            <iframe id="haWidgetButton" title="Adhérer — Taiwan Tech France (HelloAsso)"
-                    allowtransparency="true" loading="lazy"
-                    src="https://www.helloasso.com/associations/taiwan-tech-france-association/adhesions/adhesion-officielle-taiwan-tech-france-association/widget-bouton"></iframe>
+          <div class="upgrade-to-asso-banner-actions">
+            <button type="button" class="upgrade-to-asso-signin-btn signed-out-only" onclick="ttfMemberSignIn()">
+              <i class="fab fa-google"></i> Se connecter · 登入驗證
+            </button>
+            <span class="signed-in-only" style="font-size:0.72rem;color:#92400e;">Connecté(e) mais pas encore Adhésion —</span>
+            <a href="adhesion.html" class="upgrade-to-asso-join-btn">
+              <i class="fas fa-id-card"></i> Adhérer · 成為會員
+            </a>
           </div>
         </div>
       </div>
@@ -277,5 +277,138 @@
   </main>
   <div id="site-footer"></div>
   <script src="assets/js/footer.js"></script>
+
+  <script src="assets/js/firebase-read.js"></script>
+  <script src="assets/js/member-gate.js"></script>
+  <script>
+  'use strict';
+
+  const RES_TAG_COLORS = {
+    'Finance':  { bg: '#d1fae5', color: '#065f46' },
+    'Tech':     { bg: '#dbeafe', color: '#1d4ed8' },
+    'Visa':     { bg: '#ede9fe', color: '#5b21b6' },
+    'Vie':      { bg: '#fef3c7', color: '#92400e' },
+    'Carrière': { bg: '#fce7f3', color: '#9d174d' },
+    'Autre':    { bg: '#f1f5f9', color: '#475569' }
+  };
+
+  function buildPublicSharingCard(sh) {
+    const tagStyle = sh.tag && RES_TAG_COLORS[sh.tag]
+      ? `background:${RES_TAG_COLORS[sh.tag].bg};color:${RES_TAG_COLORS[sh.tag].color};`
+      : 'background:#f1f5f9;color:#475569;';
+    const tagBadge = sh.tag
+      ? `<span class="sm-sharing-tag" style="${tagStyle}">${escHtmlRead(sh.tag)}</span>`
+      : '';
+    const dateStr = sh.date
+      ? new Date(sh.date).toLocaleString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : '—';
+    const descHtml = sh.description
+      ? `<div class="sm-sharing-desc">${escHtmlRead(sh.description)}</div>`
+      : '';
+
+    let videoSection = '';
+    if (sh.videoUrl) {
+      const ytEmbedUrl = toYoutubeEmbedUrl(sh.videoUrl);
+      const embedBtn = ytEmbedUrl
+        ? `<button class="sm-sharing-embed-toggle" data-action="toggle-embed" data-target="video-${sh.id}" data-icon="fa-play-circle" data-label="Regarder">
+             <i class="fas fa-play-circle"></i> Regarder
+           </button>`
+        : '';
+      const embedFrame = ytEmbedUrl
+        ? `<div id="embed-video-${sh.id}" class="sm-sharing-embed-frame" style="display:none;">
+             <iframe src="${escHtmlRead(ytEmbedUrl)}" allowfullscreen loading="lazy"
+                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+           </div>`
+        : '';
+      videoSection = `
+        <div class="sm-sharing-section">
+          <div class="sm-sharing-section-label"><i class="fab fa-youtube"></i> Replay vidéo</div>
+          <div class="sm-sharing-doc-row">
+            <a class="sm-sharing-doc-btn" href="${escHtmlRead(sh.videoUrl)}" target="_blank" rel="noopener">
+              <i class="fas fa-external-link-alt"></i> Ouvrir sur YouTube
+            </a>
+            ${embedBtn}
+          </div>
+          ${embedFrame}
+        </div>`;
+    }
+
+    let docSection = '';
+    if (sh.docUrl) {
+      const embedUrl = toDocEmbedUrl(sh.docUrl);
+      const embedBtn = embedUrl
+        ? `<button class="sm-sharing-embed-toggle" data-action="toggle-embed" data-target="doc-${sh.id}" data-icon="fa-expand-alt" data-label="Aperçu">
+             <i class="fas fa-expand-alt"></i> Aperçu
+           </button>`
+        : '';
+      const embedFrame = embedUrl
+        ? `<div id="embed-doc-${sh.id}" class="sm-sharing-embed-frame" style="display:none;">
+             <iframe src="${escHtmlRead(embedUrl)}" allowfullscreen loading="lazy"></iframe>
+           </div>`
+        : '';
+      docSection = `
+        <div class="sm-sharing-section">
+          <div class="sm-sharing-section-label"><i class="fas fa-file-alt"></i> Document</div>
+          <div class="sm-sharing-doc-row">
+            <a class="sm-sharing-doc-btn" href="${escHtmlRead(sh.docUrl)}" target="_blank" rel="noopener">
+              <i class="fas fa-external-link-alt"></i> Ouvrir le document
+            </a>
+            ${embedBtn}
+          </div>
+          ${embedFrame}
+        </div>`;
+    }
+
+    return `
+      <div class="sm-sharing-card">
+        <div class="sm-sharing-head">
+          <div class="sm-sharing-meta">
+            <span class="sm-sharing-date"><i class="fas fa-calendar-alt"></i>${dateStr}</span>
+            <span class="sm-sharing-host"><i class="fas fa-user"></i>${escHtmlRead(sh.host || '')}</span>
+            ${tagBadge}
+          </div>
+          <div class="sm-sharing-title">${escHtmlRead(sh.title || '')}</div>
+          ${descHtml}
+        </div>
+        ${videoSection}
+        ${docSection}
+      </div>`;
+  }
+
+  function renderPublicSharings(sharings) {
+    const container = document.getElementById('sharing-list-public');
+    if (!container) return;
+
+    if (!sharings || sharings.length === 0) {
+      container.innerHTML = `
+        <div class="sm-empty">
+          <i class="fas fa-lightbulb"></i>
+          <h3>Aucun partage pour le moment</h3>
+          <p>Les slides et replays des prochains webinaires apparaîtront ici. · 未來的簡報與錄影將顯示於此。</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = sharings.map(buildPublicSharingCard).join('');
+
+    container.querySelectorAll('[data-action="toggle-embed"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const frameWrap = document.getElementById('embed-' + btn.dataset.target);
+        if (!frameWrap) return;
+        const isHidden = frameWrap.style.display === 'none' || !frameWrap.style.display;
+        frameWrap.style.display = isHidden ? 'block' : 'none';
+        btn.innerHTML = isHidden
+          ? '<i class="fas fa-compress-alt"></i> Masquer'
+          : `<i class="fas ${btn.dataset.icon}"></i> ${btn.dataset.label}`;
+      });
+    });
+  }
+
+  if (typeof subscribeFirebaseData === 'function') {
+    subscribeFirebaseData(function (data) {
+      renderPublicSharings(data.sharings || []);
+    });
+  }
+  </script>
 </body>
 </html>

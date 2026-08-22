@@ -23,7 +23,8 @@ const _firebaseReadLive = {
   announcements: null,
   jobs: null,
   surveys: null,
-  surveyVotes: null
+  surveyVotes: null,
+  sharings: null
 };
 const _firebaseReadReadyKeys = new Set();
 
@@ -38,6 +39,49 @@ function fmtDateRead(iso) {
   const d = new Date(iso);
   if (isNaN(d)) return '';
   return d.toLocaleDateString('fr-FR', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function toYoutubeEmbedUrl(url) {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    const host = u.hostname.replace(/^www\./, '').replace(/^m\./, '');
+    let videoId = null;
+    if (host === 'youtu.be') {
+      videoId = u.pathname.slice(1).split('/')[0];
+    } else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+      if (u.pathname === '/watch') {
+        videoId = u.searchParams.get('v');
+      } else {
+        const m = u.pathname.match(/^\/(embed|shorts|live)\/([^/]+)/);
+        if (m) videoId = m[2];
+      }
+    }
+    if (!videoId) return null;
+    return `https://www.youtube-nocookie.com/embed/${videoId}`;
+  } catch (_) {
+    return null;
+  }
+}
+
+function toDocEmbedUrl(url) {
+  if (!url) return null;
+  const ytEmbed = toYoutubeEmbedUrl(url);
+  if (ytEmbed) return ytEmbed;
+  try {
+    const u = new URL(url);
+    const driveFile = u.pathname.match(/\/file\/d\/([^/]+)/);
+    if (driveFile) return `https://drive.google.com/file/d/${driveFile[1]}/preview`;
+    const gDoc = u.pathname.match(/\/document\/d\/([^/]+)/);
+    if (gDoc) return `https://docs.google.com/document/d/${gDoc[1]}/preview`;
+    const gSlides = u.pathname.match(/\/presentation\/d\/([^/]+)/);
+    if (gSlides) return `https://docs.google.com/presentation/d/${gSlides[1]}/preview`;
+    const gSheets = u.pathname.match(/\/spreadsheets\/d\/([^/]+)/);
+    if (gSheets) return `https://docs.google.com/spreadsheets/d/${gSheets[1]}/preview`;
+    return null;
+  } catch (_) {
+    return null;
+  }
 }
 
 function _recordsFromFirebase(raw) {
@@ -64,6 +108,7 @@ function _makeFirebaseReadData(source) {
     memberCount: communityMemberCount,
     announcements: _sortNewestFirst(_recordsFromFirebase(_firebaseReadLive.announcements), 'date'),
     jobs: _sortNewestFirst(_recordsFromFirebase(_firebaseReadLive.jobs), 'createdAt'),
+    sharings: _sortNewestFirst(_recordsFromFirebase(_firebaseReadLive.sharings), 'date'),
     surveyVotes: (_firebaseReadLive.surveyVotes && typeof _firebaseReadLive.surveyVotes === 'object')
       ? _firebaseReadLive.surveyVotes
       : {},
@@ -85,6 +130,7 @@ function _loadPublicCache() {
       jobs: cached.jobs,
       surveyVotes: (cached.surveyVotes && typeof cached.surveyVotes === 'object') ? cached.surveyVotes : {},
       userSurveys: Array.isArray(cached.userSurveys) ? cached.userSurveys : [],
+      sharings: Array.isArray(cached.sharings) ? cached.sharings : [],
       assoMembers: [],
       source: 'cache'
     };
@@ -111,7 +157,8 @@ function _savePublicCache(data) {
       announcements: data.announcements,
       jobs: data.jobs,
       surveyVotes: anonymousVotes,
-      userSurveys: publicSurveys
+      userSurveys: publicSurveys,
+      sharings: data.sharings
     }));
   } catch (_) {}
 }
@@ -129,7 +176,8 @@ function _publishFirebaseReadData(data) {
     jobs: data.jobs,
     surveyVotes: data.surveyVotes,
     userSurveys: data.userSurveys,
-    assoMembers: data.assoMembers
+    assoMembers: data.assoMembers,
+    sharings: data.sharings
   });
   if (signature === _firebaseReadLastSignature) return;
   _firebaseReadLastSignature = signature;
@@ -167,7 +215,8 @@ function subscribeFirebaseData(onData) {
           announcements: firebase.database().ref('announcements'),
           jobs: firebase.database().ref('jobs'),
           surveys: firebase.database().ref('surveys'),
-          surveyVotes: firebase.database().ref('surveyVotes')
+          surveyVotes: firebase.database().ref('surveyVotes'),
+          sharings: firebase.database().ref('sharings')
         };
         Object.entries(refs).forEach(([key, ref]) => {
           ref.on('value', snap => {

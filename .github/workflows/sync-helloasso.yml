@@ -20,4 +20,6 @@ jobs:
           HELLOASSO_ORG_SLUG:      ${{ secrets.HELLOASSO_ORG_SLUG }}
           FIREBASE_DB_URL:         ${{ secrets.FIREBASE_DB_URL }}
           FIREBASE_DB_SECRET:      ${{ secrets.FIREBASE_DB_SECRET }}
+          BREVO_API_KEY:               ${{ secrets.BREVO_API_KEY }}
+          BREVO_WELCOME_TEMPLATE_ID:   ${{ secrets.BREVO_WELCOME_TEMPLATE_ID }}
         run: node scripts/sync-helloasso.js

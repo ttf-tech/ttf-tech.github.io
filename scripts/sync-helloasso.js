@@ -4,12 +4,23 @@
  *   - /assoMembers/{memberId}
  *   - /assoMemberLookup/{sha256(email)}
  *
+ * Also sends a one-time Brevo transactional welcome email to any member
+ * (HelloAsso-synced or manually added in admin.html) that doesn't yet have
+ * a `welcomeEmailSentAt` stamp. A failed send just leaves the stamp unset,
+ * so the next "Sync Asso" click retries it automatically — no separate
+ * retry/queue needed.
+ *
  * Triggered manually by .github/workflows/sync-helloasso.yml.
  * Required GitHub Actions secrets:
  *   HELLOASSO_CLIENT_ID
  *   HELLOASSO_CLIENT_SECRET
  *   FIREBASE_DB_SECRET
  * Optional overrides: HELLOASSO_ORG_SLUG, FIREBASE_DB_URL.
+ * Optional (welcome email is skipped, not fatal, if either is unset):
+ *   BREVO_API_KEY
+ *   BREVO_WELCOME_TEMPLATE_ID   — id of a Brevo *transactional* template
+ *                                 (Transactionnel → Templates), not a
+ *                                 Campagnes id.
  */
 'use strict';
 
@@ -20,6 +31,8 @@ const HELLOASSO_CLIENT_SECRET = process.env.HELLOASSO_CLIENT_SECRET;
 const HELLOASSO_ORG_SLUG      = process.env.HELLOASSO_ORG_SLUG || 'taiwan-tech-france-association';
 const FIREBASE_DB_URL         = process.env.FIREBASE_DB_URL || 'https://groupe-tech-fr-default-rtdb.europe-west1.firebasedatabase.app';
 const FIREBASE_DB_SECRET      = process.env.FIREBASE_DB_SECRET;
+const BREVO_API_KEY           = process.env.BREVO_API_KEY;
+const BREVO_WELCOME_TEMPLATE_ID = process.env.BREVO_WELCOME_TEMPLATE_ID;
 
 function requireEnv() {
   const missing = ['HELLOASSO_CLIENT_ID', 'HELLOASSO_CLIENT_SECRET', 'FIREBASE_DB_SECRET']
@@ -129,6 +142,74 @@ function objectToMembers(value) {
   return Object.entries(value).map(([id, member]) => ({ id, ...(member || {}) }));
 }
 
+// The template's subject uses {{ contact.FIRSTNAME }}, which reads from the
+// Brevo *contact record*, not from the params passed to the send call below.
+// Upsert the contact first so that merge tag resolves instead of rendering blank.
+async function upsertBrevoContact(member) {
+  const [firstName, ...rest] = (member.name || '').split(' ');
+  const response = await fetch('https://api.brevo.com/v3/contacts', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': BREVO_API_KEY
+    },
+    body: JSON.stringify({
+      email: member.email,
+      attributes: { FIRSTNAME: firstName || member.name || '', LASTNAME: rest.join(' ') },
+      updateEnabled: true
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`Brevo contact upsert failed: ${response.status} ${await response.text()}`);
+  }
+}
+
+async function sendBrevoWelcomeEmail(member) {
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'api-key': BREVO_API_KEY
+    },
+    body: JSON.stringify({
+      templateId: Number(BREVO_WELCOME_TEMPLATE_ID),
+      to: [{ email: member.email, name: member.name || member.email }],
+      params: {
+        NAME: member.name || '',
+        FIRSTNAME: (member.name || '').split(' ')[0] || member.name || ''
+      }
+    })
+  });
+  if (!response.ok) {
+    throw new Error(`Brevo send failed: ${response.status} ${await response.text()}`);
+  }
+}
+
+// Mutates the `welcomeEmailSentAt` field in place on entries of `members`
+// so the caller's later Firebase write persists the stamp for successes.
+// Members whose send fails keep no stamp, so the next sync run retries them.
+async function sendWelcomeEmails(members, syncedAt) {
+  if (!BREVO_API_KEY || !BREVO_WELCOME_TEMPLATE_ID) {
+    console.log('[sync-helloasso] BREVO_API_KEY/BREVO_WELCOME_TEMPLATE_ID not set — skipping welcome emails');
+    return { sent: 0, failed: 0, skipped: true };
+  }
+  const pending = members.filter(member => member.email && !member.welcomeEmailSentAt);
+  let sent = 0;
+  let failed = 0;
+  for (const member of pending) {
+    try {
+      await upsertBrevoContact(member);
+      await sendBrevoWelcomeEmail(member);
+      member.welcomeEmailSentAt = syncedAt;
+      sent++;
+    } catch (error) {
+      console.error(`[sync-helloasso] welcome email failed for ${member.email}:`, error.message);
+      failed++;
+    }
+  }
+  return { sent, failed, skipped: false };
+}
+
 async function syncToFirebase(helloAssoMembers) {
   const authQuery = `auth=${encodeURIComponent(FIREBASE_DB_SECRET)}`;
   const v2Url = `${FIREBASE_DB_URL}/assoMembers.json?${authQuery}`;
@@ -197,6 +278,10 @@ async function syncToFirebase(helloAssoMembers) {
     email: normalizeEmail(member.email),
     status: isActiveMembership(member.joinedAt) ? 'active' : 'inactive'
   }));
+  // Runs before memberMap is built so a successful send's welcomeEmailSentAt
+  // stamp (mutated onto these same objects) lands in the write below.
+  const emailResult = await sendWelcomeEmails(finalMembers, syncedAt);
+
   const memberMap = Object.fromEntries(finalMembers.map(member => [member.id, member]));
   const lookupMap = Object.fromEntries(finalMembers
     .filter(member => member.email)
@@ -208,12 +293,17 @@ async function syncToFirebase(helloAssoMembers) {
       updatedAt: syncedAt
     }]));
 
-  const message = helloAssoMembers.length === 0
+  const emailNote = emailResult.skipped || (emailResult.sent === 0 && emailResult.failed === 0)
+    ? ''
+    : ` · 歡迎信已寄出 ${emailResult.sent} 封${emailResult.failed ? `，${emailResult.failed} 封失敗` : ''} · ${emailResult.sent} welcome email(s) sent${emailResult.failed ? `, ${emailResult.failed} failed` : ''}`;
+  const message = (helloAssoMembers.length === 0
     ? '尚無 HelloAsso 會員付款資料 · No HelloAsso payments to sync yet'
-    : `已新增 ${added} 位、更新 ${updated} 位 · ${added} added, ${updated} updated`;
+    : `已新增 ${added} 位、更新 ${updated} 位 · ${added} added, ${updated} updated`) + emailNote;
   const syncSummary = {
     schemaVersion: 3,
     ts: Date.now(),
+    emailsSent: emailResult.sent,
+    emailsFailed: emailResult.failed,
     added,
     updated,
     totalFromHelloAsso: helloAssoMembers.length,

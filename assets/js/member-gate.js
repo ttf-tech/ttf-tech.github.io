@@ -120,6 +120,9 @@ function _mgApplyToDom() {
   });
   document.body.classList.toggle('mg-signed-in', !!_mgUser);
   document.body.classList.toggle('mg-auth-restoring', isRestoring);
+  document.dispatchEvent(new CustomEvent('ttf:member-gate-change', {
+    detail: { hasAccess, isRestoring, user: _mgUser }
+  }));
 }
 
 function ttfMemberGateInit() {

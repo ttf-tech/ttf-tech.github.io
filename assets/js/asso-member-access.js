@@ -51,6 +51,17 @@
           memberId: lookup.memberId,
           member: { ...member, id: member.id || lookup.memberId }
         };
+        // Create a UID-keyed access binding. Firebase Rules independently
+        // verify this member ID belongs to the signed-in email and is active.
+        if (result.active) {
+          await firebase.database().ref(`access/members/${user.uid}`).set({
+            uid: user.uid,
+            email: normalizedEmail,
+            memberId: lookup.memberId,
+            active: true,
+            updatedAt: new Date().toISOString()
+          });
+        }
         membershipCache.set(user.uid, result);
         return result;
       } catch (error) {

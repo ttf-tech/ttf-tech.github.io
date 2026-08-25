@@ -76,6 +76,10 @@
           <i class="fas fa-user-edit" aria-hidden="true"></i>
           編輯我的會員資料
         </button>
+        <button id="auth-account-signout" class="auth-account-signout" type="button">
+          <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+          登出
+        </button>
       </section>`;
     document.body.appendChild(accountWidget);
     accountChip = accountWidget.querySelector('#auth-account-chip');
@@ -89,6 +93,26 @@
     accountWidget.querySelector('#member-profile-open')?.addEventListener('click', () => {
       accountPanel.hidden = true;
       accountChip.setAttribute('aria-expanded', 'false');
+    });
+    accountWidget.querySelector('#auth-account-signout')?.addEventListener('click', async event => {
+      const button = event.currentTarget;
+      const originalHtml = button.innerHTML;
+      button.disabled = true;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> 登出中…';
+      accountPanel.hidden = true;
+      accountChip.setAttribute('aria-expanded', 'false');
+      try {
+        if (typeof window.ttfMemberSignOut === 'function') {
+          await window.ttfMemberSignOut();
+        } else if (typeof firebase !== 'undefined' && firebase.auth) {
+          await firebase.auth().signOut();
+        }
+      } catch (error) {
+        console.warn('[account] sign-out failed', error);
+      } finally {
+        button.disabled = false;
+        button.innerHTML = originalHtml;
+      }
     });
 
     document.addEventListener('click', event => {

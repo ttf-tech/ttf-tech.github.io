@@ -74,6 +74,10 @@
 .auth-account-edit { width: 100%; min-height: 42px; margin-top: 0.8rem; align-items: center; justify-content: center; gap: 0.45rem; border: 0; border-radius: 9px; background: #073981; color: #fff; font-size: 0.75rem; font-weight: 800; cursor: pointer; }
 .auth-account-edit:hover { background: #052b62; }
 .auth-account-edit:focus-visible { outline: 3px solid rgba(7,57,129,0.25); outline-offset: 2px; }
+.auth-account-signout { width: 100%; min-height: 42px; margin-top: 0.55rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; border: 1px solid #fecaca; border-radius: 9px; background: #fff; color: #b91c1c; font-size: 0.75rem; font-weight: 800; cursor: pointer; }
+.auth-account-signout:hover { border-color: #fca5a5; background: #fff1f2; }
+.auth-account-signout:focus-visible { outline: 3px solid rgba(185,28,28,0.2); outline-offset: 2px; }
+.auth-account-signout:disabled { opacity: 0.65; cursor: wait; }
 
 @media (max-height: 760px) {
   #app-sidebar { padding: 0.75rem 0; }

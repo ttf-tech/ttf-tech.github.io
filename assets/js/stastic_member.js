@@ -275,6 +275,11 @@ const MEMBER_PROFILE_FIELDS = [
   'notificationPreferenceAt'
 ];
 const HELLOASSO_PROFILE_OVERLAP = ['city', 'phone', 'linkedin'];
+const ASSO_ADMIN_AUDIT_FIELDS = [
+  'name', 'nickname', 'gender', 'email', 'city', 'job', 'expertise', 'intro',
+  'linkedin', 'phone', 'helloassoRef', 'motivation', 'joinedAt', 'goals',
+  'acceptsRules', 'notificationConsent'
+];
 
 function splitAssoMemberRecord(member) {
   const now = new Date().toISOString();
@@ -926,9 +931,13 @@ function renderAssoMembers() {
       : m._isAdmin
         ? '<span class="sm-asso-paid-badge sm-asso-role-badge admin"><i class="fas fa-user-shield"></i> Administrateur</span>'
         : '<span class="sm-asso-paid-badge sm-asso-role-badge official"><i class="fas fa-check-circle"></i> Membre officiel</span>';
-    const cardAction = m._isOfficial ? `onclick="openAssoMemberModal('${escHtml(m.id)}')"` : '';
+    const openCall = m._isOfficial
+      ? `openAssoMemberModal('${escHtml(m.id)}')`
+      : `openAdminProfileReadOnly(decodeURIComponent('${encodeURIComponent(m.email || '')}'))`;
     return `
-      <div class="sm-member-card sm-asso-card${m._isOfficial ? '' : ' sm-admin-profile-card'}" data-id="${escHtml(m.id)}" ${cardAction}>
+      <div class="sm-member-card sm-asso-card${m._isOfficial ? '' : ' sm-admin-profile-card'}" data-id="${escHtml(m.id)}"
+           role="button" tabindex="0" onclick="${openCall}"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${openCall};}">
         <div class="sm-asso-card-top">
           <div class="sm-member-avatar sm-asso-avatar">${escHtml(initials)}</div>
           <div class="sm-asso-card-info">
@@ -951,9 +960,37 @@ function renderAssoMembers() {
 }
 
 let _assoModalId = null;
+let _assoModalReadOnly = false;
+let _assoModalOriginalRecord = null;
 
-function openAssoMemberModal(id = null) {
+function openAdminProfileReadOnly(email) {
+  const normalized = (email || '').trim().toLowerCase();
+  const profile = (state.adminProfiles || []).find(item =>
+    (item.email || '').trim().toLowerCase() === normalized
+  ) || {};
+  openAssoMemberModal(null, {
+    ...profile,
+    email: profile.email || normalized,
+    name: profile.name || normalized.split('@')[0]
+  });
+}
+
+function _setAssoModalReadOnly(readOnly) {
+  const overlay = document.getElementById('asso-member-modal');
+  const notice = document.getElementById('asso-readonly-notice');
+  const saveButton = document.getElementById('asso-modal-save');
+  const cancelButton = document.getElementById('asso-modal-cancel');
+  overlay?.querySelectorAll('input, select, textarea').forEach(control => {
+    control.disabled = readOnly;
+  });
+  if (notice) notice.style.display = readOnly ? 'block' : 'none';
+  if (saveButton) saveButton.style.display = readOnly ? 'none' : 'flex';
+  if (cancelButton) cancelButton.textContent = readOnly ? 'Fermer · 關閉' : 'Annuler · 取消';
+}
+
+function openAssoMemberModal(id = null, readOnlyProfile = null) {
   _assoModalId = id;
+  _assoModalReadOnly = !!readOnlyProfile;
   const overlay = document.getElementById('asso-member-modal');
   const title   = document.getElementById('asso-modal-title');
   const delBtn  = document.getElementById('asso-modal-delete');
@@ -978,12 +1015,20 @@ function openAssoMemberModal(id = null) {
     goalsEl.dataset.built = '1';
   }
 
-  if (id) {
-    const official = state.assoMembers.find(x => x.id === id);
-    if (!official) return;
-    const profile = (state.memberProfiles || []).find(x => x.memberId === id) || {};
-    const m = { ...official, ...profile, id: official.id, email: official.email, name: official.name };
-    if (title) title.textContent = 'Modifier membre Asso';
+  if (id || readOnlyProfile) {
+    let m;
+    if (id) {
+      const official = state.assoMembers.find(x => x.id === id);
+      if (!official) return;
+      const profile = (state.memberProfiles || []).find(x => x.memberId === id) || {};
+      m = { ...official, ...profile, id: official.id, email: official.email, name: official.name };
+    } else {
+      m = readOnlyProfile;
+    }
+    _assoModalOriginalRecord = { ...m, goals: Array.isArray(m.goals) ? [...m.goals] : m.goals };
+    if (title) title.textContent = readOnlyProfile
+      ? 'Profil administrateur · 管理員資料（唯讀）'
+      : 'Modifier membre Asso';
     _setVal('am-name',     m.name);
     _setVal('am-nickname', m.nickname || '');
     _setVal('am-gender',   m.gender || '');
@@ -1005,10 +1050,13 @@ function openAssoMemberModal(id = null) {
     overlay.querySelectorAll('input[name="am-goal"]').forEach(cb => {
       cb.checked = effectiveGoals.includes(cb.value);
     });
-    if (delBtn) delBtn.classList.remove('hidden');
+    if (delBtn) delBtn.classList.toggle('hidden', !!readOnlyProfile);
     if (auditEl) {
-      const entries = Object.entries(state.assoFieldAudit?.[id] || {})
-        .sort(([, a], [, b]) => String(b?.editedAt || '').localeCompare(String(a?.editedAt || '')));
+      const entries = id
+        ? Object.entries(state.assoFieldAudit?.[id] || {})
+            .filter(([field, audit]) => ASSO_ADMIN_AUDIT_FIELDS.includes(field) && audit?.previousValue !== null)
+            .sort(([, a], [, b]) => String(b?.editedAt || '').localeCompare(String(a?.editedAt || '')))
+        : [];
       auditEl.style.display = entries.length ? 'block' : 'none';
       auditEl.innerHTML = entries.length
         ? `<strong><i class="fas fa-history"></i> Modifications administrateur · 管理員修改紀錄</strong><br>${entries.map(([field, audit]) =>
@@ -1017,6 +1065,7 @@ function openAssoMemberModal(id = null) {
         : '';
     }
   } else {
+    _assoModalOriginalRecord = null;
     if (title) title.textContent = 'Ajouter membre Asso · 新增協會成員';
     ['am-name','am-nickname','am-gender','am-email','am-city','am-job','am-expertise','am-intro','am-linkedin','am-phone','am-helloasso','am-motivation'].forEach(id => _setVal(id, ''));
     _setVal('am-joined', new Date().toISOString().slice(0, 10));
@@ -1027,6 +1076,7 @@ function openAssoMemberModal(id = null) {
     if (auditEl) auditEl.style.display = 'none';
   }
 
+  _setAssoModalReadOnly(_assoModalReadOnly);
   if (overlay) overlay.classList.remove('hidden');
 }
 
@@ -1042,6 +1092,8 @@ function _setChecked(id, checked) {
 
 function closeAssoMemberModal() {
   _assoModalId = null;
+  _assoModalReadOnly = false;
+  _assoModalOriginalRecord = null;
   document.getElementById('asso-member-modal')?.classList.add('hidden');
 }
 
@@ -1076,18 +1128,26 @@ async function _writeAssoMemberV2(member, previousEmail, previousMember) {
   };
   const actor = firebase.auth().currentUser;
   const auditedAt = new Date().toISOString();
-  const before = previousMember || {};
-  Object.keys(member).forEach(field => {
-    if (field === 'id' || JSON.stringify(before[field]) === JSON.stringify(member[field])) return;
-    updates[`assoMemberFieldAudit/${member.id}/${field}`] = {
-      adminUid: actor?.uid || '',
-      adminEmail: actor?.email || '',
-      adminName: actor?.displayName || actor?.email || '',
-      editedAt: auditedAt,
-      previousValue: before[field] === undefined ? null : before[field],
-      newValue: member[field] === undefined ? null : member[field]
-    };
-  });
+  const before = previousMember || null;
+  if (before) {
+    ASSO_ADMIN_AUDIT_FIELDS.forEach(field => {
+      const previousValue = field === 'joinedAt'
+        ? String(before[field] || '').slice(0, 10)
+        : before[field];
+      const nextValue = field === 'joinedAt'
+        ? String(member[field] || '').slice(0, 10)
+        : member[field];
+      if (JSON.stringify(previousValue) === JSON.stringify(nextValue)) return;
+      updates[`assoMemberFieldAudit/${member.id}/${field}`] = {
+        adminUid: actor?.uid || '',
+        adminEmail: actor?.email || '',
+        adminName: actor?.displayName || actor?.email || '',
+        editedAt: auditedAt,
+        previousValue: previousValue === undefined ? null : previousValue,
+        newValue: nextValue === undefined ? null : nextValue
+      };
+    });
+  }
 
   if (previous && previous !== email) {
     const previousHash = await ttfHashAssoEmail(previous);
@@ -1122,6 +1182,7 @@ async function _deleteAssoMemberV2(member) {
 }
 
 async function saveAssoMember() {
+  if (_assoModalReadOnly) return;
   const name = document.getElementById('am-name')?.value.trim();
   if (!name) { showToast('Le nom est obligatoire · 姓名為必填'); return; }
 
@@ -1162,7 +1223,11 @@ async function saveAssoMember() {
 
   const savedMember = { ...(existing || {}), id: _assoModalId || uid(), ...member };
   try {
-    const saved = await _writeAssoMemberV2(savedMember, existing?.email, existing);
+    const saved = await _writeAssoMemberV2(
+      savedMember,
+      existing?.email,
+      _assoModalOriginalRecord || existing
+    );
     const officialIndex = _assoMembersV2.findIndex(item => item.id === savedMember.id);
     if (officialIndex >= 0) _assoMembersV2[officialIndex] = saved.official;
     else _assoMembersV2.push(saved.official);
@@ -1181,7 +1246,7 @@ async function saveAssoMember() {
 }
 
 async function deleteAssoMember() {
-  if (!_assoModalId) return;
+  if (!_assoModalId || _assoModalReadOnly) return;
   if (!confirm('Supprimer ce membre officiel ? · 確定刪除此協會成員？')) return;
 
   const dyn = extractDynamic();

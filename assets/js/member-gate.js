@@ -76,6 +76,7 @@ function _mgSaveSignInHint(user) {
     if (user) {
       sessionStorage.setItem(MEMBER_GATE_UI_HINT_KEY, JSON.stringify({
         signedIn: true,
+        email: user.email || '',
         savedAt: Date.now()
       }));
     } else {
@@ -125,12 +126,18 @@ function _mgApplyToDom() {
   }));
 }
 
-function ttfMemberGateInit() {
+async function ttfMemberGateInit() {
   if (typeof firebase === 'undefined') {
     document.body.classList.remove('mg-auth-restoring');
     return;
   }
   if (!firebase.apps.length) firebase.initializeApp(_MG_FB_CONFIG);
+
+  try {
+    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+  } catch (error) {
+    console.warn('[member-gate] local persistence unavailable', error);
+  }
 
   _mgHasSignInHint = _mgLoadSignInHint();
   _mgApplyToDom();
@@ -176,6 +183,7 @@ function ttfMemberGateInit() {
 
 async function ttfMemberSignIn() {
   try {
+    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
     const provider = new firebase.auth.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
     await firebase.auth().signInWithPopup(provider);

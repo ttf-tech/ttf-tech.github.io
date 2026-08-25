@@ -54,13 +54,20 @@
         // Create a UID-keyed access binding. Firebase Rules independently
         // verify this member ID belongs to the signed-in email and is active.
         if (result.active) {
-          await firebase.database().ref(`access/members/${user.uid}`).set({
-            uid: user.uid,
-            email: normalizedEmail,
-            memberId: lookup.memberId,
-            active: true,
-            updatedAt: new Date().toISOString()
-          });
+          try {
+            await firebase.database().ref(`access/members/${user.uid}`).set({
+              uid: user.uid,
+              email: normalizedEmail,
+              memberId: lookup.memberId,
+              active: true,
+              updatedAt: new Date().toISOString()
+            });
+          } catch (bindingError) {
+            // The membership lookup itself succeeded. Keep the verified member
+            // status available to the UI even if Rules have not yet allowed the
+            // optional UID binding write.
+            console.warn('[asso-member-access] UID access binding unavailable', bindingError);
+          }
         }
         membershipCache.set(user.uid, result);
         return result;

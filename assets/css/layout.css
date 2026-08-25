@@ -30,6 +30,51 @@
 .sidebar-link-admin { margin-top: auto; }
 .sidebar-link-admin:hover { color: #b45309; }
 
+.auth-account-widget {
+  position: fixed; top: 0.75rem; right: 1rem; z-index: 19;
+}
+.auth-account-chip {
+  display: none; align-items: center; gap: 0.45rem;
+  max-width: min(22rem, calc(100vw - 6rem));
+  padding: 0.45rem 0.7rem; border: 1px solid #dbe3ec; border-radius: 999px;
+  background: rgba(255,255,255,0.96); color: #334155;
+  box-shadow: 0 2px 10px rgba(15,23,42,0.08);
+  font-size: 0.7rem; font-weight: 700; line-height: 1;
+  backdrop-filter: blur(8px); cursor: pointer;
+}
+.auth-account-chip.visible { display: flex; }
+.auth-account-chip i { flex: 0 0 auto; color: #0e7490; font-size: 0.85rem; }
+.auth-account-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auth-account-chip:hover { border-color: #94a3b8; box-shadow: 0 4px 14px rgba(15,23,42,0.12); }
+.auth-account-chip:focus-visible { outline: 3px solid rgba(14,116,144,0.28); outline-offset: 2px; }
+.auth-account-chevron { margin-left: 0.15rem; font-size: 0.55rem !important; color: #64748b !important; transition: transform 0.15s; }
+.auth-account-chip[aria-expanded="true"] .auth-account-chevron { transform: rotate(180deg); }
+.auth-account-panel {
+  position: absolute; top: calc(100% + 0.55rem); right: 0; width: min(21rem, calc(100vw - 5.5rem));
+  padding: 1rem; border: 1px solid #dbe3ec; border-radius: 14px;
+  background: #fff; color: #334155; box-shadow: 0 16px 40px rgba(15,23,42,0.16);
+}
+.auth-account-panel[hidden] { display: none; }
+.auth-account-panel-label { color: #64748b; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; }
+.auth-account-panel-email { margin-top: 0.2rem; overflow-wrap: anywhere; color: #0f172a; font-size: 0.78rem; font-weight: 800; }
+.auth-member-status { display: grid; grid-template-columns: 2rem 1fr; gap: 0.65rem; align-items: start; margin-top: 0.85rem; padding: 0.8rem; border: 1px solid; border-radius: 11px; }
+.auth-member-status-icon { display: inline-flex; width: 2rem; height: 2rem; align-items: center; justify-content: center; border-radius: 50%; }
+.auth-member-status-title { font-size: 0.78rem; font-weight: 800; line-height: 1.4; }
+.auth-member-status-copy { margin-top: 0.15rem; font-size: 0.66rem; line-height: 1.55; }
+.auth-member-status.checking { border-color: #cbd5e1; background: #f8fafc; color: #475569; }
+.auth-member-status.checking .auth-member-status-icon { background: #e2e8f0; }
+.auth-member-status.not-member { border-color: #fed7aa; background: #fff7ed; color: #9a3412; }
+.auth-member-status.not-member .auth-member-status-icon { background: #ffedd5; }
+.auth-member-status.member { border-color: #bfdbfe; background: #eff6ff; color: #1e40af; }
+.auth-member-status.member .auth-member-status-icon { background: #dbeafe; }
+.auth-member-status.complete { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+.auth-member-status.complete .auth-member-status-icon { background: #dcfce7; }
+.auth-member-status.admin { border-color: #c4b5fd; background: #f5f3ff; color: #5b21b6; }
+.auth-member-status.admin .auth-member-status-icon { background: #ede9fe; }
+.auth-account-edit { width: 100%; min-height: 42px; margin-top: 0.8rem; align-items: center; justify-content: center; gap: 0.45rem; border: 0; border-radius: 9px; background: #073981; color: #fff; font-size: 0.75rem; font-weight: 800; cursor: pointer; }
+.auth-account-edit:hover { background: #052b62; }
+.auth-account-edit:focus-visible { outline: 3px solid rgba(7,57,129,0.25); outline-offset: 2px; }
+
 @media (max-height: 760px) {
   #app-sidebar { padding: 0.75rem 0; }
   .sidebar-logo { width: 2rem; margin-bottom: 0.75rem; }
@@ -48,6 +93,14 @@
 
 /* ── Shared mobile layout ───────────────────────────────────── */
 @media (max-width: 640px) {
+  .auth-account-widget {
+    top: auto; right: 0.75rem; bottom: 0.75rem;
+  }
+  .auth-account-chip {
+    max-width: calc(100vw - 5rem);
+    font-size: 0.65rem;
+  }
+  .auth-account-panel { top: auto; bottom: calc(100% + 0.55rem); }
   #app-sidebar {
     width: 3.5rem;
     padding: 0.75rem 0;

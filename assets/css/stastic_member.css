@@ -375,10 +375,22 @@
 .sm-admin-profile-card {
   border-color: #c7d2fe;
   background: linear-gradient(160deg, #eef2ff 0%, #fff 60%);
-  cursor: default;
+  cursor: pointer;
 }
+.sm-admin-profile-card:hover { border-color: #8b5cf6; box-shadow: 0 8px 22px rgba(91,33,182,0.12); }
+.sm-admin-profile-card:focus-visible { outline: 3px solid rgba(124,58,237,0.3); outline-offset: 3px; }
 .sm-admin-profile-card .sm-asso-avatar {
   background: linear-gradient(135deg, #4338ca, #7c3aed);
+}
+#asso-member-modal .sm-input:disabled,
+#asso-member-modal input:disabled,
+#asso-member-modal select:disabled,
+#asso-member-modal textarea:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+  background: #f8fafc;
+  color: #475569;
+  border-color: #e2e8f0;
 }
 .sm-asso-linkedin {
   color: #0a66c2;

@@ -48,6 +48,7 @@
   let backdropPressStarted = false;
   let currentAdminAccess = false;
   let adminCheckVersion = 0;
+  let membershipResolved = true;
 
   const byId = id => document.getElementById(id);
   const norm = value => (value || '').trim().toLowerCase();
@@ -105,6 +106,9 @@
       ? adminProfiles.find(profile => norm(profile.email) === signedInEmail)
       : null;
     const isAdmin = isAdminAccount();
+    const activeAssoRecord = ownAssoRecord && isActiveMember(ownAssoRecord)
+      ? ownAssoRecord
+      : null;
 
     if (isAdmin) {
       currentMember = {
@@ -118,13 +122,13 @@
         source: 'admin'
       };
       currentProfileSource = 'admin';
-    } else if (ownAssoRecord && isActiveMember(ownAssoRecord)) {
+    } else if (activeAssoRecord) {
       currentMember = {
-        ...ownAssoRecord,
+        ...activeAssoRecord,
         ...(ownMemberProfile || {}),
-        id: ownAssoRecord.id,
-        email: ownAssoRecord.email,
-        name: ownAssoRecord.name,
+        id: activeAssoRecord.id,
+        email: activeAssoRecord.email,
+        name: activeAssoRecord.name,
         _storageSource: ownAssoV2 ? 'v2' : 'legacy'
       };
       currentProfileSource = 'asso';
@@ -133,9 +137,23 @@
       currentProfileSource = null;
     }
     const button = byId('member-profile-open');
-    const canUseProfile = !!currentMember;
+    const canUseProfile = currentProfileSource === 'admin' ||
+      (currentProfileSource === 'asso' && currentMember?._storageSource === 'v2');
     if (button) button.style.display = canUseProfile ? 'inline-flex' : 'none';
     if (!canUseProfile) closeModal();
+
+    const missing = activeAssoRecord && currentMember ? missingFields(currentMember) : [];
+    document.dispatchEvent(new CustomEvent('ttf:member-profile-state', {
+      detail: {
+        resolved: !currentUser || membershipResolved,
+        signedIn: !!currentUser,
+        isAdmin,
+        isAssoMember: !!activeAssoRecord,
+        isComplete: !!activeAssoRecord && missing.length === 0,
+        missingCount: missing.length,
+        canEdit: canUseProfile
+      }
+    }));
   }
 
   function setValue(id, value) {
@@ -386,7 +404,7 @@
     ownMemberProfileHandler = null;
     ownMemberProfile = null;
 
-    if (!user || !user.uid || isAdminAccount() || !ownAssoV2) {
+    if (!user || !user.uid || !ownAssoV2) {
       refreshCurrentMember();
       return;
     }
@@ -432,20 +450,23 @@
       currentUser = user;
       currentAdminAccess = false;
       ownAssoV2 = null;
+      membershipResolved = !user;
       watchOwnMemberProfile(null);
       watchOwnAdminProfile(user);
       refreshCurrentMember();
 
       if (user) {
-        currentAdminAccess = typeof ttfResolveAdminAccess === 'function'
-          ? await ttfResolveAdminAccess(user)
-          : false;
+        const adminPromise = typeof ttfResolveAdminAccess === 'function'
+          ? ttfResolveAdminAccess(user)
+          : Promise.resolve(false);
+        const membershipPromise = typeof ttfResolveAssoMembership === 'function'
+          ? ttfResolveAssoMembership(user)
+          : Promise.resolve(null);
+        const [adminAccess, membership] = await Promise.all([adminPromise, membershipPromise]);
         if (checkVersion !== adminCheckVersion) return;
-        if (!currentAdminAccess && typeof ttfResolveAssoMembership === 'function') {
-          const membership = await ttfResolveAssoMembership(user);
-          if (checkVersion !== adminCheckVersion) return;
-          ownAssoV2 = membership?.active ? membership.member : null;
-        }
+        currentAdminAccess = adminAccess === true;
+        ownAssoV2 = membership?.active ? membership.member : null;
+        membershipResolved = true;
         watchOwnMemberProfile(user);
         watchOwnAdminProfile(user);
         refreshCurrentMember();

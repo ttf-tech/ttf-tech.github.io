@@ -8,8 +8,8 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="assets/css/stastic_member.css">
-  <link rel="stylesheet" href="assets/css/layout.css">
+  <link rel="stylesheet" href="assets/css/stastic_member.css?v=2">
+  <link rel="stylesheet" href="assets/css/layout.css?v=2">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <!-- Firebase SDK (compat v9 — needed for Realtime Database) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -18,7 +18,7 @@
   <!-- Generated at deploy time by GitHub Actions — not stored in repo -->
   <script src="assets/js/admin-config.js"></script>
   <script src="assets/js/admin-access.js"></script>
-  <script src="assets/js/asso-member-access.js"></script>
+  <script src="assets/js/asso-member-access.js?v=2"></script>
 
   <style>
     /* Sidebar styles: assets/css/layout.css */
@@ -54,6 +54,19 @@
     .auth-close:focus-visible {
       outline: 3px solid #fde68a;
       outline-offset: 3px;
+    }
+    .admin-auth-actions {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 0.65rem; margin-top: 1.25rem;
+    }
+    .admin-auth-btn {
+      min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem;
+      padding: 0.65rem 1.1rem; border-radius: 9px; font-size: 0.78rem; font-weight: 800; cursor: pointer;
+    }
+    .admin-auth-btn-primary { border: 1px solid #fff; background: #fff; color: #1f2937; }
+    .admin-auth-btn-secondary { border: 1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.08); color: #fff; }
+    .admin-denied-icon {
+      width: 3.25rem; height: 3.25rem; margin: 0 auto 0.9rem; display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; background: rgba(254,202,202,0.12); color: #fca5a5; font-size: 1.25rem;
     }
 
     @media (max-width: 640px) {
@@ -113,33 +126,82 @@
       if (overlay) overlay.style.display = locked ? 'flex' : 'none';
     }
 
-    firebase.auth().onAuthStateChanged(async function(user) {
-      await adminPageReady();
-      const overlay = document.getElementById('auth-overlay');
+    function renderAdminAuthState(state, user) {
+      const loadingState = document.getElementById('admin-auth-loading-state');
+      const signInState = document.getElementById('admin-signed-out-state');
+      const deniedState = document.getElementById('admin-denied-state');
+      const deniedEmail = document.getElementById('admin-denied-email');
       const errorEl = document.getElementById('signin-error');
-      if (!overlay) return;
-      if (!user) { setAdminInterfaceLocked(true); return; }
-
-      const allowed = typeof ttfResolveAdminAccess === 'function'
-        ? await ttfResolveAdminAccess(user)
-        : false;
-      if (firebase.auth().currentUser?.uid !== user.uid) return;
-      if (allowed) {
-        setAdminInterfaceLocked(false);
-        const badge = document.getElementById('auth-badge');
-        if (badge) badge.textContent = user.displayName || user.email;
-      } else {
-        setAdminInterfaceLocked(true);
-        firebase.auth().signOut();
-        if (errorEl) errorEl.textContent = 'Accès refusé · 無訪問權限 (' + user.email + ')';
+      const signInButton = document.getElementById('signin-btn');
+      const signedIn = state === 'denied';
+      if (loadingState) loadingState.style.display = 'none';
+      if (signInState) signInState.style.display = state === 'signed-out' ? 'block' : 'none';
+      if (deniedState) deniedState.style.display = signedIn ? 'block' : 'none';
+      if (deniedEmail) deniedEmail.textContent = user?.email || '';
+      if (errorEl && signedIn) errorEl.textContent = '';
+      if (state === 'signed-out' && signInButton) {
+        signInButton.disabled = false;
+        signInButton.innerHTML = '<i class="fab fa-google" style="color:#ea4335;"></i> Se connecter avec Google · Google 登入';
       }
-    });
+    }
+
+    function closeAdminPage(event) {
+      event.preventDefault();
+      let cameFromThisSite = false;
+      try {
+        cameFromThisSite = !!document.referrer &&
+          new URL(document.referrer).origin === window.location.origin;
+      } catch (_) {}
+
+      if (cameFromThisSite && window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.assign('index.html');
+      }
+    }
+
+    async function initAdminAuthGate() {
+      try {
+        await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      } catch (error) {
+        console.warn('[admin-auth] local persistence unavailable', error);
+      }
+
+      firebase.auth().onAuthStateChanged(async function(user) {
+        await adminPageReady();
+        const overlay = document.getElementById('auth-overlay');
+        const errorEl = document.getElementById('signin-error');
+        if (!overlay) return;
+        if (!user) {
+          setAdminInterfaceLocked(true);
+          renderAdminAuthState('signed-out');
+          return;
+        }
+
+        const allowed = typeof ttfResolveAdminAccess === 'function'
+          ? await ttfResolveAdminAccess(user)
+          : false;
+        if (firebase.auth().currentUser?.uid !== user.uid) return;
+        if (allowed) {
+          renderAdminAuthState('allowed', user);
+          setAdminInterfaceLocked(false);
+          const badge = document.getElementById('auth-badge');
+          if (badge) badge.textContent = user.displayName || user.email;
+        } else {
+          setAdminInterfaceLocked(true);
+          renderAdminAuthState('denied', user);
+        }
+      });
+    }
+
+    initAdminAuthGate();
 
     async function adminSignIn() {
       const btn = document.getElementById('signin-btn');
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Connexion…';
       try {
+        await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
         await firebase.auth().signInWithPopup(provider);
@@ -162,24 +224,46 @@
   <div id="auth-overlay" style="
     position:fixed;inset:0;z-index:9999;background:rgba(10,20,40,0.97);
     display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;">
-    <a href="index.html" class="auth-close" aria-label="關閉並返回首頁" title="返回首頁 · Accueil">
+    <a href="index.html" class="auth-close" onclick="closeAdminPage(event)" aria-label="關閉並返回上一頁" title="返回上一頁 · Retour">
       <i class="fas fa-times" aria-hidden="true"></i>
     </a>
-    <div style="text-align:center;max-width:340px;">
-      <div style="font-size:3rem;margin-bottom:0.75rem;">🇹🇼</div>
-      <div style="font-size:1.2rem;font-weight:800;color:#fff;margin-bottom:0.25rem;">Taiwan Tech France</div>
-      <div style="font-size:0.8rem;color:rgba(255,255,255,0.45);margin-bottom:2rem;">Administration · 管理員登入</div>
-      <button id="signin-btn" onclick="adminSignIn()" style="
-        display:inline-flex;align-items:center;gap:0.6rem;
-        padding:0.75rem 1.75rem;border-radius:99px;border:none;cursor:pointer;
-        background:#fff;color:#1f2937;font-size:0.9rem;font-weight:700;
-        box-shadow:0 2px 12px rgba(0,0,0,0.4);transition:transform 0.1s;">
-        <i class="fab fa-google" style="color:#ea4335;"></i>
-        Se connecter avec Google · Google 登入
-      </button>
-      <div id="signin-error" style="margin-top:1rem;font-size:0.72rem;color:#fca5a5;min-height:1rem;"></div>
-      <div style="margin-top:1.5rem;font-size:0.65rem;color:rgba(255,255,255,0.25);">
-        Accès réservé à l'administrateur du site. · 只有網站管理員可以登入。
+    <div style="text-align:center;max-width:380px;width:100%;">
+      <div id="admin-auth-loading-state" role="status" aria-live="polite">
+        <i class="fas fa-spinner fa-spin" aria-hidden="true" style="font-size:1.5rem;color:#fff;"></i>
+        <div style="margin-top:0.8rem;font-size:0.78rem;color:rgba(255,255,255,0.65);">正在確認登入狀態…</div>
+      </div>
+      <div id="admin-signed-out-state" style="display:none;">
+        <div style="font-size:3rem;margin-bottom:0.75rem;">🇹🇼</div>
+        <div style="font-size:1.2rem;font-weight:800;color:#fff;margin-bottom:0.25rem;">Taiwan Tech France</div>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.45);margin-bottom:2rem;">Administration · 管理員登入</div>
+        <button id="signin-btn" onclick="adminSignIn()" style="
+          display:inline-flex;align-items:center;gap:0.6rem;
+          padding:0.75rem 1.75rem;border-radius:99px;border:none;cursor:pointer;
+          background:#fff;color:#1f2937;font-size:0.9rem;font-weight:700;
+          box-shadow:0 2px 12px rgba(0,0,0,0.4);transition:transform 0.1s;">
+          <i class="fab fa-google" style="color:#ea4335;"></i>
+          Se connecter avec Google · Google 登入
+        </button>
+        <div id="signin-error" style="margin-top:1rem;font-size:0.72rem;color:#fca5a5;min-height:1rem;"></div>
+        <div style="margin-top:1.5rem;font-size:0.65rem;color:rgba(255,255,255,0.25);">
+          Accès réservé à l'administrateur du site. · 只有網站管理員可以登入。
+        </div>
+      </div>
+      <div id="admin-denied-state" style="display:none;">
+        <div class="admin-denied-icon"><i class="fas fa-user-lock" aria-hidden="true"></i></div>
+        <div style="font-size:1.15rem;font-weight:800;color:#fff;">無管理員權限</div>
+        <div style="margin-top:0.45rem;font-size:0.75rem;line-height:1.6;color:rgba(255,255,255,0.62);">
+          你已使用以下帳號登入，但此帳號沒有管理後台的存取權限。
+        </div>
+        <div id="admin-denied-email" style="margin-top:0.75rem;padding:0.55rem 0.75rem;border-radius:8px;background:rgba(255,255,255,0.08);color:#fff;font-size:0.75rem;font-weight:700;overflow-wrap:anywhere;"></div>
+        <div class="admin-auth-actions">
+          <button type="button" class="admin-auth-btn admin-auth-btn-primary" onclick="closeAdminPage(event)">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i> 返回上一頁
+          </button>
+          <button type="button" class="admin-auth-btn admin-auth-btn-secondary" onclick="adminSignOut()">
+            <i class="fas fa-sign-out-alt" aria-hidden="true"></i> 登出此帳號
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -187,7 +271,7 @@
   <!-- ── SIDEBAR ───────────────────────────────────────────────── -->
 
   <aside id="app-sidebar"></aside>
-  <script src="assets/js/sidebar.js"></script>
+  <script src="assets/js/sidebar.js?v=4"></script>
 
   <!-- ── MAIN ─────────────────────────────────────────────────── -->
   <main role="main" class="flex-1 ml-16">
@@ -1501,6 +1585,11 @@
       </div>
       <div class="sm-modal-body" style="max-height:70vh;overflow-y:auto;">
 
+        <div id="asso-readonly-notice" style="display:none;margin-bottom:1rem;padding:0.8rem 0.9rem;border:1px solid #c4b5fd;border-radius:10px;background:#f5f3ff;color:#5b21b6;font-size:0.72rem;line-height:1.55;">
+          <strong><i class="fas fa-eye" aria-hidden="true" style="margin-right:0.3rem;"></i>管理員資料 · 唯讀</strong><br>
+          此資料由管理員本人從首頁更新；在 Asso Membres 分頁只能查看，不能代為修改。
+        </div>
+
         <div class="sm-form-group">
           <label class="sm-label" for="am-name">Nom complet · 姓名 *</label>
           <input id="am-name" class="sm-input" type="text" placeholder="ex: Wei-Chen Liu">
@@ -1627,6 +1716,6 @@
   </div>
   <!-- /ASSO MEMBER MODAL -->
 
-  <script src="assets/js/stastic_member.js?v=11" defer></script>
+  <script src="assets/js/stastic_member.js?v=12" defer></script>
 </body>
 </html>

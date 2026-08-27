@@ -12,7 +12,7 @@
     { href: 'index.html',       icon: 'fa-home',         label: 'Accueil', title: 'Home · 首頁' },
     { href: 'events.html',      icon: 'fa-calendar-alt', label: 'Agenda',  title: 'Events · 活動' },
     { href: 'jobs.html',        icon: 'fa-briefcase',    label: 'Offres',  title: 'Jobs · 職缺' },
-    { href: 'resources.html',   icon: 'fa-book-open',    label: 'Docs',    title: 'Resources · 資源' },
+    { href: 'resources.html',   icon: 'fa-toolbox',      label: 'Res',     title: 'Resources · 資源' },
     { href: 'vote.html',        icon: 'fa-poll',         label: 'Vote',    title: 'Sondages · 投票' },
     { href: 'association.html', icon: 'fa-landmark',     label: 'Assoc',   title: 'Association · 協會' },
     { href: 'adhesion.html',    icon: 'fa-id-card',      label: 'Membre',  title: 'Adhésion · 成為會員' },

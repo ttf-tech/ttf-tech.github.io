@@ -452,9 +452,11 @@ function renderKPIs() {
   const elM = document.getElementById('kpi-members');
   const elJ = document.getElementById('kpi-jobs');
   const elE = document.getElementById('kpi-events');
+  const elP = document.getElementById('kpi-paid-members');
   if (elM) elM.textContent = kpi.totalMembers;
   if (elJ) elJ.textContent = kpi.jobCount;
   if (elE) elE.textContent = kpi.eventCount;
+  if (elP) elP.textContent = getHelloAssoMemberCount();
 }
 
 // ── Tab switching ──────────────────────────────────────────────
@@ -496,18 +498,15 @@ function countHelloAssoMembers(members) {
   return emails.size;
 }
 
-function renderHelloAssoMemberCount() {
-  const countEl = document.getElementById('asso-helloasso-count');
-  if (!countEl) return;
+function getHelloAssoMemberCount() {
   if (!_helloAssoSyncSummary && !_assoMembersV2Loaded) {
-    countEl.textContent = '—';
-    return;
+    return '—';
   }
 
   const rawSyncedCount = _helloAssoSyncSummary?.totalFromHelloAsso;
   const syncedCount = Number(rawSyncedCount);
   const hasSyncedCount = rawSyncedCount !== undefined && rawSyncedCount !== null && rawSyncedCount !== '';
-  countEl.textContent = hasSyncedCount && Number.isSafeInteger(syncedCount) && syncedCount >= 0
+  return hasSyncedCount && Number.isSafeInteger(syncedCount) && syncedCount >= 0
     ? syncedCount
     : countHelloAssoMembers(state.assoMembers);
 }
@@ -875,7 +874,6 @@ function renderMembers(filter = '') {
 function renderAssoMembers() {
   const container = document.getElementById('asso-grid');
   if (!container) return;
-  renderHelloAssoMemberCount();
 
   const query   = (document.getElementById('asso-search')?.value   || '').toLowerCase();
   const cityFlt = (document.getElementById('asso-city-filter')?.value || '');
@@ -3150,7 +3148,7 @@ function initAdminProfiles() {
     _assoMembersV2Loaded = false;
     _assoV2Hydrated = false;
     _helloAssoSyncSummary = null;
-    renderHelloAssoMemberCount();
+    renderKPIs();
     _surveyV4Ready = true;
     _surveysV4 = [];
     _surveyVotesV4 = {};
@@ -3246,7 +3244,6 @@ function initAdminProfiles() {
         : Object.entries(raw).map(([id, member]) => ({ id, ...(member || {}) }));
       _assoV2Hydrated = true;
       state.assoMembers = _assoMembersV2;
-      renderHelloAssoMemberCount();
       if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
       renderKPIs();
     };
@@ -3258,7 +3255,7 @@ function initAdminProfiles() {
       const summary = snapshot.val();
       _helloAssoSyncSummary = summary || null;
       _assoV2Ready = true;
-      renderHelloAssoMemberCount();
+      renderKPIs();
       if (summary) handleLastAssoSync(summary);
     };
     _helloAssoSyncRef.on('value', _helloAssoSyncHandler, error => {

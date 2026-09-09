@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZTM2QR5VPV"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag("js", new Date());
+    gtag("config", "G-ZTM2QR5VPV");
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>你的台法職涯原型 · Ton archétype carrière France-Taïwan</title>
+  <meta name="description" content="1 分鐘小測驗，找出你在法國的職涯原型 · Un quiz d'une minute pour trouver ton archétype de carrière en France.">
+  <link rel="canonical" href="https://ttf-tech.github.io/game.html">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="你的台法職涯原型 · Ton archétype carrière France-Taïwan">
+  <meta property="og:description" content="1 分鐘小測驗，找出你在法國的職涯原型 · Un quiz d'une minute pour trouver ton archétype de carrière en France.">
+  <meta property="og:url" content="https://ttf-tech.github.io/game.html">
+  <meta property="og:image" content="https://ttf-tech.github.io/logo.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body { background: linear-gradient(160deg, #0f172a 0%, #1e1b4b 55%, #0f172a 100%); min-height: 100vh; }
+    .game-wrap { max-width: 480px; margin: 0 auto; padding: 1.25rem 1.25rem 3rem; min-height: 100vh; display: flex; flex-direction: column; }
+
+    .g-header { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0 1.25rem; }
+    .g-logo { display: flex; align-items: center; gap: 0.5rem; color: #fff; font-weight: 800; font-size: 0.95rem; text-decoration: none; }
+    .g-logo img { width: 28px; height: 28px; border-radius: 8px; }
+    .lang-toggle {
+      display: flex; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 99px; padding: 0.2rem; gap: 0.15rem;
+    }
+    .lang-toggle button {
+      border: none; background: transparent; color: rgba(255,255,255,0.55); font-size: 0.72rem; font-weight: 700;
+      padding: 0.35rem 0.65rem; border-radius: 99px; cursor: pointer; min-height: 32px;
+    }
+    .lang-toggle button.active { background: #fff; color: #1e1b4b; }
+
+    .g-nav { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; min-height: 32px; }
+    .g-back {
+      color: rgba(255,255,255,0.6); background: none; border: none; font-size: 1.1rem; cursor: pointer;
+      min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center;
+    }
+    .g-dots { display: flex; gap: 0.4rem; }
+    .g-dot { width: 8px; height: 8px; border-radius: 99px; background: rgba(255,255,255,0.2); transition: background 0.2s, transform 0.2s; }
+    .g-dot.done { background: #22d3ee; }
+    .g-dot.current { background: #fff; transform: scale(1.3); }
+
+    .g-view { display: none; flex: 1; flex-direction: column; }
+    .g-view.active { display: flex; animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+    .g-title { color: #fff; font-size: 1.5rem; font-weight: 900; line-height: 1.3; margin-bottom: 0.5rem; }
+    .g-sub { color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 1.75rem; line-height: 1.5; }
+
+    .g-opt {
+      display: block; width: 100%; text-align: left; background: rgba(255,255,255,0.06);
+      border: 1.5px solid rgba(255,255,255,0.12); color: #fff; border-radius: 14px;
+      padding: 0.95rem 1.1rem; margin-bottom: 0.65rem; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; min-height: 48px; transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    .g-opt:active { transform: scale(0.98); }
+    .g-opt:hover { background: rgba(255,255,255,0.11); border-color: rgba(255,255,255,0.3); }
+    .g-opt-zh { display: block; }
+    .g-opt-fr { display: block; font-size: 0.76rem; font-weight: 400; color: rgba(255,255,255,0.55); margin-top: 0.15rem; }
+
+    .g-cta {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      background: linear-gradient(135deg, #22d3ee, #6366f1); color: #0f172a; font-weight: 800;
+      border: none; border-radius: 14px; padding: 1rem 1.5rem; font-size: 1rem; cursor: pointer;
+      min-height: 52px; width: 100%; text-decoration: none; box-shadow: 0 8px 24px rgba(99,102,241,0.35);
+    }
+    .g-cta-secondary {
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.08); color: #fff; font-weight: 700;
+      border: 1.5px solid rgba(255,255,255,0.2); border-radius: 14px; padding: 0.9rem 1.5rem;
+      font-size: 0.9rem; cursor: pointer; min-height: 48px; width: 100%; text-decoration: none;
+    }
+
+    .archetype-card {
+      background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.15);
+      border-radius: 20px; padding: 1.75rem 1.5rem; text-align: center; margin-bottom: 1.25rem;
+    }
+    .archetype-emoji { font-size: 2.75rem; margin-bottom: 0.5rem; }
+    .archetype-name-zh { color: #fff; font-size: 1.6rem; font-weight: 900; }
+    .archetype-name-fr { color: #22d3ee; font-size: 1rem; font-weight: 700; margin-top: 0.15rem; }
+    .archetype-tagline { color: rgba(255,255,255,0.7); font-size: 0.85rem; margin-top: 0.75rem; line-height: 1.5; }
+
+    .stat-line {
+      background: rgba(34,211,238,0.1); border: 1px solid rgba(34,211,238,0.25);
+      border-radius: 12px; padding: 0.85rem 1rem; font-size: 0.78rem; color: #a5f3fc;
+      line-height: 1.5; margin-bottom: 1.25rem;
+    }
+
+    .unlock-section { margin-top: 1.75rem; }
+    .unlock-label {
+      color: rgba(255,255,255,0.4); font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.08em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;
+    }
+    .lock-card {
+      position: relative; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px; padding: 1rem 1.1rem; margin-bottom: 0.65rem; overflow: hidden;
+    }
+    .lock-card.primary { border-color: rgba(34,211,238,0.35); background: rgba(34,211,238,0.06); }
+    .lock-card-title { color: #fff; font-weight: 700; font-size: 0.88rem; }
+    .lock-card-title-fr { color: rgba(255,255,255,0.55); font-size: 0.74rem; margin-top: 0.15rem; }
+    .lock-icon { position: absolute; top: 0.9rem; right: 1rem; color: rgba(255,255,255,0.35); font-size: 0.85rem; }
+    .lock-blur { filter: blur(3px); user-select: none; opacity: 0.6; }
+
+    .share-row { display: flex; gap: 0.6rem; margin-bottom: 0.85rem; }
+    .share-row .g-cta { background: #25d366; color: #fff; box-shadow: 0 8px 24px rgba(37,211,102,0.3); }
+
+    .g-footer-link { text-align: center; color: rgba(255,255,255,0.35); font-size: 0.75rem; margin-top: 1.5rem; }
+    .g-footer-link a { color: rgba(255,255,255,0.5); text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <div class="game-wrap">
+    <div class="g-header">
+      <a class="g-logo" href="index.html">
+        <img src="favicon-32x32.png" alt="TTF">
+        <span>Taiwan Tech France</span>
+      </a>
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button type="button" data-lang="zh">中文</button>
+        <button type="button" data-lang="fr">FR</button>
+      </div>
+    </div>
+
+    <div class="g-nav">
+      <button type="button" class="g-back" id="back-btn" style="visibility:hidden;"><i class="fas fa-arrow-left"></i></button>
+      <div class="g-dots" id="dots" style="display:none;">
+        <div class="g-dot" data-dot="0"></div>
+        <div class="g-dot" data-dot="1"></div>
+        <div class="g-dot" data-dot="2"></div>
+      </div>
+    </div>
+
+    <!-- Splash -->
+    <div class="g-view active" id="view-splash">
+      <div style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+        <div style="font-size:3rem; margin-bottom:1rem;">🧭</div>
+        <div class="g-title" data-zh="你的台法職涯原型是？" data-fr="Quel est ton archétype carrière France-Taïwan ?">你的台法職涯原型是？</div>
+        <div class="g-sub" data-zh="3 個問題，1 分鐘，找出最適合你的方向與資源。" data-fr="3 questions, 1 minute, pour trouver la direction et les ressources qui te correspondent.">3 個問題，1 分鐘，找出最適合你的方向與資源。</div>
+      </div>
+      <button type="button" class="g-cta" id="start-btn">
+        <span data-zh="開始測驗" data-fr="Commencer">開始測驗</span>
+        <i class="fas fa-arrow-right"></i>
+      </button>
+    </div>
+
+    <!-- Q1 : status -->
+    <div class="g-view" id="view-q1">
+      <div class="g-title" data-zh="你目前的狀態是？" data-fr="Quel est ton statut actuel ?">你目前的狀態是？</div>
+      <div class="g-sub" data-zh="幫我們更了解你" data-fr="Pour mieux te connaître">幫我們更了解你</div>
+      <div id="q1-options"></div>
+    </div>
+
+    <!-- Q2 : trajectory -->
+    <div class="g-view" id="view-q2">
+      <div class="g-title" data-zh="台法兩地的長期規劃？" data-fr="Ta trajectoire long terme, France-Taïwan ?">台法兩地的長期規劃？</div>
+      <div class="g-sub" data-zh="這決定你的原型" data-fr="Ceci détermine ton archétype">這決定你的原型</div>
+      <div id="q2-options"></div>
+    </div>
+
+    <!-- Q3 : immediate need -->
+    <div class="g-view" id="view-q3">
+      <div class="g-title" data-zh="現在最需要的資源？" data-fr="De quoi as-tu besoin en ce moment ?">現在最需要的資源？</div>
+      <div class="g-sub" data-zh="最後一題！" data-fr="Dernière question !">最後一題！</div>
+      <div id="q3-options"></div>
+    </div>
+
+    <!-- Result -->
+    <div class="g-view" id="view-result">
+      <div class="archetype-card">
+        <div class="archetype-emoji" id="r-emoji">🧭</div>
+        <div class="archetype-name-zh" id="r-name-zh">扎根者</div>
+        <div class="archetype-name-fr" id="r-name-fr">L'Ancreur</div>
+        <div class="archetype-tagline" id="r-tagline"></div>
+      </div>
+
+      <div class="stat-line" id="r-stat"></div>
+
+      <div class="share-row">
+        <a class="g-cta" id="share-btn" target="_blank" rel="noopener">
+          <i class="fab fa-whatsapp"></i>
+          <span data-zh="分享給朋友" data-fr="Partager">分享給朋友</span>
+        </a>
+      </div>
+
+      <div class="unlock-section">
+        <div class="unlock-label"><i class="fas fa-lock"></i><span data-zh="專屬解鎖內容" data-fr="Contenu à débloquer">專屬解鎖內容</span></div>
+
+        <div class="lock-card primary">
+          <i class="fas fa-lock lock-icon"></i>
+          <div class="lock-blur">
+            <div class="lock-card-title" id="r-hook-zh">你的專屬行動指南</div>
+            <div class="lock-card-title-fr" id="r-hook-fr"></div>
+          </div>
+        </div>
+
+        <div id="r-needs-list"></div>
+
+        <div class="lock-card" style="margin-top:0.9rem;background:rgba(255,255,255,0.03);">
+          <div class="lock-card-title" style="color:rgba(255,255,255,0.75);" data-zh="下一場閉門場次，會員優先保留名額" data-fr="Prochaine session à huis clos, places prioritaires pour les membres">下一場閉門場次，會員優先保留名額</div>
+          <div class="lock-card-title-fr" id="r-session-date"></div>
+        </div>
+      </div>
+
+      <a class="g-cta" id="unlock-btn" style="margin-top:1rem;">
+        <i class="fas fa-unlock"></i>
+        <span data-zh="成為會員，解鎖完整內容" data-fr="Devenir membre, tout débloquer">成為會員，解鎖完整內容</span>
+      </a>
+      <button type="button" class="g-cta-secondary" id="replay-btn" style="margin-top:0.6rem;">
+        <span data-zh="重新測驗" data-fr="Refaire le test">重新測驗</span>
+      </button>
+
+      <div class="g-footer-link">
+        <span data-zh="想看更多資源？" data-fr="Envie de voir plus de ressources ?">想看更多資源？</span>
+        <a href="resources.html" data-zh="回到資源頁" data-fr="Retour aux ressources">回到資源頁</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  'use strict';
+
+  // ── Session date: edit this one line once the closed-door session is confirmed ──
+  const SESSION_DATE = { zh: '日期即將公布', fr: 'Date à confirmer' };
+
+  // Real, verified community stat (WhatsApp survey, 125 responses) — see vote.html "你目前的狀態是？"
+  const REAL_STAT = { zh: '你並不孤單：在 125 位受訪社群成員中，45% 也正在積極求職中（來自社群調查）。',
+                       fr: 'Tu n\'es pas seul(e) : sur 125 membres sondés, 45% sont aussi activement en recherche (sondage communautaire).' };
+
+  const ARCHETYPES = {
+    ancreur: {
+      emoji: '🌳', zh: '扎根者', fr: "L'Ancreur",
+      tagline_zh: '你已經決定：法國是你長期的家。', tagline_fr: 'Tu as décidé : la France, c\'est chez toi, pour longtemps.',
+      hook_zh: '入籍時間軸規劃、CDI／CIR 身份槓桿運用', hook_fr: 'Calendrier de naturalisation, effet de levier CDI/CIR'
+    },
+    pont: {
+      emoji: '🌉', zh: '橋樑者', fr: 'Le Pont',
+      tagline_zh: '你想成為連結台灣與歐洲的那座橋。', tagline_fr: 'Tu veux être le pont entre Taïwan et l\'Europe.',
+      hook_zh: '駐法台北辦事處與僑務委員會（OCAC）註冊資源', hook_fr: 'Bureau français de Taipei + inscription OCAC'
+    },
+    tremplin: {
+      emoji: '🚀', zh: '跳板者', fr: 'Le Tremplin',
+      tagline_zh: '法國只是起點，你的目光望向整個歐洲。', tagline_fr: 'La France n\'est qu\'un début, tu vises toute l\'Europe.',
+      hook_zh: '跨境內推地圖，串連歐洲各國的機會', hook_fr: 'Carte de cooptation transfrontalière en Europe'
+    },
+    boomerang: {
+      emoji: '🪃', zh: '回流者', fr: 'Le Boomerang',
+      tagline_zh: '你想帶著法國經驗，最終回到台灣。', tagline_fr: 'Tu veux ramener ton expérience française à Taïwan.',
+      hook_zh: '退休金與社會保險的可攜性規劃', hook_fr: 'Portabilité de la pension et de la sécurité sociale'
+    },
+    biresident: {
+      emoji: '🦎', zh: '雙棲者', fr: 'Le Bi-Résident',
+      tagline_zh: '你想在台法兩地之間自由往返，兼顧生活與事業。', tagline_fr: 'Tu veux naviguer librement entre la France et Taïwan.',
+      hook_zh: '稅務與投資工作坊（社群票選 15 票最高需求）', hook_fr: 'Atelier fiscalité & investissement (top demande, 15 votes)'
+    }
+  };
+
+  const Q1_OPTIONS = [
+    { id: 'cdi', zh: 'CDI（正職）', fr: 'CDI' },
+    { id: 'freelance', zh: 'Freelance（自由工作者）', fr: 'Freelance' },
+    { id: 'recherche', zh: '求職中', fr: 'En recherche' },
+    { id: 'nouveau', zh: '剛抵達法國', fr: 'Nouvel(le) arrivant(e)' }
+  ];
+
+  const Q2_OPTIONS = [
+    { id: 'ancreur',    zh: '長期定居法國（入籍或永久居留）', fr: 'S\'installer durablement en France' },
+    { id: 'pont',       zh: '成為台歐之間的科技與商業橋樑',   fr: 'Devenir un pont tech/business Taïwan-Europe' },
+    { id: 'tremplin',   zh: '以法國為跳板，放眼歐洲市場',     fr: 'Utiliser la France comme tremplin vers l\'Europe' },
+    { id: 'boomerang',  zh: '累積法國經驗後最終返回台灣',     fr: 'Retourner à Taïwan avec une expérience française' },
+    { id: 'biresident', zh: '台法雙邊資產配置，自由往返',     fr: 'Patrimoine France-Taïwan, allers-retours' }
+  ];
+
+  const NEEDS = {
+    cv:         { zh: '履歷優化與一對一職涯諮詢', fr: 'Coaching de carrière / relecture de CV' },
+    tax:        { zh: '稅務與法規交流工作坊',     fr: 'Atelier fiscalité & réglementation' },
+    referral:   { zh: '企業內推網絡',             fr: 'Réseau de cooptation en entreprise' },
+    experience: { zh: '會員實戰經驗分享',         fr: 'Partage d\'expérience terrain entre membres' }
+  };
+  const Q3_OPTIONS = [
+    { id: 'cv', ...NEEDS.cv },
+    { id: 'tax', ...NEEDS.tax },
+    { id: 'referral', ...NEEDS.referral },
+    { id: 'experience', ...NEEDS.experience }
+  ];
+
+  // Tone modulation by Q1 answer — "en recherche" leads with referrals, per spec.
+  const TONE = {
+    cdi:       { zh: '穩定的起點，是時候放眼下一步了。', fr: 'Un point de départ stable — il est temps de viser plus loin.' },
+    freelance: { zh: '自由工作者的彈性，正是連結資源的好時機。', fr: 'La flexibilité du freelance, le bon moment pour se connecter aux bonnes ressources.' },
+    recherche: { zh: '求職中？現在正是善用社群內推網絡的時刻。', fr: 'En recherche ? C\'est le moment d\'activer le réseau de cooptation de la communauté.' },
+    nouveau:   { zh: '剛抵達法國？從這些資源開始，少走彎路。', fr: 'Nouvel(le) arrivant(e) ? Commence par ces ressources pour gagner du temps.' }
+  };
+
+  // ── State ──────────────────────────────────────────────────────
+  const STEPS = ['splash', 'q1', 'q2', 'q3', 'result'];
+  let state = { step: 0, lang: 'zh', q1: null, q2: null, q3: null };
+
+  function detectLang() {
+    try {
+      const saved = localStorage.getItem('ttf_game_lang');
+      if (saved === 'zh' || saved === 'fr') return saved;
+    } catch (_) {}
+    const nav = (navigator.language || '').toLowerCase();
+    return nav.startsWith('fr') ? 'fr' : 'zh';
+  }
+
+  function setLang(lang) {
+    state.lang = lang;
+    try { localStorage.setItem('ttf_game_lang', lang); } catch (_) {}
+    document.querySelectorAll('[data-lang]').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
+    document.querySelectorAll('[data-zh]').forEach(el => {
+      el.textContent = lang === 'fr' ? el.dataset.fr : el.dataset.zh;
+    });
+    renderOptions();
+    if (STEPS[state.step] === 'result') renderResult();
+  }
+
+  function showStep(index) {
+    state.step = index;
+    const name = STEPS[index];
+    document.querySelectorAll('.g-view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+
+    const backBtn = document.getElementById('back-btn');
+    backBtn.style.visibility = (name === 'splash' || name === 'result') ? 'hidden' : 'visible';
+
+    const dots = document.getElementById('dots');
+    const questionSteps = ['q1', 'q2', 'q3'];
+    if (questionSteps.includes(name)) {
+      dots.style.display = 'flex';
+      const qIndex = questionSteps.indexOf(name);
+      document.querySelectorAll('.g-dot').forEach((dot, i) => {
+        dot.classList.toggle('done', i < qIndex);
+        dot.classList.toggle('current', i === qIndex);
+      });
+    } else {
+      dots.style.display = 'none';
+    }
+  }
+
+  function goBack() {
+    const name = STEPS[state.step];
+    if (name === 'q1') showStep(STEPS.indexOf('splash'));
+    else if (name === 'q2') showStep(STEPS.indexOf('q1'));
+    else if (name === 'q3') showStep(STEPS.indexOf('q2'));
+  }
+
+  function optionButton(opt, onPick) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'g-opt';
+    btn.innerHTML = `<span class="g-opt-zh">${state.lang === 'fr' ? opt.fr : opt.zh}</span>` +
+                    (opt.zh && opt.fr ? `<span class="g-opt-fr">${state.lang === 'fr' ? opt.zh : opt.fr}</span>` : '');
+    btn.addEventListener('click', onPick);
+    return btn;
+  }
+
+  function renderOptions() {
+    const q1Wrap = document.getElementById('q1-options');
+    q1Wrap.innerHTML = '';
+    Q1_OPTIONS.forEach(opt => {
+      q1Wrap.appendChild(optionButton(opt, () => {
+        state.q1 = opt.id;
+        showStep(STEPS.indexOf('q2'));
+      }));
+    });
+
+    const q2Wrap = document.getElementById('q2-options');
+    q2Wrap.innerHTML = '';
+    Q2_OPTIONS.forEach(opt => {
+      q2Wrap.appendChild(optionButton(opt, () => {
+        state.q2 = opt.id;
+        showStep(STEPS.indexOf('q3'));
+      }));
+    });
+
+    const q3Wrap = document.getElementById('q3-options');
+    q3Wrap.innerHTML = '';
+    Q3_OPTIONS.forEach(opt => {
+      q3Wrap.appendChild(optionButton(opt, () => {
+        state.q3 = opt.id;
+        renderResult();
+        showStep(STEPS.indexOf('result'));
+      }));
+    });
+  }
+
+  function renderResult() {
+    const archetype = ARCHETYPES[state.q2] || ARCHETYPES.ancreur;
+    const lang = state.lang;
+
+    document.getElementById('r-emoji').textContent = archetype.emoji;
+    document.getElementById('r-name-zh').textContent = lang === 'fr' ? archetype.fr : archetype.zh;
+    document.getElementById('r-name-fr').textContent = lang === 'fr' ? archetype.zh : archetype.fr;
+    document.getElementById('r-tagline').textContent = lang === 'fr' ? archetype.tagline_fr : archetype.tagline_zh;
+    document.getElementById('r-hook-zh').textContent = lang === 'fr' ? archetype.hook_fr : archetype.hook_zh;
+    document.getElementById('r-hook-fr').textContent = lang === 'fr' ? archetype.hook_zh : archetype.hook_fr;
+    document.getElementById('r-session-date').textContent = lang === 'fr' ? SESSION_DATE.fr : SESSION_DATE.zh;
+
+    const tone = TONE[state.q1] || TONE.cdi;
+    document.getElementById('r-stat').textContent =
+      (lang === 'fr' ? tone.fr : tone.zh) + ' ' + (lang === 'fr' ? REAL_STAT.fr : REAL_STAT.zh);
+
+    // Q3 answer's resource leads the unlocked-resources list; the rest follow.
+    const needsList = document.getElementById('r-needs-list');
+    needsList.innerHTML = '';
+    const orderedIds = [state.q3, ...Object.keys(NEEDS).filter(id => id !== state.q3)];
+    orderedIds.forEach(id => {
+      const need = NEEDS[id];
+      const card = document.createElement('div');
+      card.className = 'lock-card' + (id === state.q3 ? ' primary' : '');
+      card.innerHTML = `
+        <i class="fas fa-lock lock-icon"></i>
+        <div class="lock-blur">
+          <div class="lock-card-title">${lang === 'fr' ? need.fr : need.zh}</div>
+          <div class="lock-card-title-fr">${lang === 'fr' ? need.zh : need.fr}</div>
+        </div>`;
+      needsList.appendChild(card);
+    });
+
+    // wa.me share — archetype name + link back to the game (fresh play for the recipient).
+    const shareTextZh = `我是「${archetype.zh}」！來測你的台法職涯原型 → https://ttf-tech.github.io/game.html`;
+    const shareTextFr = `Je suis "${archetype.fr}" ! Découvre ton archétype carrière France-Taïwan → https://ttf-tech.github.io/game.html`;
+    document.getElementById('share-btn').href =
+      'https://wa.me/?text=' + encodeURIComponent(lang === 'fr' ? shareTextFr : shareTextZh);
+
+    document.getElementById('unlock-btn').href = 'adhesion.html?type=' + encodeURIComponent(state.q2);
+  }
+
+  document.querySelectorAll('[data-lang]').forEach(btn => {
+    btn.addEventListener('click', () => setLang(btn.dataset.lang));
+  });
+  document.getElementById('back-btn').addEventListener('click', goBack);
+  document.getElementById('start-btn').addEventListener('click', () => showStep(STEPS.indexOf('q1')));
+  document.getElementById('replay-btn').addEventListener('click', () => {
+    state.q1 = state.q2 = state.q3 = null;
+    showStep(STEPS.indexOf('splash'));
+  });
+
+  setLang(detectLang());
+  showStep(0);
+  </script>
+</body>
+</html>

@@ -452,9 +452,11 @@ function renderKPIs() {
   const elM = document.getElementById('kpi-members');
   const elJ = document.getElementById('kpi-jobs');
   const elE = document.getElementById('kpi-events');
+  const elP = document.getElementById('kpi-paid-members');
   if (elM) elM.textContent = kpi.totalMembers;
   if (elJ) elJ.textContent = kpi.jobCount;
   if (elE) elE.textContent = kpi.eventCount;
+  if (elP) elP.textContent = getHelloAssoMemberCount();
 }
 
 // ── Tab switching ──────────────────────────────────────────────
@@ -484,6 +486,29 @@ function renderDashboard() {
   renderInvestChart();
   renderCityChart();
   renderStatusChart();
+}
+
+function countHelloAssoMembers(members) {
+  const emails = new Set();
+  (members || []).forEach(member => {
+    if (!member?.helloassoRef) return;
+    const email = (member.email || '').trim().toLowerCase();
+    if (email) emails.add(email);
+  });
+  return emails.size;
+}
+
+function getHelloAssoMemberCount() {
+  if (!_helloAssoSyncSummary && !_assoMembersV2Loaded) {
+    return '—';
+  }
+
+  const rawSyncedCount = _helloAssoSyncSummary?.totalFromHelloAsso;
+  const syncedCount = Number(rawSyncedCount);
+  const hasSyncedCount = rawSyncedCount !== undefined && rawSyncedCount !== null && rawSyncedCount !== '';
+  return hasSyncedCount && Number.isSafeInteger(syncedCount) && syncedCount >= 0
+    ? syncedCount
+    : countHelloAssoMembers(state.assoMembers);
 }
 
 function renderTechChart() {
@@ -3123,6 +3148,7 @@ function initAdminProfiles() {
     _assoMembersV2Loaded = false;
     _assoV2Hydrated = false;
     _helloAssoSyncSummary = null;
+    renderKPIs();
     _surveyV4Ready = true;
     _surveysV4 = [];
     _surveyVotesV4 = {};
@@ -3229,6 +3255,7 @@ function initAdminProfiles() {
       const summary = snapshot.val();
       _helloAssoSyncSummary = summary || null;
       _assoV2Ready = true;
+      renderKPIs();
       if (summary) handleLastAssoSync(summary);
     };
     _helloAssoSyncRef.on('value', _helloAssoSyncHandler, error => {

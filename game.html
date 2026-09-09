@@ -321,7 +321,7 @@
     try { localStorage.setItem('ttf_game_lang', lang); } catch (_) {}
     document.querySelectorAll('[data-lang]').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
     document.querySelectorAll('[data-zh]').forEach(el => {
-      el.textContent = lang === 'fr' ? el.dataset.fr : el.dataset.zh;
+      el.textContent = lang === 'fr' ? `${el.dataset.fr} · ${el.dataset.zh}` : `${el.dataset.zh} · ${el.dataset.fr}`;
     });
     renderOptions();
     if (STEPS[state.step] === 'result') renderResult();
@@ -397,6 +397,11 @@
     });
   }
 
+  // Always renders both languages together — order only follows the toggle.
+  function both(zh, fr) {
+    return state.lang === 'fr' ? `${fr} · ${zh}` : `${zh} · ${fr}`;
+  }
+
   function renderResult() {
     const archetype = ARCHETYPES[state.q2] || ARCHETYPES.ancreur;
     const lang = state.lang;
@@ -404,14 +409,14 @@
     document.getElementById('r-emoji').textContent = archetype.emoji;
     document.getElementById('r-name-zh').textContent = lang === 'fr' ? archetype.fr : archetype.zh;
     document.getElementById('r-name-fr').textContent = lang === 'fr' ? archetype.zh : archetype.fr;
-    document.getElementById('r-tagline').textContent = lang === 'fr' ? archetype.tagline_fr : archetype.tagline_zh;
-    document.getElementById('r-hook-zh').textContent = lang === 'fr' ? archetype.hook_fr : archetype.hook_zh;
-    document.getElementById('r-hook-fr').textContent = lang === 'fr' ? archetype.hook_zh : archetype.hook_fr;
-    document.getElementById('r-session-date').textContent = lang === 'fr' ? SESSION_DATE.fr : SESSION_DATE.zh;
+    document.getElementById('r-tagline').textContent = both(archetype.tagline_zh, archetype.tagline_fr);
+    document.getElementById('r-hook-zh').textContent = both(archetype.hook_zh, archetype.hook_fr);
+    document.getElementById('r-hook-fr').textContent = '';
+    document.getElementById('r-session-date').textContent = both(SESSION_DATE.zh, SESSION_DATE.fr);
 
     const tone = TONE[state.q1] || TONE.cdi;
     document.getElementById('r-stat').textContent =
-      (lang === 'fr' ? tone.fr : tone.zh) + ' ' + (lang === 'fr' ? REAL_STAT.fr : REAL_STAT.zh);
+      both(tone.zh, tone.fr) + ' ' + both(REAL_STAT.zh, REAL_STAT.fr);
 
     // Q3 answer's resource leads the unlocked-resources list; the rest follow.
     const needsList = document.getElementById('r-needs-list');
@@ -424,17 +429,14 @@
       card.innerHTML = `
         <i class="fas fa-lock lock-icon"></i>
         <div class="lock-blur">
-          <div class="lock-card-title">${lang === 'fr' ? need.fr : need.zh}</div>
-          <div class="lock-card-title-fr">${lang === 'fr' ? need.zh : need.fr}</div>
+          <div class="lock-card-title">${both(need.zh, need.fr)}</div>
         </div>`;
       needsList.appendChild(card);
     });
 
-    // wa.me share — archetype name + link back to the game (fresh play for the recipient).
-    const shareTextZh = `我是「${archetype.zh}」！來測你的台法職涯原型 → https://ttf-tech.github.io/game.html`;
-    const shareTextFr = `Je suis "${archetype.fr}" ! Découvre ton archétype carrière France-Taïwan → https://ttf-tech.github.io/game.html`;
-    document.getElementById('share-btn').href =
-      'https://wa.me/?text=' + encodeURIComponent(lang === 'fr' ? shareTextFr : shareTextZh);
+    // wa.me share — archetype name (both languages) + link back to the game.
+    const shareText = `我是「${archetype.zh}」· Je suis "${archetype.fr}" ! 來測你的台法職涯原型 · Découvre ton archétype → https://ttf-tech.github.io/game.html`;
+    document.getElementById('share-btn').href = 'https://wa.me/?text=' + encodeURIComponent(shareText);
 
     document.getElementById('unlock-btn').href = 'adhesion.html?type=' + encodeURIComponent(state.q2);
   }

@@ -23,6 +23,12 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="assets/js/admin-config.js"></script>
+  <script src="assets/js/admin-access.js"></script>
+  <script src="assets/js/asso-member-access.js?v=2"></script>
 
   <style>
     * { -webkit-tap-highlight-color: transparent; }
@@ -208,10 +214,26 @@
 
         <div id="r-needs-list"></div>
 
-        <div class="lock-card" style="margin-top:0.9rem;background:rgba(255,255,255,0.03);">
-          <div class="lock-card-title" style="color:rgba(255,255,255,0.75);" data-zh="下一場閉門場次，會員優先保留名額" data-fr="Prochaine session à huis clos, places prioritaires pour les membres">下一場閉門場次，會員優先保留名額</div>
-          <div class="lock-card-title-fr" id="r-session-date"></div>
+        <div class="lock-card" id="advanced-gate-card" style="margin-top:0.9rem;background:rgba(255,255,255,0.03);">
+          <div class="lock-card-title" style="color:rgba(255,255,255,0.75);" data-zh="進階版測驗（2 題，更精準結果）" data-fr="Test avancé (2 questions, résultat plus précis)">進階版測驗（2 題，更精準結果）</div>
+          <div class="lock-card-title-fr" data-zh="僅限 Adhésion 會員解鎖" data-fr="Réservé aux membres Adhésion">僅限 Adhésion 會員解鎖</div>
+          <div id="advanced-gate-actions" style="margin-top:0.65rem;display:flex;flex-wrap:wrap;gap:0.5rem;">
+            <button type="button" class="g-cta-secondary adv-signin-btn" style="display:none;min-height:40px;padding:0.55rem 1rem;font-size:0.78rem;width:auto;flex:1;" onclick="ttfMemberSignIn()">
+              <i class="fab fa-google"></i>
+              <span data-zh="登入驗證" data-fr="Se connecter">登入驗證</span>
+            </button>
+            <a href="adhesion.html" class="g-cta-secondary adv-join-btn" style="display:none;min-height:40px;padding:0.55rem 1rem;font-size:0.78rem;width:auto;flex:1;">
+              <i class="fas fa-id-card"></i>
+              <span data-zh="加入會員" data-fr="Adhérer">加入會員</span>
+            </a>
+            <button type="button" class="g-cta-secondary adv-start-btn" style="display:none;min-height:40px;padding:0.55rem 1rem;font-size:0.78rem;width:auto;flex:1;">
+              <i class="fas fa-unlock"></i>
+              <span data-zh="開始進階測驗" data-fr="Commencer le test avancé">開始進階測驗</span>
+            </button>
+          </div>
         </div>
+
+        <div id="advanced-questions" style="display:none;margin-top:0.65rem;"></div>
       </div>
 
       <a class="g-cta" id="unlock-btn" style="margin-top:1rem;">
@@ -229,11 +251,10 @@
     </div>
   </div>
 
+  <script src="assets/js/firebase-read.js"></script>
+  <script src="assets/js/member-gate.js?v=2"></script>
   <script>
   'use strict';
-
-  // ── Session date: edit this one line once the closed-door session is confirmed ──
-  const SESSION_DATE = { zh: '日期即將公布', fr: 'Date à confirmer' };
 
   // Real, verified community stat (WhatsApp survey, 125 responses) — see vote.html "你目前的狀態是？"
   const REAL_STAT = { zh: '你並不孤單：在 125 位受訪社群成員中，45% 也正在積極求職中（來自社群調查）。',
@@ -295,6 +316,32 @@
     { id: 'experience', ...NEEDS.experience }
   ];
 
+  // ── Advanced test (Adhésion members only) ────────────────────────
+  const ADVANCED_Q4_OPTIONS = [
+    { id: 'tax_residency',        zh: '雙重稅務居民身分認定',       fr: 'Double résidence fiscale' },
+    { id: 'pension_portability',  zh: '退休金與社會保險可攜性',     fr: 'Portabilité de la retraite et de la sécurité sociale' },
+    { id: 'visa_stability',       zh: '簽證與居留穩定性',           fr: 'Stabilité du visa et du titre de séjour' },
+    { id: 'fx_risk',              zh: '資產配置與匯率風險',         fr: 'Allocation d\'actifs et risque de change' }
+  ];
+  const ADVANCED_Q5_OPTIONS = [
+    { id: 'numbers',     zh: '實際的財務數字與談判技巧',   fr: 'Chiffres concrets et techniques de négociation' },
+    { id: 'family',      zh: '家庭／伴侶的適應策略',       fr: 'Stratégies d\'adaptation pour la famille / le conjoint' },
+    { id: 'transition',  zh: '職涯轉換的具體步驟',         fr: 'Étapes concrètes de transition de carrière' },
+    { id: 'network',     zh: '如何建立在地人脈',           fr: 'Comment construire un réseau local' }
+  ];
+  const INSIGHT_Q4 = {
+    tax_residency:       { zh: '建議優先釐清「183 天規則」與台法租稅協定的適用範圍。', fr: 'Priorité : clarifier la règle des 183 jours et le champ de la convention fiscale France-Taïwan.' },
+    pension_portability: { zh: '建議提前確認台灣與法國之間的社會保險協定涵蓋範圍。',   fr: 'Priorité : vérifier la couverture de l\'accord de sécurité sociale entre Taïwan et la France.' },
+    visa_stability:      { zh: '建議規劃人才護照（Passeport Talent）續簽與入籍所需的時間軸。', fr: 'Priorité : planifier le calendrier de renouvellement du Passeport Talent et de la naturalisation.' },
+    fx_risk:             { zh: '建議與熟悉跨境稅務的前輩討論台幣／歐元資產配置策略。', fr: 'Priorité : échanger avec des pairs expérimentés sur l\'allocation d\'actifs TWD/EUR.' }
+  };
+  const INSIGHT_Q5 = {
+    numbers:    { zh: '我們會優先為你媒合已談過薪資與合約細節的前輩。',       fr: 'On te mettra en priorité en contact avec des pairs qui ont déjà négocié salaire et contrat.' },
+    family:     { zh: '我們會優先為你媒合帶著家庭一起適應法國生活的會員。',   fr: 'On te mettra en priorité en contact avec des membres ayant installé leur famille en France.' },
+    transition: { zh: '我們會優先為你媒合成功完成職涯轉換的會員。',           fr: 'On te mettra en priorité en contact avec des membres ayant réussi une reconversion.' },
+    network:    { zh: '我們會優先為你媒合活躍於在地人脈經營的會員。',         fr: 'On te mettra en priorité en contact avec des membres actifs dans le réseautage local.' }
+  };
+
   // Tone modulation by Q1 answer — "en recherche" leads with referrals, per spec.
   const TONE = {
     cdi:       { zh: '穩定的起點，是時候放眼下一步了。', fr: 'Un point de départ stable — il est temps de viser plus loin.' },
@@ -305,7 +352,8 @@
 
   // ── State ──────────────────────────────────────────────────────
   const STEPS = ['splash', 'q1', 'q2', 'q3', 'result'];
-  let state = { step: 0, lang: 'zh', q1: null, q2: null, q3: null };
+  let state = { step: 0, lang: 'zh', q1: null, q2: null, q3: null, q4: null, q5: null };
+  let advancedStarted = false;
 
   function detectLang() {
     try {
@@ -325,6 +373,7 @@
     });
     renderOptions();
     if (STEPS[state.step] === 'result') renderResult();
+    if (advancedStarted) renderAdvancedFlow();
   }
 
   function showStep(index) {
@@ -412,7 +461,6 @@
     document.getElementById('r-tagline').textContent = both(archetype.tagline_zh, archetype.tagline_fr);
     document.getElementById('r-hook-zh').textContent = both(archetype.hook_zh, archetype.hook_fr);
     document.getElementById('r-hook-fr').textContent = '';
-    document.getElementById('r-session-date').textContent = both(SESSION_DATE.zh, SESSION_DATE.fr);
 
     const tone = TONE[state.q1] || TONE.cdi;
     document.getElementById('r-stat').textContent =
@@ -441,6 +489,83 @@
     document.getElementById('unlock-btn').href = 'adhesion.html?type=' + encodeURIComponent(state.q2);
   }
 
+  // ── Advanced test gate (Adhésion members only) ───────────────────
+  function updateAdvancedGate(hasAccess, isRestoring, user) {
+    const signinBtn = document.querySelector('.adv-signin-btn');
+    const joinBtn   = document.querySelector('.adv-join-btn');
+    const startBtn  = document.querySelector('.adv-start-btn');
+    if (!signinBtn || !joinBtn || !startBtn) return;
+    if (isRestoring) {
+      signinBtn.style.display = joinBtn.style.display = startBtn.style.display = 'none';
+      return;
+    }
+    signinBtn.style.display = !user ? 'flex' : 'none';
+    joinBtn.style.display   = (user && !hasAccess) ? 'flex' : 'none';
+    startBtn.style.display  = hasAccess ? 'flex' : 'none';
+  }
+
+  document.addEventListener('ttf:member-gate-change', event => {
+    const { hasAccess, isRestoring, user } = event.detail || {};
+    updateAdvancedGate(!!hasAccess, !!isRestoring, user);
+  });
+
+  function renderAdvancedFlow() {
+    const wrap = document.getElementById('advanced-questions');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+
+    if (!state.q4) {
+      const title = document.createElement('div');
+      title.className = 'lock-card-title';
+      title.style.marginBottom = '0.5rem';
+      title.textContent = both('進階問題 1／2：你最擔心的財務／法律風險？', 'Question avancée 1/2 : quel risque financier/juridique t\'inquiète le plus ?');
+      wrap.appendChild(title);
+      ADVANCED_Q4_OPTIONS.forEach(opt => {
+        wrap.appendChild(optionButton(opt, () => { state.q4 = opt.id; renderAdvancedFlow(); }));
+      });
+      return;
+    }
+
+    if (!state.q5) {
+      const title = document.createElement('div');
+      title.className = 'lock-card-title';
+      title.style.marginBottom = '0.5rem';
+      title.textContent = both('進階問題 2／2：你最想向前輩請教什麼？', 'Question avancée 2/2 : que voudrais-tu demander à un senior ?');
+      wrap.appendChild(title);
+      ADVANCED_Q5_OPTIONS.forEach(opt => {
+        wrap.appendChild(optionButton(opt, () => { state.q5 = opt.id; renderAdvancedFlow(); }));
+      });
+      return;
+    }
+
+    const insight4 = INSIGHT_Q4[state.q4];
+    const insight5 = INSIGHT_Q5[state.q5];
+    const card = document.createElement('div');
+    card.className = 'lock-card primary';
+    card.innerHTML = `
+      <div class="lock-card-title" style="margin-bottom:0.5rem;">${both('你的進階洞察', 'Ton insight avancé')}</div>
+      <div class="lock-card-title-fr">${both(insight4.zh, insight4.fr)}</div>
+      <div class="lock-card-title-fr" style="margin-top:0.4rem;">${both(insight5.zh, insight5.fr)}</div>`;
+    wrap.appendChild(card);
+  }
+
+  function resetAdvancedFlow() {
+    state.q4 = state.q5 = null;
+    advancedStarted = false;
+    const wrap = document.getElementById('advanced-questions');
+    if (wrap) { wrap.style.display = 'none'; wrap.innerHTML = ''; }
+    const actions = document.getElementById('advanced-gate-actions');
+    if (actions) actions.style.display = 'flex';
+  }
+
+  document.querySelector('.adv-start-btn')?.addEventListener('click', () => {
+    advancedStarted = true;
+    state.q4 = state.q5 = null;
+    document.getElementById('advanced-gate-actions').style.display = 'none';
+    document.getElementById('advanced-questions').style.display = 'block';
+    renderAdvancedFlow();
+  });
+
   document.querySelectorAll('[data-lang]').forEach(btn => {
     btn.addEventListener('click', () => setLang(btn.dataset.lang));
   });
@@ -448,6 +573,7 @@
   document.getElementById('start-btn').addEventListener('click', () => showStep(STEPS.indexOf('q1')));
   document.getElementById('replay-btn').addEventListener('click', () => {
     state.q1 = state.q2 = state.q3 = null;
+    resetAdvancedFlow();
     showStep(STEPS.indexOf('splash'));
   });
 

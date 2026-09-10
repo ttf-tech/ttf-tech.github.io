@@ -188,9 +188,33 @@
       color: var(--accent-bar-1, #22d3ee); background: rgba(255,255,255,0.04); border-radius: 8px; padding: 0.55rem 0.7rem;
     }
     .diag-action i { margin-top: 0.2rem; flex-shrink: 0; font-size: 0.7rem; }
+    /* Icon-driven chunking: each item's own topic icon sits left of its headline. */
+    .diag-dynamic { display: flex; align-items: flex-start; gap: 0.45rem; }
+    .diag-dynamic i { margin-top: 0.15rem; flex-shrink: 0; font-size: 0.72rem; color: var(--accent-bar-1, #22d3ee); }
 
     .share-row { display: flex; gap: 0.6rem; margin-bottom: 0.85rem; }
     .share-row .g-cta { background: #25d366; color: #fff; box-shadow: 0 8px 24px rgba(37,211,102,0.3); }
+
+    /* Peak-end capsule + multi-platform share dock, shown after the full result. */
+    .anchor-capsule {
+      margin-top: 1.5rem; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: 1.1rem; text-align: center;
+    }
+    .anchor-capsule-text { font-size: 0.78rem; color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 1rem; }
+    .anchor-capsule-label {
+      font-size: 0.68rem; font-weight: 800; color: rgba(255,255,255,0.4); text-transform: uppercase;
+      letter-spacing: 0.07em; margin-bottom: 0.7rem;
+    }
+    .share-dock { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+    .share-dock a {
+      display: flex; align-items: center; justify-content: center; min-height: 42px;
+      border-radius: 10px; color: #fff; font-size: 1rem; transition: transform 0.1s, opacity 0.15s;
+    }
+    .share-dock a:hover { opacity: 0.88; transform: translateY(-1px); }
+    .share-dock a.share-line { background: #06c755; }
+    .share-dock a.share-linkedin { background: #0a66c2; }
+    .share-dock a.share-whatsapp { background: #25d366; }
+    .share-dock a.share-facebook { background: #1877f2; }
 
     /* Full-family showcase — teases the other 4 archetypes right after the result,
        before the member-gated section, to pull people into "what else could I be?" */
@@ -328,6 +352,18 @@
         <div id="advanced-questions" style="display:none;margin-top:0.65rem;"></div>
       </div>
 
+      <!-- Peak-end capsule: a short, memorable synthesis + one-tap multi-platform share -->
+      <div class="anchor-capsule">
+        <div class="anchor-capsule-text" id="anchor-capsule-text"></div>
+        <div class="anchor-capsule-label" data-zh="分享你的原型與好友比較" data-fr="Partage ton archétype avec tes amis">分享你的原型與好友比較</div>
+        <div class="share-dock">
+          <a id="share-line" class="share-line" target="_blank" rel="noopener" aria-label="LINE"><i class="fab fa-line"></i></a>
+          <a id="share-linkedin" class="share-linkedin" target="_blank" rel="noopener" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+          <a id="share-whatsapp" class="share-whatsapp" target="_blank" rel="noopener" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+          <a id="share-facebook" class="share-facebook" target="_blank" rel="noopener" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+        </div>
+      </div>
+
       <a class="g-cta" id="unlock-btn" style="margin-top:1rem;">
         <i class="fas fa-unlock"></i>
         <span data-zh="成為會員，解鎖完整內容" data-fr="Devenir membre, tout débloquer">成為會員，解鎖完整內容</span>
@@ -361,7 +397,9 @@
       hook_zh: '入籍時間軸規劃、CDI／CIR 身份槓桿運用', hook_fr: 'Calendrier de naturalisation, effet de levier CDI/CIR',
       accent: { border: 'rgba(16,185,129,0.4)', bar1: '#10b981', bar2: '#34d399' },
       validation_zh: '你已經做出了明確的選擇：法國是你的長期基地。這份篤定是優勢，但長期定居也意味著入籍、身份與稅務的每一步都需要被妥善規劃，才能把「決定留下」真正轉化為「穩固紮根」。',
-      validation_fr: 'Tu as fait un choix clair : la France est ta base long terme. Cette certitude est un atout, mais s\'installer durablement signifie aussi que chaque étape — naturalisation, statut, fiscalité — doit être planifiée avec soin pour transformer une décision en véritable ancrage.'
+      validation_fr: 'Tu as fait un choix clair : la France est ta base long terme. Cette certitude est un atout, mais s\'installer durablement signifie aussi que chaque étape — naturalisation, statut, fiscalité — doit être planifiée avec soin pour transformer une décision en véritable ancrage.',
+      anchor_zh: '扎根者的核心優勢在於長期穩定，但成功取決於入籍與身份規劃的精準時機。',
+      anchor_fr: 'L\'atout de l\'Ancreur est la stabilité long terme, mais le succès dépend du bon timing pour la naturalisation et le statut.'
     },
     pont: {
       emoji: '🌉', zh: '橋樑者', fr: 'Le Pont',
@@ -369,7 +407,9 @@
       hook_zh: '駐法台北辦事處與僑務委員會（OCAC）註冊資源', hook_fr: 'Bureau français de Taipei + inscription OCAC',
       accent: { border: 'rgba(245,158,11,0.4)', bar1: '#f59e0b', bar2: '#fbbf24' },
       validation_zh: '你的定位是連結者：一腳在台灣、一腳在歐洲，為兩邊創造價值。這個位置很有影響力，但也代表你必須同時維護兩套人脈、兩種文化語境，避免兩邊都只觸及表層。',
-      validation_fr: 'Ta position est celle d\'un connecteur : un pied à Taïwan, un pied en Europe, créant de la valeur des deux côtés. Cette position est puissante, mais elle exige aussi d\'entretenir deux réseaux et deux contextes culturels à la fois — sans rester en surface de part et d\'autre.'
+      validation_fr: 'Ta position est celle d\'un connecteur : un pied à Taïwan, un pied en Europe, créant de la valeur des deux côtés. Cette position est puissante, mais elle exige aussi d\'entretenir deux réseaux et deux contextes culturels à la fois — sans rester en surface de part et d\'autre.',
+      anchor_zh: '橋樑者的核心優勢在於雙邊連結，但成功取決於兩地人脈與文化語境的同步經營。',
+      anchor_fr: 'L\'atout du Pont est sa connexion bilatérale, mais le succès dépend d\'un entretien synchronisé des deux réseaux et cultures.'
     },
     tremplin: {
       emoji: '🚀', zh: '跳板者', fr: 'Le Tremplin',
@@ -377,7 +417,9 @@
       hook_zh: '跨境內推地圖，串連歐洲各國的機會', hook_fr: 'Carte de cooptation transfrontalière en Europe',
       accent: { border: 'rgba(34,211,238,0.4)', bar1: '#22d3ee', bar2: '#6366f1' },
       validation_zh: '對你來說，法國不是終點，而是通往整個歐洲的起跳點。這種開放性帶來機會，但也意味著你需要更早建立可攜式的技能、人脈與制度知識，才能在下一次移動時無縫接軌。',
-      validation_fr: 'Pour toi, la France n\'est pas une destination finale mais un tremplin vers toute l\'Europe. Cette ouverture crée des opportunités, mais suppose aussi de construire tôt des compétences, un réseau et une connaissance administrative "portables", pour que ton prochain mouvement se fasse sans friction.'
+      validation_fr: 'Pour toi, la France n\'est pas une destination finale mais un tremplin vers toute l\'Europe. Cette ouverture crée des opportunités, mais suppose aussi de construire tôt des compétences, un réseau et une connaissance administrative "portables", pour que ton prochain mouvement se fasse sans friction.',
+      anchor_zh: '跳板者的核心優勢在於歐洲視野，但成功取決於技能與人脈的可攜性布局。',
+      anchor_fr: 'L\'atout du Tremplin est sa vision européenne, mais le succès dépend de compétences et d\'un réseau conçus pour être portables.'
     },
     boomerang: {
       emoji: '🪃', zh: '回流者', fr: 'Le Boomerang',
@@ -385,7 +427,9 @@
       hook_zh: '退休金與社會保險的可攜性規劃', hook_fr: 'Portabilité de la pension et de la sécurité sociale',
       accent: { border: 'rgba(251,113,133,0.4)', bar1: '#fb7185', bar2: '#f97316' },
       validation_zh: '你正在為「最終回台灣」佈局，法國經驗是你手上的籌碼，而不是終點。這代表你現在做的每個選擇，都該用「這對我回台灣後有沒有幫助」來檢視，尤其是退休金、社會保險與職涯敘事的可攜性。',
-      validation_fr: 'Tu prépares déjà ton retour à Taïwan : l\'expérience française est un atout dans ta manche, pas une fin en soi. Cela veut dire qu\'aujourd\'hui, chaque choix devrait être évalué à l\'aune de "est-ce que cela m\'aidera à mon retour ?", notamment la portabilité de ta retraite, ta sécurité sociale et ton parcours professionnel.'
+      validation_fr: 'Tu prépares déjà ton retour à Taïwan : l\'expérience française est un atout dans ta manche, pas une fin en soi. Cela veut dire qu\'aujourd\'hui, chaque choix devrait être évalué à l\'aune de "est-ce que cela m\'aidera à mon retour ?", notamment la portabilité de ta retraite, ta sécurité sociale et ton parcours professionnel.',
+      anchor_zh: '回流者的核心優勢在於雙重歷練，但成功取決於退休金與職涯敘事的可攜性規劃。',
+      anchor_fr: 'L\'atout du Boomerang est sa double expérience, mais le succès dépend de la portabilité de sa retraite et de son parcours.'
     },
     biresident: {
       emoji: '🦎', zh: '雙棲者', fr: 'Le Bi-Résident',
@@ -393,7 +437,9 @@
       hook_zh: '稅務與投資工作坊（社群票選 15 票最高需求）', hook_fr: 'Atelier fiscalité & investissement (top demande, 15 votes)',
       accent: { border: 'rgba(168,85,247,0.4)', bar1: '#a855f7', bar2: '#06b6d4' },
       validation_zh: '你正處於雙核心狀態：同時在台灣與法國之間自由往返，兼顧生活與事業。這是極具優勢的位置，但也帶來可觀的行政與稅務複雜度；你的成功關鍵不只在於掌握機會，更在於在兩邊拉力之間維持結構上的平衡。',
-      validation_fr: 'Tu opères à double cœur, naviguant librement entre Taïwan et la France pour concilier vie et carrière. C\'est une position à fort potentiel, mais qui introduit une complexité administrative et fiscale non négligeable ; ta réussite dépendra autant de saisir les opportunités que de maintenir un équilibre structurel entre ces deux pôles.'
+      validation_fr: 'Tu opères à double cœur, naviguant librement entre Taïwan et la France pour concilier vie et carrière. C\'est une position à fort potentiel, mais qui introduit une complexité administrative et fiscale non négligeable ; ta réussite dépendra autant de saisir les opportunités que de maintenir un équilibre structurel entre ces deux pôles.',
+      anchor_zh: '雙棲者的核心優勢在於跨界槓桿，但長期成功取決於結構與稅務的精準對齊。',
+      anchor_fr: 'L\'atout du bi-résident est son effet de levier transfrontalier, mais le succès à long terme exige un alignement structurel et fiscal rigoureux.'
     }
   };
 
@@ -750,6 +796,20 @@
     const shareText = `我是「${archetype.zh}」· Je suis "${archetype.fr}" ! 來測你的台法職涯原型 · Découvre ton archétype → https://ttf-tech.github.io/game.html`;
     document.getElementById('share-btn').href = 'https://wa.me/?text=' + encodeURIComponent(shareText);
 
+    // Peak-end capsule + multi-platform share dock.
+    const anchorEl = document.getElementById('anchor-capsule-text');
+    if (anchorEl && archetype.anchor_zh) anchorEl.textContent = both(archetype.anchor_zh, archetype.anchor_fr);
+    const encodedShareText = encodeURIComponent(shareText);
+    const gameUrl = encodeURIComponent('https://ttf-tech.github.io/game.html');
+    const lineBtn = document.getElementById('share-line');
+    const linkedinBtn = document.getElementById('share-linkedin');
+    const whatsappBtn = document.getElementById('share-whatsapp');
+    const facebookBtn = document.getElementById('share-facebook');
+    if (lineBtn) lineBtn.href = `https://social-plugins.line.me/lineit/share?url=${gameUrl}&text=${encodedShareText}`;
+    if (linkedinBtn) linkedinBtn.href = `https://www.linkedin.com/sharing/share-offsite/?url=${gameUrl}`;
+    if (whatsappBtn) whatsappBtn.href = `https://wa.me/?text=${encodedShareText}`;
+    if (facebookBtn) facebookBtn.href = `https://www.facebook.com/sharer/sharer.php?u=${gameUrl}`;
+
     document.getElementById('unlock-btn').href = 'adhesion.html?type=' + encodeURIComponent(state.q2);
     updateUnlockButtonVisibility();
   }
@@ -834,7 +894,7 @@
         const q = ADVANCED_QUESTIONS[ins.qIndex];
         return `
           <div class="diag-item">
-            <div class="diag-dynamic">${both(q.dynamic_zh, q.dynamic_fr)}</div>
+            <div class="diag-dynamic"><i class="fas ${q.topic_icon}"></i><span>${both(q.dynamic_zh, q.dynamic_fr)}</span></div>
             <div class="diag-analysis">${both(q.analysis_zh, q.analysis_fr)}</div>
             <div class="diag-action"><i class="fas fa-arrow-right"></i><span>${both(ins.action_zh, ins.action_fr)}</span></div>
           </div>`;

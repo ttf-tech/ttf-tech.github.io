@@ -215,7 +215,7 @@
         <div id="r-needs-list"></div>
 
         <div class="lock-card" id="advanced-gate-card" style="margin-top:0.9rem;background:rgba(255,255,255,0.03);">
-          <div class="lock-card-title" style="color:rgba(255,255,255,0.75);" data-zh="進階版測驗（2 題，更精準結果）" data-fr="Test avancé (2 questions, résultat plus précis)">進階版測驗（2 題，更精準結果）</div>
+          <div class="lock-card-title" style="color:rgba(255,255,255,0.75);" data-zh="進階版測驗（7 題，更精準結果）" data-fr="Test avancé (7 questions, résultat plus précis)">進階版測驗（7 題，更精準結果）</div>
           <div class="lock-card-title-fr" data-zh="僅限 Adhésion 會員解鎖" data-fr="Réservé aux membres Adhésion">僅限 Adhésion 會員解鎖</div>
           <div id="advanced-gate-actions" style="margin-top:0.65rem;display:flex;flex-wrap:wrap;gap:0.5rem;">
             <button type="button" class="g-cta-secondary adv-signin-btn" style="display:none;min-height:40px;padding:0.55rem 1rem;font-size:0.78rem;width:auto;flex:1;" onclick="ttfMemberSignIn()">
@@ -317,30 +317,108 @@
   ];
 
   // ── Advanced test (Adhésion members only) ────────────────────────
-  const ADVANCED_Q4_OPTIONS = [
-    { id: 'tax_residency',        zh: '雙重稅務居民身分認定',       fr: 'Double résidence fiscale' },
-    { id: 'pension_portability',  zh: '退休金與社會保險可攜性',     fr: 'Portabilité de la retraite et de la sécurité sociale' },
-    { id: 'visa_stability',       zh: '簽證與居留穩定性',           fr: 'Stabilité du visa et du titre de séjour' },
-    { id: 'fx_risk',              zh: '資產配置與匯率風險',         fr: 'Allocation d\'actifs et risque de change' }
+  // Each question's options carry their own insight text, so adding/removing
+  // a question is a single edit here — renderAdvancedFlow() below is generic.
+  const ADVANCED_QUESTIONS = [
+    {
+      title_zh: '進階問題 1／7：你最擔心的財務／法律風險？',
+      title_fr: 'Question avancée 1/7 : quel risque financier/juridique t\'inquiète le plus ?',
+      options: [
+        { id: 'tax_residency', zh: '雙重稅務居民身分認定', fr: 'Double résidence fiscale',
+          insight_zh: '建議優先釐清「183 天規則」與台法租稅協定的適用範圍。', insight_fr: 'Priorité : clarifier la règle des 183 jours et le champ de la convention fiscale France-Taïwan.' },
+        { id: 'pension_portability', zh: '退休金與社會保險可攜性', fr: 'Portabilité de la retraite et de la sécurité sociale',
+          insight_zh: '建議提前確認台灣與法國之間的社會保險協定涵蓋範圍。', insight_fr: 'Priorité : vérifier la couverture de l\'accord de sécurité sociale entre Taïwan et la France.' },
+        { id: 'visa_stability', zh: '簽證與居留穩定性', fr: 'Stabilité du visa et du titre de séjour',
+          insight_zh: '建議規劃人才護照（Passeport Talent）續簽與入籍所需的時間軸。', insight_fr: 'Priorité : planifier le calendrier de renouvellement du Passeport Talent et de la naturalisation.' },
+        { id: 'fx_risk', zh: '資產配置與匯率風險', fr: 'Allocation d\'actifs et risque de change',
+          insight_zh: '建議與熟悉跨境稅務的前輩討論台幣／歐元資產配置策略。', insight_fr: 'Priorité : échanger avec des pairs expérimentés sur l\'allocation d\'actifs TWD/EUR.' }
+      ]
+    },
+    {
+      title_zh: '進階問題 2／7：你最想向前輩請教什麼？',
+      title_fr: 'Question avancée 2/7 : que voudrais-tu demander à un senior ?',
+      options: [
+        { id: 'numbers', zh: '實際的財務數字與談判技巧', fr: 'Chiffres concrets et techniques de négociation',
+          insight_zh: '我們會優先為你媒合已談過薪資與合約細節的前輩。', insight_fr: 'On te mettra en priorité en contact avec des pairs qui ont déjà négocié salaire et contrat.' },
+        { id: 'family', zh: '家庭／伴侶的適應策略', fr: 'Stratégies d\'adaptation pour la famille / le conjoint',
+          insight_zh: '我們會優先為你媒合帶著家庭一起適應法國生活的會員。', insight_fr: 'On te mettra en priorité en contact avec des membres ayant installé leur famille en France.' },
+        { id: 'transition', zh: '職涯轉換的具體步驟', fr: 'Étapes concrètes de transition de carrière',
+          insight_zh: '我們會優先為你媒合成功完成職涯轉換的會員。', insight_fr: 'On te mettra en priorité en contact avec des membres ayant réussi une reconversion.' },
+        { id: 'network', zh: '如何建立在地人脈', fr: 'Comment construire un réseau local',
+          insight_zh: '我們會優先為你媒合活躍於在地人脈經營的會員。', insight_fr: 'On te mettra en priorité en contact avec des membres actifs dans le réseautage local.' }
+      ]
+    },
+    {
+      title_zh: '進階問題 3／7：在法國置產或簽長租約，你最在意的是？',
+      title_fr: 'Question avancée 3/7 : à l\'achat ou en bail longue durée en France, qu\'est-ce qui te préoccupe le plus ?',
+      options: [
+        { id: 'mortgage', zh: '房貸與外國人信用評估', fr: 'Dossier de prêt et évaluation de crédit pour non-résident',
+          insight_zh: '我們會優先分享會員申請房貸成功的實際案例與銀行清單。', insight_fr: 'On te mettra en priorité en contact avec des membres ayant obtenu un prêt, et une liste de banques.' },
+        { id: 'location', zh: '地段選擇與長期增值潛力', fr: 'Choix du quartier et potentiel de plus-value',
+          insight_zh: '建議參考會員實際居住地區的長期生活與增值經驗分享。', insight_fr: 'Priorité : retours d\'expérience de membres sur leur quartier et sa valorisation à long terme.' },
+        { id: 'tenant_file', zh: '房東審核與文件準備', fr: 'Constitution du dossier locataire',
+          insight_zh: '建議準備好保證人（garant）與 Visale 等替代方案，加速審核。', insight_fr: 'Priorité : préparer un garant ou une alternative type Visale pour accélérer le dossier.' },
+        { id: 'remote_asset', zh: '遠端管理台灣與法國兩邊資產', fr: 'Gestion à distance d\'un patrimoine des deux côtés',
+          insight_zh: '建議與已經同時持有台法資產的會員交流實際管理方式。', insight_fr: 'Priorité : échanger avec des membres gérant déjà un patrimoine des deux côtés.' }
+      ]
+    },
+    {
+      title_zh: '進階問題 4／7：建立法國職場個人品牌，你最想加強哪一塊？',
+      title_fr: 'Question avancée 4/7 : pour ta marque professionnelle en France, que veux-tu renforcer en priorité ?',
+      options: [
+        { id: 'cv_linkedin', zh: '法語履歷與 LinkedIn 優化', fr: 'CV en français et optimisation LinkedIn',
+          insight_zh: '我們會優先為你媒合提供履歷／LinkedIn 一對一諮詢的會員。', insight_fr: 'On te mettra en priorité en contact avec des membres proposant du coaching CV/LinkedIn.' },
+        { id: 'public_speaking', zh: '公開演講與參與產業活動', fr: 'Prise de parole et participation à des événements',
+          insight_zh: '建議從協會的閉門分享會開始練習，累積曝光與人脈。', insight_fr: 'Priorité : commencer par les sessions internes de l\'association pour gagner en visibilité.' },
+        { id: 'content_portfolio', zh: '建立內容作品集（技術部落格、GitHub）', fr: 'Portfolio de contenu : blog technique, GitHub',
+          insight_zh: '我們會優先為你媒合已建立技術作品集的資深會員。', insight_fr: 'On te mettra en priorité en contact avec des membres seniors ayant un portfolio établi.' },
+        { id: 'cross_industry', zh: '建立跨產業人脈網絡', fr: 'Réseau inter-sectoriel',
+          insight_zh: '建議優先參與協會的跨產業媒合活動與線下小聚。', insight_fr: 'Priorité : participer aux événements de mise en relation inter-sectorielle de l\'association.' }
+      ]
+    },
+    {
+      title_zh: '進階問題 5／7：面對法國企業的薪資與股權方案，你最不確定的是？',
+      title_fr: 'Question avancée 5/7 : dans les packages salariaux et actions des entreprises françaises, qu\'est-ce qui reste flou ?',
+      options: [
+        { id: 'bspce_tax', zh: 'BSPCE／股票選擇權的稅務規則', fr: 'Fiscalité des BSPCE / stock-options',
+          insight_zh: '建議優先了解 BSPCE 行使與出售時點的稅務差異。', insight_fr: 'Priorité : comprendre la différence de fiscalité entre exercice et cession des BSPCE.' },
+        { id: 'benefits', zh: '13ème mois、intéressement 等福利換算', fr: 'Calcul des avantages : 13e mois, intéressement',
+          insight_zh: '建議將這些福利折算進年薪，才能正確比較不同 offer。', insight_fr: 'Priorité : intégrer ces avantages au salaire annuel pour bien comparer les offres.' },
+        { id: 'negotiation', zh: '如何在面試中談判薪資區間', fr: 'Négocier la fourchette salariale en entretien',
+          insight_zh: '我們會優先為你媒合近期成功談判薪資的會員分享實戰經驗。', insight_fr: 'On te mettra en priorité en contact avec des membres ayant récemment négocié leur salaire.' },
+        { id: 'scaleup_vs_corp', zh: 'Scale-up vs 大企業的薪資結構差異', fr: 'Différences de structure salariale scale-up vs grand groupe',
+          insight_zh: '建議比較現金／股權比例，再依你的風險承受度做選擇。', insight_fr: 'Priorité : comparer le ratio cash/equity selon ta tolérance au risque.' }
+      ]
+    },
+    {
+      title_zh: '進階問題 6／7：如果你考慮在法國成家，最想先了解什麼？',
+      title_fr: 'Question avancée 6/7 : si tu envisages de fonder une famille en France, que veux-tu comprendre en premier ?',
+      options: [
+        { id: 'bilingual_school', zh: '雙語教育與國際學校選擇', fr: 'Éducation bilingue et choix d\'école internationale',
+          insight_zh: '我們會優先為你媒合已為孩子選校的會員分享實際經驗。', insight_fr: 'On te mettra en priorité en contact avec des membres ayant déjà choisi une école pour leurs enfants.' },
+        { id: 'childcare_caf', zh: '托育資源與家庭津貼（CAF）', fr: 'Garde d\'enfants et allocations familiales CAF',
+          insight_zh: '建議提早申請 CAF 並了解 crèche 與 assistante maternelle 的差異。', insight_fr: 'Priorité : faire la demande CAF tôt et comparer crèche vs assistante maternelle.' },
+        { id: 'family_reunion', zh: '家庭團聚簽證流程', fr: 'Procédure de regroupement familial',
+          insight_zh: '建議提前準備家庭團聚簽證所需文件，流程通常需數月。', insight_fr: 'Priorité : préparer le dossier de regroupement familial en amont, la procédure prend plusieurs mois.' },
+        { id: 'intercultural', zh: '跨文化婚姻與家庭適應', fr: 'Mariage interculturel et adaptation familiale',
+          insight_zh: '我們會優先為你媒合跨文化家庭的會員交流適應經驗。', insight_fr: 'On te mettra en priorité en contact avec des membres en couple/famille interculturelle.' }
+      ]
+    },
+    {
+      title_zh: '進階問題 7／7：台法兩地長期理財規劃，你最想深入了解哪一項？',
+      title_fr: 'Question avancée 7/7 : pour ta stratégie patrimoniale long terme France-Taïwan, que veux-tu approfondir ?',
+      options: [
+        { id: 'french_tools', zh: 'PEA／assurance-vie 等法國投資工具', fr: 'Outils d\'investissement français : PEA, assurance-vie',
+          insight_zh: '建議優先了解 PEA 與 assurance-vie 的持有年限與稅務優勢。', insight_fr: 'Priorité : comprendre les durées de détention et avantages fiscaux du PEA et de l\'assurance-vie.' },
+        { id: 'tw_declaration', zh: '台灣資產於海外的申報義務', fr: 'Obligations déclaratives pour des actifs taïwanais à l\'étranger',
+          insight_zh: '建議與熟悉台法雙邊申報規定的前輩確認你的申報義務。', insight_fr: 'Priorité : vérifier tes obligations déclaratives avec des pairs connaissant les deux régimes.' },
+        { id: 'retirement_tax', zh: '退休後的居住地稅務規劃', fr: 'Planification fiscale du lieu de résidence à la retraite',
+          insight_zh: '建議提前規劃退休時的稅務居住地，影響長期實拿金額。', insight_fr: 'Priorité : anticiper ta résidence fiscale à la retraite, cela impacte le montant net perçu.' },
+        { id: 'inheritance', zh: '遺產規劃與跨境繼承', fr: 'Planification successorale et héritage transfrontalier',
+          insight_zh: '建議及早了解台法之間跨境繼承的稅務與法律差異。', insight_fr: 'Priorité : te renseigner tôt sur les différences fiscales et légales de l\'héritage transfrontalier.' }
+      ]
+    }
   ];
-  const ADVANCED_Q5_OPTIONS = [
-    { id: 'numbers',     zh: '實際的財務數字與談判技巧',   fr: 'Chiffres concrets et techniques de négociation' },
-    { id: 'family',      zh: '家庭／伴侶的適應策略',       fr: 'Stratégies d\'adaptation pour la famille / le conjoint' },
-    { id: 'transition',  zh: '職涯轉換的具體步驟',         fr: 'Étapes concrètes de transition de carrière' },
-    { id: 'network',     zh: '如何建立在地人脈',           fr: 'Comment construire un réseau local' }
-  ];
-  const INSIGHT_Q4 = {
-    tax_residency:       { zh: '建議優先釐清「183 天規則」與台法租稅協定的適用範圍。', fr: 'Priorité : clarifier la règle des 183 jours et le champ de la convention fiscale France-Taïwan.' },
-    pension_portability: { zh: '建議提前確認台灣與法國之間的社會保險協定涵蓋範圍。',   fr: 'Priorité : vérifier la couverture de l\'accord de sécurité sociale entre Taïwan et la France.' },
-    visa_stability:      { zh: '建議規劃人才護照（Passeport Talent）續簽與入籍所需的時間軸。', fr: 'Priorité : planifier le calendrier de renouvellement du Passeport Talent et de la naturalisation.' },
-    fx_risk:             { zh: '建議與熟悉跨境稅務的前輩討論台幣／歐元資產配置策略。', fr: 'Priorité : échanger avec des pairs expérimentés sur l\'allocation d\'actifs TWD/EUR.' }
-  };
-  const INSIGHT_Q5 = {
-    numbers:    { zh: '我們會優先為你媒合已談過薪資與合約細節的前輩。',       fr: 'On te mettra en priorité en contact avec des pairs qui ont déjà négocié salaire et contrat.' },
-    family:     { zh: '我們會優先為你媒合帶著家庭一起適應法國生活的會員。',   fr: 'On te mettra en priorité en contact avec des membres ayant installé leur famille en France.' },
-    transition: { zh: '我們會優先為你媒合成功完成職涯轉換的會員。',           fr: 'On te mettra en priorité en contact avec des membres ayant réussi une reconversion.' },
-    network:    { zh: '我們會優先為你媒合活躍於在地人脈經營的會員。',         fr: 'On te mettra en priorité en contact avec des membres actifs dans le réseautage local.' }
-  };
 
   // Tone modulation by Q1 answer — "en recherche" leads with referrals, per spec.
   const TONE = {
@@ -352,8 +430,9 @@
 
   // ── State ──────────────────────────────────────────────────────
   const STEPS = ['splash', 'q1', 'q2', 'q3', 'result'];
-  let state = { step: 0, lang: 'zh', q1: null, q2: null, q3: null, q4: null, q5: null };
+  let state = { step: 0, lang: 'zh', q1: null, q2: null, q3: null, advancedInsights: [] };
   let advancedStarted = false;
+  let hasAssoAccess = false;
 
   function detectLang() {
     try {
@@ -487,9 +566,15 @@
     document.getElementById('share-btn').href = 'https://wa.me/?text=' + encodeURIComponent(shareText);
 
     document.getElementById('unlock-btn').href = 'adhesion.html?type=' + encodeURIComponent(state.q2);
+    updateUnlockButtonVisibility();
   }
 
   // ── Advanced test gate (Adhésion members only) ───────────────────
+  function updateUnlockButtonVisibility() {
+    const btn = document.getElementById('unlock-btn');
+    if (btn) btn.style.display = hasAssoAccess ? 'none' : 'flex';
+  }
+
   function updateAdvancedGate(hasAccess, isRestoring, user) {
     const signinBtn = document.querySelector('.adv-signin-btn');
     const joinBtn   = document.querySelector('.adv-join-btn');
@@ -506,7 +591,9 @@
 
   document.addEventListener('ttf:member-gate-change', event => {
     const { hasAccess, isRestoring, user } = event.detail || {};
-    updateAdvancedGate(!!hasAccess, !!isRestoring, user);
+    hasAssoAccess = !!hasAccess;
+    updateAdvancedGate(hasAssoAccess, !!isRestoring, user);
+    updateUnlockButtonVisibility();
   });
 
   function renderAdvancedFlow() {
@@ -514,43 +601,34 @@
     if (!wrap) return;
     wrap.innerHTML = '';
 
-    if (!state.q4) {
+    const answeredCount = state.advancedInsights.length;
+    if (answeredCount < ADVANCED_QUESTIONS.length) {
+      const q = ADVANCED_QUESTIONS[answeredCount];
       const title = document.createElement('div');
       title.className = 'lock-card-title';
       title.style.marginBottom = '0.5rem';
-      title.textContent = both('進階問題 1／2：你最擔心的財務／法律風險？', 'Question avancée 1/2 : quel risque financier/juridique t\'inquiète le plus ?');
+      title.textContent = both(q.title_zh, q.title_fr);
       wrap.appendChild(title);
-      ADVANCED_Q4_OPTIONS.forEach(opt => {
-        wrap.appendChild(optionButton(opt, () => { state.q4 = opt.id; renderAdvancedFlow(); }));
+      q.options.forEach(opt => {
+        wrap.appendChild(optionButton(opt, () => {
+          state.advancedInsights.push({ zh: opt.insight_zh, fr: opt.insight_fr });
+          renderAdvancedFlow();
+        }));
       });
       return;
     }
 
-    if (!state.q5) {
-      const title = document.createElement('div');
-      title.className = 'lock-card-title';
-      title.style.marginBottom = '0.5rem';
-      title.textContent = both('進階問題 2／2：你最想向前輩請教什麼？', 'Question avancée 2/2 : que voudrais-tu demander à un senior ?');
-      wrap.appendChild(title);
-      ADVANCED_Q5_OPTIONS.forEach(opt => {
-        wrap.appendChild(optionButton(opt, () => { state.q5 = opt.id; renderAdvancedFlow(); }));
-      });
-      return;
-    }
-
-    const insight4 = INSIGHT_Q4[state.q4];
-    const insight5 = INSIGHT_Q5[state.q5];
     const card = document.createElement('div');
     card.className = 'lock-card primary';
-    card.innerHTML = `
-      <div class="lock-card-title" style="margin-bottom:0.5rem;">${both('你的進階洞察', 'Ton insight avancé')}</div>
-      <div class="lock-card-title-fr">${both(insight4.zh, insight4.fr)}</div>
-      <div class="lock-card-title-fr" style="margin-top:0.4rem;">${both(insight5.zh, insight5.fr)}</div>`;
+    const insightsHtml = state.advancedInsights
+      .map(ins => `<div class="lock-card-title-fr" style="margin-top:0.4rem;">${both(ins.zh, ins.fr)}</div>`)
+      .join('');
+    card.innerHTML = `<div class="lock-card-title" style="margin-bottom:0.5rem;">${both('你的進階洞察', 'Ton insight avancé')}</div>${insightsHtml}`;
     wrap.appendChild(card);
   }
 
   function resetAdvancedFlow() {
-    state.q4 = state.q5 = null;
+    state.advancedInsights = [];
     advancedStarted = false;
     const wrap = document.getElementById('advanced-questions');
     if (wrap) { wrap.style.display = 'none'; wrap.innerHTML = ''; }
@@ -560,7 +638,7 @@
 
   document.querySelector('.adv-start-btn')?.addEventListener('click', () => {
     advancedStarted = true;
-    state.q4 = state.q5 = null;
+    state.advancedInsights = [];
     document.getElementById('advanced-gate-actions').style.display = 'none';
     document.getElementById('advanced-questions').style.display = 'block';
     renderAdvancedFlow();

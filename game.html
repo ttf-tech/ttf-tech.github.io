@@ -90,12 +90,19 @@
     }
 
     .archetype-card {
-      background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.15);
-      border-radius: 20px; padding: 1.75rem 1.5rem; text-align: center; margin-bottom: 1.25rem;
+      background: linear-gradient(135deg, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 100%);
+      border: 1.5px solid var(--accent-border, rgba(34,211,238,0.3));
+      box-shadow: 0 12px 32px rgba(15,23,42,0.6), inset 0 1px 0 rgba(255,255,255,0.15);
+      border-radius: 24px; padding: 2rem 1.5rem; text-align: center; margin-bottom: 1.25rem;
+      position: relative; overflow: hidden; transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .archetype-card::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent-bar-1, #22d3ee), var(--accent-bar-2, #6366f1));
     }
     .archetype-emoji { font-size: 2.75rem; margin-bottom: 0.5rem; }
     .archetype-name-zh { color: #fff; font-size: 1.6rem; font-weight: 900; }
-    .archetype-name-fr { color: #22d3ee; font-size: 1rem; font-weight: 700; margin-top: 0.15rem; }
+    .archetype-name-fr { color: var(--accent-bar-1, #22d3ee); font-size: 1rem; font-weight: 700; margin-top: 0.15rem; }
     .archetype-tagline { color: rgba(255,255,255,0.7); font-size: 0.85rem; margin-top: 0.75rem; line-height: 1.5; }
 
     .stat-line {
@@ -110,17 +117,65 @@
       letter-spacing: 0.08em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;
     }
     .lock-card {
-      position: relative; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 14px; padding: 1rem 1.1rem; margin-bottom: 0.65rem; overflow: hidden;
+      position: relative; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 1.1rem 1.25rem; margin-bottom: 0.75rem; overflow: hidden;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
-    .lock-card.primary { border-color: rgba(34,211,238,0.35); background: rgba(34,211,238,0.06); }
+    .lock-card.primary {
+      border-color: rgba(34,211,238,0.4); background: rgba(34,211,238,0.05);
+      box-shadow: 0 4px 16px rgba(34,211,238,0.08);
+    }
+    .lock-card-eyebrow {
+      color: rgba(255,255,255,0.45); font-size: 0.64rem; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.06em; margin-bottom: 0.3rem;
+    }
     .lock-card-title { color: #fff; font-weight: 700; font-size: 0.88rem; }
     .lock-card-title-fr { color: rgba(255,255,255,0.55); font-size: 0.74rem; margin-top: 0.15rem; }
     .lock-icon { position: absolute; top: 0.9rem; right: 1rem; color: rgba(255,255,255,0.35); font-size: 0.85rem; }
-    .lock-blur { filter: blur(3px); user-select: none; opacity: 0.6; }
+    /* Teaser + blur: the category label above stays sharp (Zeigarnik hook),
+       only the specific payoff text is blurred — a preview, not a wall. */
+    .lock-blur-preview {
+      display: inline-block; margin-top: 0.4rem; padding: 0.1rem 0.5rem;
+      color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.05); border-radius: 6px;
+      filter: blur(3px); user-select: none; font-size: 0.78rem;
+    }
+
+    .adv-topics-grid { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.65rem; }
+    .adv-topic-chip {
+      display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.6rem;
+      background: rgba(34,211,238,0.08); border: 1px solid rgba(34,211,238,0.2);
+      border-radius: 99px; font-size: 0.68rem; font-weight: 600; color: rgba(255,255,255,0.75);
+    }
+    .adv-topic-chip i { font-size: 0.6rem; color: rgba(34,211,238,0.75); }
+
+    /* Archetype art card — blurred sneak-peek pre-membership, full reveal after. */
+    .archetype-art-wrap { text-align: center; margin-top: 0.75rem; }
+    .archetype-art-blur {
+      width: 100%; max-width: 220px; border-radius: 14px; display: block; margin: 0 auto;
+      filter: blur(7px) brightness(0.6); user-select: none; pointer-events: none;
+    }
+    .archetype-art-caption {
+      margin-top: 0.5rem; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
+      color: rgba(255,255,255,0.5); text-align: center;
+    }
+    .archetype-art-full {
+      width: 100%; max-width: 260px; border-radius: 16px; display: block; margin: 0.75rem auto 0;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+    }
 
     .share-row { display: flex; gap: 0.6rem; margin-bottom: 0.85rem; }
     .share-row .g-cta { background: #25d366; color: #fff; box-shadow: 0 8px 24px rgba(37,211,102,0.3); }
+
+    /* Full-family showcase — teases the other 4 archetypes right after the result,
+       before the member-gated section, to pull people into "what else could I be?" */
+    .result-family-wrap { text-align: center; margin-bottom: 1.5rem; }
+    .result-family-img {
+      width: 100%; border-radius: 16px; display: block;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+    }
+    .result-family-caption {
+      margin-top: 0.6rem; font-size: 0.76rem; color: rgba(255,255,255,0.55); line-height: 1.5;
+    }
 
     .g-footer-link { text-align: center; color: rgba(255,255,255,0.35); font-size: 0.75rem; margin-top: 1.5rem; }
     .g-footer-link a { color: rgba(255,255,255,0.5); text-decoration: underline; }
@@ -185,7 +240,7 @@
 
     <!-- Result -->
     <div class="g-view" id="view-result">
-      <div class="archetype-card">
+      <div class="archetype-card" id="archetype-card">
         <div class="archetype-emoji" id="r-emoji">🧭</div>
         <div class="archetype-name-zh" id="r-name-zh">扎根者</div>
         <div class="archetype-name-fr" id="r-name-fr">L'Ancreur</div>
@@ -201,15 +256,18 @@
         </a>
       </div>
 
+      <div class="result-family-wrap">
+        <img class="result-family-img" src="assets/img/game-result.jpeg" alt="5 archétypes carrière France-Taïwan · 5 種台法職涯原型" loading="lazy">
+        <div class="result-family-caption" data-zh="還有 4 種原型等你發掘，邀請朋友一起測試！" data-fr="4 autres archétypes à découvrir — invite tes amis à tester !">還有 4 種原型等你發掘，邀請朋友一起測試！</div>
+      </div>
+
       <div class="unlock-section">
         <div class="unlock-label"><i class="fas fa-lock"></i><span data-zh="專屬解鎖內容" data-fr="Contenu à débloquer">專屬解鎖內容</span></div>
 
         <div class="lock-card primary">
           <i class="fas fa-lock lock-icon"></i>
-          <div class="lock-blur">
-            <div class="lock-card-title" id="r-hook-zh">你的專屬行動指南</div>
-            <div class="lock-card-title-fr" id="r-hook-fr"></div>
-          </div>
+          <div class="lock-card-eyebrow" data-zh="根據你的原型，你的專屬行動指南" data-fr="Selon ton archétype, ton guide d'action personnalisé">根據你的原型，你的專屬行動指南</div>
+          <div class="lock-card-title lock-blur-preview" id="r-hook-zh">你的專屬行動指南</div>
         </div>
 
         <div id="r-needs-list"></div>
@@ -217,6 +275,14 @@
         <div class="lock-card" id="advanced-gate-card" style="margin-top:0.9rem;background:rgba(255,255,255,0.03);">
           <div class="lock-card-title" style="color:rgba(255,255,255,0.75);" data-zh="進階版測驗（7 題，更精準結果）" data-fr="Test avancé (7 questions, résultat plus précis)">進階版測驗（7 題，更精準結果）</div>
           <div class="lock-card-title-fr" data-zh="僅限 Adhésion 會員解鎖" data-fr="Réservé aux membres Adhésion">僅限 Adhésion 會員解鎖</div>
+
+          <div class="archetype-art-wrap" id="archetype-art-locked">
+            <img class="archetype-art-blur" id="archetype-art-img-blur" src="" alt="" loading="lazy">
+            <div class="archetype-art-caption" data-zh="✦ 解鎖你的專屬原型視覺卡 ✦" data-fr="✦ Débloque ta carte d'archétype exclusive ✦">✦ 解鎖你的專屬原型視覺卡 ✦</div>
+          </div>
+          <img class="archetype-art-full" id="archetype-art-img-full" src="" alt="" style="display:none;" loading="lazy">
+
+          <div class="adv-topics-grid" id="advanced-topics-preview"></div>
           <div id="advanced-gate-actions" style="margin-top:0.65rem;display:flex;flex-wrap:wrap;gap:0.5rem;">
             <button type="button" class="g-cta-secondary adv-signin-btn" style="display:none;min-height:40px;padding:0.55rem 1rem;font-size:0.78rem;width:auto;flex:1;" onclick="ttfMemberSignIn()">
               <i class="fab fa-google"></i>
@@ -260,31 +326,38 @@
   const REAL_STAT = { zh: '你並不孤單：在 125 位受訪社群成員中，45% 也正在積極求職中（來自社群調查）。',
                        fr: 'Tu n\'es pas seul(e) : sur 125 membres sondés, 45% sont aussi activement en recherche (sondage communautaire).' };
 
+  // accent drives the hero card's border glow + top gradient bar per archetype —
+  // a distinct emotional color so each result feels like a personal identity, not a template.
   const ARCHETYPES = {
     ancreur: {
       emoji: '🌳', zh: '扎根者', fr: "L'Ancreur",
       tagline_zh: '你已經決定：法國是你長期的家。', tagline_fr: 'Tu as décidé : la France, c\'est chez toi, pour longtemps.',
-      hook_zh: '入籍時間軸規劃、CDI／CIR 身份槓桿運用', hook_fr: 'Calendrier de naturalisation, effet de levier CDI/CIR'
+      hook_zh: '入籍時間軸規劃、CDI／CIR 身份槓桿運用', hook_fr: 'Calendrier de naturalisation, effet de levier CDI/CIR',
+      accent: { border: 'rgba(16,185,129,0.4)', bar1: '#10b981', bar2: '#34d399' }
     },
     pont: {
       emoji: '🌉', zh: '橋樑者', fr: 'Le Pont',
       tagline_zh: '你想成為連結台灣與歐洲的那座橋。', tagline_fr: 'Tu veux être le pont entre Taïwan et l\'Europe.',
-      hook_zh: '駐法台北辦事處與僑務委員會（OCAC）註冊資源', hook_fr: 'Bureau français de Taipei + inscription OCAC'
+      hook_zh: '駐法台北辦事處與僑務委員會（OCAC）註冊資源', hook_fr: 'Bureau français de Taipei + inscription OCAC',
+      accent: { border: 'rgba(245,158,11,0.4)', bar1: '#f59e0b', bar2: '#fbbf24' }
     },
     tremplin: {
       emoji: '🚀', zh: '跳板者', fr: 'Le Tremplin',
       tagline_zh: '法國只是起點，你的目光望向整個歐洲。', tagline_fr: 'La France n\'est qu\'un début, tu vises toute l\'Europe.',
-      hook_zh: '跨境內推地圖，串連歐洲各國的機會', hook_fr: 'Carte de cooptation transfrontalière en Europe'
+      hook_zh: '跨境內推地圖，串連歐洲各國的機會', hook_fr: 'Carte de cooptation transfrontalière en Europe',
+      accent: { border: 'rgba(34,211,238,0.4)', bar1: '#22d3ee', bar2: '#6366f1' }
     },
     boomerang: {
       emoji: '🪃', zh: '回流者', fr: 'Le Boomerang',
       tagline_zh: '你想帶著法國經驗，最終回到台灣。', tagline_fr: 'Tu veux ramener ton expérience française à Taïwan.',
-      hook_zh: '退休金與社會保險的可攜性規劃', hook_fr: 'Portabilité de la pension et de la sécurité sociale'
+      hook_zh: '退休金與社會保險的可攜性規劃', hook_fr: 'Portabilité de la pension et de la sécurité sociale',
+      accent: { border: 'rgba(251,113,133,0.4)', bar1: '#fb7185', bar2: '#f97316' }
     },
     biresident: {
       emoji: '🦎', zh: '雙棲者', fr: 'Le Bi-Résident',
       tagline_zh: '你想在台法兩地之間自由往返，兼顧生活與事業。', tagline_fr: 'Tu veux naviguer librement entre la France et Taïwan.',
-      hook_zh: '稅務與投資工作坊（社群票選 15 票最高需求）', hook_fr: 'Atelier fiscalité & investissement (top demande, 15 votes)'
+      hook_zh: '稅務與投資工作坊（社群票選 15 票最高需求）', hook_fr: 'Atelier fiscalité & investissement (top demande, 15 votes)',
+      accent: { border: 'rgba(168,85,247,0.4)', bar1: '#a855f7', bar2: '#06b6d4' }
     }
   };
 
@@ -304,10 +377,14 @@
   ];
 
   const NEEDS = {
-    cv:         { zh: '履歷優化與一對一職涯諮詢', fr: 'Coaching de carrière / relecture de CV' },
-    tax:        { zh: '稅務與法規交流工作坊',     fr: 'Atelier fiscalité & réglementation' },
-    referral:   { zh: '企業內推網絡',             fr: 'Réseau de cooptation en entreprise' },
-    experience: { zh: '會員實戰經驗分享',         fr: 'Partage d\'expérience terrain entre membres' }
+    cv:         { zh: '履歷優化與一對一職涯諮詢', fr: 'Coaching de carrière / relecture de CV',
+                  teaser_zh: '→ 本週有 3 位資深會員開放諮詢', teaser_fr: '→ 3 membres seniors disponibles cette semaine' },
+    tax:        { zh: '稅務與法規交流工作坊',     fr: 'Atelier fiscalité & réglementation',
+                  teaser_zh: '→ 下一場工作坊主題已公布', teaser_fr: '→ Le thème du prochain atelier est dévoilé' },
+    referral:   { zh: '企業內推網絡',             fr: 'Réseau de cooptation en entreprise',
+                  teaser_zh: '→ 已建立 12 家企業內推窗口', teaser_fr: '→ 12 entreprises avec un contact interne' },
+    experience: { zh: '會員實戰經驗分享',         fr: 'Partage d\'expérience terrain entre membres',
+                  teaser_zh: '→ 5 篇實戰心得等你解鎖', teaser_fr: '→ 5 retours d\'expérience à débloquer' }
   };
   const Q3_OPTIONS = [
     { id: 'cv', ...NEEDS.cv },
@@ -321,6 +398,7 @@
   // a question is a single edit here — renderAdvancedFlow() below is generic.
   const ADVANCED_QUESTIONS = [
     {
+      topic_zh: '稅務／簽證風險', topic_fr: 'Fiscalité & visa', topic_icon: 'fa-file-invoice-dollar',
       title_zh: '進階問題 1／7：你最擔心的財務／法律風險？',
       title_fr: 'Question avancée 1/7 : quel risque financier/juridique t\'inquiète le plus ?',
       options: [
@@ -335,6 +413,7 @@
       ]
     },
     {
+      topic_zh: '前輩經驗媒合', topic_fr: 'Mentorat senior', topic_icon: 'fa-user-graduate',
       title_zh: '進階問題 2／7：你最想向前輩請教什麼？',
       title_fr: 'Question avancée 2/7 : que voudrais-tu demander à un senior ?',
       options: [
@@ -349,6 +428,7 @@
       ]
     },
     {
+      topic_zh: '置產與租屋', topic_fr: 'Immobilier', topic_icon: 'fa-house',
       title_zh: '進階問題 3／7：在法國置產或簽長租約，你最在意的是？',
       title_fr: 'Question avancée 3/7 : à l\'achat ou en bail longue durée en France, qu\'est-ce qui te préoccupe le plus ?',
       options: [
@@ -363,6 +443,7 @@
       ]
     },
     {
+      topic_zh: '個人品牌', topic_fr: 'Marque pro', topic_icon: 'fa-id-badge',
       title_zh: '進階問題 4／7：建立法國職場個人品牌，你最想加強哪一塊？',
       title_fr: 'Question avancée 4/7 : pour ta marque professionnelle en France, que veux-tu renforcer en priorité ?',
       options: [
@@ -377,6 +458,7 @@
       ]
     },
     {
+      topic_zh: '薪資與股權', topic_fr: 'Salaire & equity', topic_icon: 'fa-sack-dollar',
       title_zh: '進階問題 5／7：面對法國企業的薪資與股權方案，你最不確定的是？',
       title_fr: 'Question avancée 5/7 : dans les packages salariaux et actions des entreprises françaises, qu\'est-ce qui reste flou ?',
       options: [
@@ -391,6 +473,7 @@
       ]
     },
     {
+      topic_zh: '成家與教育', topic_fr: 'Famille & école', topic_icon: 'fa-people-roof',
       title_zh: '進階問題 6／7：如果你考慮在法國成家，最想先了解什麼？',
       title_fr: 'Question avancée 6/7 : si tu envisages de fonder une famille en France, que veux-tu comprendre en premier ?',
       options: [
@@ -405,6 +488,7 @@
       ]
     },
     {
+      topic_zh: '長期理財規劃', topic_fr: 'Patrimoine long terme', topic_icon: 'fa-chart-line',
       title_zh: '進階問題 7／7：台法兩地長期理財規劃，你最想深入了解哪一項？',
       title_fr: 'Question avancée 7/7 : pour ta stratégie patrimoniale long terme France-Taïwan, que veux-tu approfondir ?',
       options: [
@@ -451,8 +535,20 @@
       el.textContent = lang === 'fr' ? `${el.dataset.fr} · ${el.dataset.zh}` : `${el.dataset.zh} · ${el.dataset.fr}`;
     });
     renderOptions();
+    renderAdvancedTopics();
     if (STEPS[state.step] === 'result') renderResult();
     if (advancedStarted) renderAdvancedFlow();
+  }
+
+  // The Mastermind Matrix: topic labels stay visible pre-signin so visitors can
+  // see the depth of what's gated (tax treaties, real estate, schooling...) —
+  // only the actual question/answer interaction below is behind the member gate.
+  function renderAdvancedTopics() {
+    const grid = document.getElementById('advanced-topics-preview');
+    if (!grid) return;
+    grid.innerHTML = ADVANCED_QUESTIONS.map(q =>
+      `<span class="adv-topic-chip"><i class="fas ${q.topic_icon}"></i>${both(q.topic_zh, q.topic_fr)}</span>`
+    ).join('');
   }
 
   function showStep(index) {
@@ -539,13 +635,29 @@
     document.getElementById('r-name-fr').textContent = lang === 'fr' ? archetype.zh : archetype.fr;
     document.getElementById('r-tagline').textContent = both(archetype.tagline_zh, archetype.tagline_fr);
     document.getElementById('r-hook-zh').textContent = both(archetype.hook_zh, archetype.hook_fr);
-    document.getElementById('r-hook-fr').textContent = '';
+
+    // Identity Mirror: each archetype gets its own border glow + gradient bar.
+    const heroCard = document.getElementById('archetype-card');
+    if (heroCard && archetype.accent) {
+      heroCard.style.setProperty('--accent-border', archetype.accent.border);
+      heroCard.style.setProperty('--accent-bar-1', archetype.accent.bar1);
+      heroCard.style.setProperty('--accent-bar-2', archetype.accent.bar2);
+    }
+
+    // Member-exclusive archetype art (assets/img/<archetype zh name>.jpeg).
+    const artSrc = `assets/img/${encodeURIComponent(archetype.zh)}.jpeg`;
+    const artAlt = `${archetype.zh} · ${archetype.fr}`;
+    ['archetype-art-img-blur', 'archetype-art-img-full'].forEach(id => {
+      const img = document.getElementById(id);
+      if (img) { img.src = artSrc; img.alt = artAlt; }
+    });
 
     const tone = TONE[state.q1] || TONE.cdi;
     document.getElementById('r-stat').textContent =
       both(tone.zh, tone.fr) + ' ' + both(REAL_STAT.zh, REAL_STAT.fr);
 
     // Q3 answer's resource leads the unlocked-resources list; the rest follow.
+    // Teaser + blur: the category title stays sharp, only the specific payoff is blurred.
     const needsList = document.getElementById('r-needs-list');
     needsList.innerHTML = '';
     const orderedIds = [state.q3, ...Object.keys(NEEDS).filter(id => id !== state.q3)];
@@ -555,9 +667,8 @@
       card.className = 'lock-card' + (id === state.q3 ? ' primary' : '');
       card.innerHTML = `
         <i class="fas fa-lock lock-icon"></i>
-        <div class="lock-blur">
-          <div class="lock-card-title">${both(need.zh, need.fr)}</div>
-        </div>`;
+        <div class="lock-card-title">${both(need.zh, need.fr)}</div>
+        <div class="lock-blur-preview">${both(need.teaser_zh, need.teaser_fr)}</div>`;
       needsList.appendChild(card);
     });
 
@@ -579,6 +690,8 @@
     const signinBtn = document.querySelector('.adv-signin-btn');
     const joinBtn   = document.querySelector('.adv-join-btn');
     const startBtn  = document.querySelector('.adv-start-btn');
+    const artLocked = document.getElementById('archetype-art-locked');
+    const artFull   = document.getElementById('archetype-art-img-full');
     if (!signinBtn || !joinBtn || !startBtn) return;
     if (isRestoring) {
       signinBtn.style.display = joinBtn.style.display = startBtn.style.display = 'none';
@@ -587,6 +700,11 @@
     signinBtn.style.display = !user ? 'flex' : 'none';
     joinBtn.style.display   = (user && !hasAccess) ? 'flex' : 'none';
     startBtn.style.display  = hasAccess ? 'flex' : 'none';
+    // Member-exclusive archetype art: blurred sneak-peek until membership confirmed.
+    if (artLocked && artFull) {
+      artLocked.style.display = hasAccess ? 'none' : 'block';
+      artFull.style.display   = hasAccess ? 'block' : 'none';
+    }
   }
 
   document.addEventListener('ttf:member-gate-change', event => {

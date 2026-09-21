@@ -4,23 +4,28 @@
  *   - /assoMembers/{memberId}
  *   - /assoMemberLookup/{sha256(email)}
  *
- * Also sends a one-time Brevo transactional welcome email to any member
- * (HelloAsso-synced or manually added in admin.html) that doesn't yet have
- * a `welcomeEmailSentAt` stamp. A failed send just leaves the stamp unset,
- * so the next "Sync Asso" click retries it automatically — no separate
- * retry/queue needed.
+ * Also upserts every active member into Brevo (NOM/PRENOM/FIRSTNAME/LASTNAME/
+ * EXT_ID attributes + "Member Official" list membership — added when active,
+ * removed when lapsed) on every run, and sends a one-time Brevo transactional
+ * welcome email to any member (HelloAsso-synced or manually added in
+ * admin.html) that doesn't yet have a `welcomeEmailSentAt` stamp. A failed
+ * send just leaves the stamp unset, so the next sync retries it automatically
+ * — no separate retry/queue needed.
  *
- * Triggered manually by .github/workflows/sync-helloasso.yml.
+ * Runs on a daily schedule plus manual dispatch — see
+ * .github/workflows/sync-helloasso.yml.
  * Required GitHub Actions secrets:
  *   HELLOASSO_CLIENT_ID
  *   HELLOASSO_CLIENT_SECRET
  *   FIREBASE_DB_SECRET
- * Optional overrides: HELLOASSO_ORG_SLUG, FIREBASE_DB_URL.
- * Optional (welcome email is skipped, not fatal, if either is unset):
- *   BREVO_API_KEY
- *   BREVO_WELCOME_TEMPLATE_ID   — id of a Brevo *transactional* template
- *                                 (Transactionnel → Templates), not a
- *                                 Campagnes id.
+ * Optional overrides: HELLOASSO_ORG_SLUG, FIREBASE_DB_URL, BREVO_MEMBER_LIST_ID
+ * (defaults to 3, the "Member Official" list).
+ * Optional (Brevo sync/welcome email is skipped, not fatal, if unset):
+ *   BREVO_API_KEY                — required for any Brevo sync at all.
+ *   BREVO_WELCOME_TEMPLATE_ID    — id of a Brevo *transactional* template
+ *                                  (Transactionnel → Templates), not a
+ *                                  Campagnes id. Without it, contacts still
+ *                                  get upserted/list-synced, just no email.
  */
 'use strict';
 
@@ -33,6 +38,7 @@ const FIREBASE_DB_URL         = process.env.FIREBASE_DB_URL || 'https://groupe-t
 const FIREBASE_DB_SECRET      = process.env.FIREBASE_DB_SECRET;
 const BREVO_API_KEY           = process.env.BREVO_API_KEY;
 const BREVO_WELCOME_TEMPLATE_ID = process.env.BREVO_WELCOME_TEMPLATE_ID;
+const BREVO_MEMBER_LIST_ID    = Number(process.env.BREVO_MEMBER_LIST_ID || '3');
 
 function requireEnv() {
   const missing = ['HELLOASSO_CLIENT_ID', 'HELLOASSO_CLIENT_SECRET', 'FIREBASE_DB_SECRET']
@@ -145,19 +151,38 @@ function objectToMembers(value) {
 // The template's subject uses {{ contact.FIRSTNAME }}, which reads from the
 // Brevo *contact record*, not from the params passed to the send call below.
 // Upsert the contact first so that merge tag resolves instead of rendering blank.
+//
+// This Brevo tenant's contact detail view labels name fields NOM/PRENOM
+// (French custom attributes from an earlier manual import), not just the
+// Brevo-native FIRSTNAME/LASTNAME — so both pairs are set here, otherwise
+// NOM/PRENOM are left stuck on whatever stale value they last had (which is
+// what caused contacts to visibly show the literal text "NOM"/"PRENOM").
+// listIds/unlinkListIds keep "Member Official" membership in sync with
+// active status on every run, not just on a member's first sync.
 async function upsertBrevoContact(member) {
   const [firstName, ...rest] = (member.name || '').split(' ');
+  const lastName = rest.join(' ');
+  const body = {
+    email: member.email,
+    attributes: {
+      FIRSTNAME: firstName || member.name || '',
+      LASTNAME: lastName,
+      PRENOM: firstName || member.name || '',
+      NOM: lastName,
+      EXT_ID: member.id || ''
+    },
+    updateEnabled: true
+  };
+  if (member.status === 'active') body.listIds = [BREVO_MEMBER_LIST_ID];
+  else body.unlinkListIds = [BREVO_MEMBER_LIST_ID];
+
   const response = await fetch('https://api.brevo.com/v3/contacts', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'api-key': BREVO_API_KEY
     },
-    body: JSON.stringify({
-      email: member.email,
-      attributes: { FIRSTNAME: firstName || member.name || '', LASTNAME: rest.join(' ') },
-      updateEnabled: true
-    })
+    body: JSON.stringify(body)
   });
   if (!response.ok) {
     throw new Error(`Brevo contact upsert failed: ${response.status} ${await response.text()}`);
@@ -185,20 +210,36 @@ async function sendBrevoWelcomeEmail(member) {
   }
 }
 
-// Mutates the `welcomeEmailSentAt` field in place on entries of `members`
-// so the caller's later Firebase write persists the stamp for successes.
-// Members whose send fails keep no stamp, so the next sync run retries them.
-async function sendWelcomeEmails(members, syncedAt) {
-  if (!BREVO_API_KEY || !BREVO_WELCOME_TEMPLATE_ID) {
-    console.log('[sync-helloasso] BREVO_API_KEY/BREVO_WELCOME_TEMPLATE_ID not set — skipping welcome emails');
-    return { sent: 0, failed: 0, skipped: true };
+// Upserts every member with an email into Brevo — not just new ones — so
+// "Member Official" list membership and NOM/PRENOM/etc. stay correct for
+// members who joined before this automation existed or whose welcome email
+// already fired. The one-time welcome email itself still only fires once,
+// via the `welcomeEmailSentAt` stamp mutated in place on entries of `members`
+// so the caller's later Firebase write persists it for successes. A member
+// whose upsert fails is skipped for the welcome send this run (its contact
+// record isn't in a known-good state); a member whose send fails keeps no
+// stamp, so the next sync retries it automatically.
+async function syncMembersToBrevo(members, syncedAt) {
+  if (!BREVO_API_KEY) {
+    console.log('[sync-helloasso] BREVO_API_KEY not set — skipping Brevo sync');
+    return { upserted: 0, upsertFailed: 0, sent: 0, failed: 0, skipped: true };
   }
-  const pending = members.filter(member => member.email && !member.welcomeEmailSentAt);
+  const targets = members.filter(member => member.email);
+  let upserted = 0;
+  let upsertFailed = 0;
   let sent = 0;
   let failed = 0;
-  for (const member of pending) {
+  for (const member of targets) {
     try {
       await upsertBrevoContact(member);
+      upserted++;
+    } catch (error) {
+      console.error(`[sync-helloasso] Brevo upsert failed for ${member.email}:`, error.message);
+      upsertFailed++;
+      continue;
+    }
+    if (!BREVO_WELCOME_TEMPLATE_ID || member.welcomeEmailSentAt) continue;
+    try {
       await sendBrevoWelcomeEmail(member);
       member.welcomeEmailSentAt = syncedAt;
       sent++;
@@ -207,7 +248,7 @@ async function sendWelcomeEmails(members, syncedAt) {
       failed++;
     }
   }
-  return { sent, failed, skipped: false };
+  return { upserted, upsertFailed, sent, failed, skipped: false };
 }
 
 async function syncToFirebase(helloAssoMembers) {
@@ -280,7 +321,7 @@ async function syncToFirebase(helloAssoMembers) {
   }));
   // Runs before memberMap is built so a successful send's welcomeEmailSentAt
   // stamp (mutated onto these same objects) lands in the write below.
-  const emailResult = await sendWelcomeEmails(finalMembers, syncedAt);
+  const brevoResult = await syncMembersToBrevo(finalMembers, syncedAt);
 
   const memberMap = Object.fromEntries(finalMembers.map(member => [member.id, member]));
   const lookupMap = Object.fromEntries(finalMembers
@@ -293,17 +334,22 @@ async function syncToFirebase(helloAssoMembers) {
       updatedAt: syncedAt
     }]));
 
-  const emailNote = emailResult.skipped || (emailResult.sent === 0 && emailResult.failed === 0)
+  const brevoNote = brevoResult.skipped
     ? ''
-    : ` · 歡迎信已寄出 ${emailResult.sent} 封${emailResult.failed ? `，${emailResult.failed} 封失敗` : ''} · ${emailResult.sent} welcome email(s) sent${emailResult.failed ? `, ${emailResult.failed} failed` : ''}`;
+    : ` · Brevo 已同步 ${brevoResult.upserted} 位${brevoResult.upsertFailed ? `，${brevoResult.upsertFailed} 位失敗` : ''} · ${brevoResult.upserted} synced to Brevo${brevoResult.upsertFailed ? `, ${brevoResult.upsertFailed} failed` : ''}`;
+  const emailNote = brevoResult.skipped || (brevoResult.sent === 0 && brevoResult.failed === 0)
+    ? ''
+    : ` · 歡迎信已寄出 ${brevoResult.sent} 封${brevoResult.failed ? `，${brevoResult.failed} 封失敗` : ''} · ${brevoResult.sent} welcome email(s) sent${brevoResult.failed ? `, ${brevoResult.failed} failed` : ''}`;
   const message = (helloAssoMembers.length === 0
     ? '尚無 HelloAsso 會員付款資料 · No HelloAsso payments to sync yet'
-    : `已新增 ${added} 位、更新 ${updated} 位 · ${added} added, ${updated} updated`) + emailNote;
+    : `已新增 ${added} 位、更新 ${updated} 位 · ${added} added, ${updated} updated`) + brevoNote + emailNote;
   const syncSummary = {
     schemaVersion: 3,
     ts: Date.now(),
-    emailsSent: emailResult.sent,
-    emailsFailed: emailResult.failed,
+    brevoSynced: brevoResult.upserted,
+    brevoSyncFailed: brevoResult.upsertFailed,
+    emailsSent: brevoResult.sent,
+    emailsFailed: brevoResult.failed,
     added,
     updated,
     totalFromHelloAsso: helloAssoMembers.length,

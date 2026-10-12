@@ -28,6 +28,8 @@ let _adminAccessHandler = null;
 let _adminDataAuthVersion = 0;
 let _assoMembersV2Ref = null;
 let _assoMembersV2Handler = null;
+let _assoPage = 1;
+const ASSO_PAGE_SIZE = 24;
 let _memberProfilesRef = null;
 let _memberProfilesHandler = null;
 let _assoFieldAuditRef = null;
@@ -935,6 +937,11 @@ function renderAssoMembers() {
     return matchQ && matchCity;
   });
 
+  const countEl = document.getElementById('asso-count');
+  if (countEl) {
+    countEl.textContent = `${list.length} membre${list.length !== 1 ? 's' : ''} officiel${list.length !== 1 ? 's' : ''} · ${list.length} 位正式會員`;
+  }
+
   if (list.length === 0) {
     container.innerHTML = `
       <div class="sm-empty" style="grid-column:1/-1;">
@@ -942,11 +949,17 @@ function renderAssoMembers() {
         <h3>Aucun membre officiel${query || cityFlt ? ' trouvé' : ''}</h3>
         <p>${query || cityFlt ? 'Essayez un autre filtre.' : 'Cliquez sur « + Ajouter membre Asso » pour enregistrer le premier membre officiel.'}</p>
       </div>`;
+    renderAssoPagination(0, 1);
     return;
   }
 
+  const totalPages = Math.max(1, Math.ceil(list.length / ASSO_PAGE_SIZE));
+  _assoPage = Math.min(Math.max(1, _assoPage), totalPages);
+  const pageList = list.slice((_assoPage - 1) * ASSO_PAGE_SIZE, _assoPage * ASSO_PAGE_SIZE);
+  renderAssoPagination(totalPages, _assoPage);
+
   const goalMap = Object.fromEntries(ASSO_GOALS.map(g => [g.id, g.fr]));
-  container.innerHTML = list.map(m => {
+  container.innerHTML = pageList.map(m => {
     const initials = (m.name || m.email || '?').split(/\s+/).map(w => w[0]).join('').toUpperCase().slice(0, 2);
     const goals    = (m.goals || []).slice(0, 3).map(g =>
       `<span class="sm-asso-goal-badge">${escHtml(goalMap[g] || g)}</span>`
@@ -982,6 +995,22 @@ function renderAssoMembers() {
         <div class="sm-member-joined"><i class="fas fa-calendar-alt" style="margin-right:0.3rem;opacity:0.5;"></i>${fmtDate(m.joinedAt || m.createdAt)}</div>
       </div>`;
   }).join('');
+}
+
+function renderAssoPagination(totalPages, currentPage) {
+  const wrap = document.getElementById('asso-pagination');
+  if (!wrap) return;
+  if (totalPages <= 1) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'flex';
+  const info = document.getElementById('asso-page-info');
+  const prevBtn = document.getElementById('asso-prev-btn');
+  const nextBtn = document.getElementById('asso-next-btn');
+  if (info) info.textContent = `Page ${currentPage} / ${totalPages} · 第 ${currentPage} / ${totalPages} 頁`;
+  if (prevBtn) prevBtn.disabled = currentPage <= 1;
+  if (nextBtn) nextBtn.disabled = currentPage >= totalPages;
 }
 
 let _assoModalId = null;
@@ -3341,8 +3370,13 @@ function init() {
 
   const assoSearch     = document.getElementById('asso-search');
   const assoCityFilter = document.getElementById('asso-city-filter');
-  if (assoSearch)     assoSearch.addEventListener('input', renderAssoMembers);
-  if (assoCityFilter) assoCityFilter.addEventListener('change', renderAssoMembers);
+  if (assoSearch)     assoSearch.addEventListener('input', () => { _assoPage = 1; renderAssoMembers(); });
+  if (assoCityFilter) assoCityFilter.addEventListener('change', () => { _assoPage = 1; renderAssoMembers(); });
+
+  const assoPrevBtn = document.getElementById('asso-prev-btn');
+  const assoNextBtn = document.getElementById('asso-next-btn');
+  if (assoPrevBtn) assoPrevBtn.addEventListener('click', () => { _assoPage--; renderAssoMembers(); });
+  if (assoNextBtn) assoNextBtn.addEventListener('click', () => { _assoPage++; renderAssoMembers(); });
 
   // Asso member modal buttons
   const assoClose  = document.getElementById('asso-modal-close');

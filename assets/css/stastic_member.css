@@ -246,6 +246,15 @@
 }
 .sm-search:focus { border-color: #3b82f6; }
 
+.sm-members-count {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  font-size: 0.78rem;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+
 .sm-members-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -253,6 +262,28 @@
   padding: 0 1.5rem 1.5rem;
   max-width: 1280px;
   margin: 0 auto;
+}
+
+.sm-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.5rem 1.5rem 1.5rem;
+}
+.sm-pagination .sm-btn-sm:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.sm-page-info {
+  font-size: 0.78rem;
+  color: #475569;
+  font-weight: 600;
+  min-width: 140px;
+  text-align: center;
 }
 .sm-member-card {
   background: #fff;

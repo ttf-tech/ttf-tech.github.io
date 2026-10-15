@@ -11,6 +11,7 @@
     gtag("config", "G-ZTM2QR5VPV");
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>try{if(localStorage.getItem('ttf_res_theme')==='dark')document.documentElement.dataset.resTheme='dark';}catch(e){}</script>
   <title>Resources · 資源 — Taiwan Tech France</title>
   <meta name="description" content="Ressources pratiques pour vivre et travailler en France : visa, logement, fiscalité, liens utiles pour la communauté tech taïwanaise. 在法國生活工作的實用資源。">
   <link rel="canonical" href="https://ttf-tech.github.io/resources.html">
@@ -79,6 +80,91 @@
       .res-card-title,
       .res-card-desc { overflow-wrap: anywhere; }
     }
+    /* ── Search / filters / favorites / dark mode (assets/js/resources-tools.js) ── */
+    .res-card-wrap[hidden], .res-section[hidden], .res-group[hidden], .res-empty[hidden] { display: none !important; }
+    .res-toolbar {
+      position: sticky; top: 0; z-index: 30; margin: -0.5rem -0.75rem 1.25rem; padding: 0.75rem 0.75rem 0.6rem;
+      background: rgba(243,244,246,0.93); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .res-toolbar-row { display: flex; gap: 0.5rem; align-items: center; }
+    .res-search { flex: 1; position: relative; }
+    .res-search i { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.8rem; pointer-events: none; }
+    .res-search input {
+      width: 100%; padding: 0.55rem 2rem 0.55rem 2.2rem; border: 1px solid #cbd5e1; border-radius: 10px;
+      background: #fff; font-size: 0.85rem; color: #0f172a; outline: none; min-height: 40px;
+    }
+    .res-search input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+    .res-search-clear {
+      position: absolute; right: 0.35rem; top: 50%; transform: translateY(-50%); border: none; background: none;
+      color: #94a3b8; cursor: pointer; width: 28px; height: 28px; border-radius: 6px; display: none;
+    }
+    .res-search-clear.show { display: block; }
+    .res-theme-btn {
+      width: 40px; height: 40px; flex-shrink: 0; border: 1px solid #cbd5e1; background: #fff; color: #475569;
+      border-radius: 10px; cursor: pointer; font-size: 0.9rem;
+    }
+    .res-theme-btn:hover { background: #f1f5f9; }
+    .res-chips { display: flex; gap: 0.4rem; overflow-x: auto; margin-top: 0.6rem; padding-bottom: 2px; scrollbar-width: none; }
+    .res-chips::-webkit-scrollbar { display: none; }
+    .res-chip {
+      white-space: nowrap; border: 1px solid #cbd5e1; background: #fff; border-radius: 99px; padding: 0.3rem 0.8rem;
+      font-size: 0.72rem; font-weight: 700; color: #475569; cursor: pointer; min-height: 32px;
+    }
+    .res-chip:hover { border-color: #94a3b8; }
+    .res-chip.active { background: #0a2d42; color: #fff; border-color: #0a2d42; }
+    .res-chip .res-chip-n { margin-left: 0.3rem; opacity: 0.7; }
+    .res-count { font-size: 0.7rem; color: #64748b; margin-top: 0.45rem; }
+    .res-empty { text-align: center; padding: 3rem 1rem; color: #64748b; font-size: 0.85rem; line-height: 1.7; }
+    .res-empty i { font-size: 1.6rem; display: block; margin-bottom: 0.6rem; opacity: 0.5; }
+
+    .res-card-wrap { position: relative; display: flex; }
+    .res-card-wrap > .res-card { flex: 1; min-width: 0; padding-right: 3.9rem; }
+    .res-card-actions { position: absolute; top: 0.4rem; right: 0.4rem; display: flex; gap: 0.1rem; }
+    .res-act {
+      width: 28px; height: 28px; border: none; background: transparent; border-radius: 7px; color: #94a3b8;
+      cursor: pointer; font-size: 0.78rem; opacity: 0; transition: opacity 0.15s, background 0.12s, color 0.12s;
+    }
+    .res-card-wrap:hover .res-act, .res-card-wrap:focus-within .res-act, .res-act.on { opacity: 1; }
+    .res-act:hover { background: #f1f5f9; color: #0a2d42; }
+    .res-act.fav.on { color: #f59e0b; }
+    @media (hover: none) { .res-act { opacity: 1; width: 32px; height: 32px; } }
+
+    .res-toast {
+      position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(20px); opacity: 0; z-index: 200;
+      background: #0f172a; color: #fff; padding: 0.55rem 1rem; border-radius: 99px; font-size: 0.78rem; font-weight: 600;
+      transition: opacity 0.2s, transform 0.2s; pointer-events: none;
+    }
+    .res-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Dark mode (page-scoped; sidebar keeps its own look) */
+    html[data-res-theme="dark"] body { background: #0b1220 !important; color: #e2e8f0; }
+    html[data-res-theme="dark"] .page-header { background: linear-gradient(160deg, #0f1b30, #0b1220) !important; border-bottom-color: #1e293b !important; color: #e2e8f0 !important; }
+    html[data-res-theme="dark"] .page-header p { color: #94a3b8 !important; }
+    html[data-res-theme="dark"] .res-section-title, html[data-res-theme="dark"] .res-group-title,
+    html[data-res-theme="dark"] .res-card-title { color: #f1f5f9; }
+    html[data-res-theme="dark"] .res-group-desc, html[data-res-theme="dark"] .res-card-desc { color: #94a3b8; }
+    html[data-res-theme="dark"] .res-group { border-top-color: #1e293b; }
+    html[data-res-theme="dark"] .res-card { background: #111a2e; border-color: #1e293b; }
+    html[data-res-theme="dark"] .res-card:hover { border-color: #334155; box-shadow: 0 2px 12px rgba(0,0,0,0.45); }
+    html[data-res-theme="dark"] .res-card[style*="gradient"] { background: linear-gradient(135deg, #2a1f08, #111a2e) !important; border-color: #78350f !important; }
+    html[data-res-theme="dark"] .res-card[style*="gradient"] .res-card-title { color: #fcd34d !important; }
+    html[data-res-theme="dark"] .res-toolbar { background: rgba(11,18,32,0.93); border-bottom-color: #1e293b; }
+    html[data-res-theme="dark"] .res-search input, html[data-res-theme="dark"] .res-theme-btn,
+    html[data-res-theme="dark"] .res-chip { background: #111a2e; border-color: #334155; color: #cbd5e1; }
+    html[data-res-theme="dark"] .res-search input::placeholder { color: #64748b; }
+    html[data-res-theme="dark"] .res-chip.active { background: #e2e8f0; color: #0b1220; border-color: #e2e8f0; }
+    html[data-res-theme="dark"] .res-theme-btn:hover, html[data-res-theme="dark"] .res-act:hover { background: #1e293b; color: #f1f5f9; }
+    html[data-res-theme="dark"] .res-count, html[data-res-theme="dark"] .res-empty { color: #94a3b8; }
+    html[data-res-theme="dark"] .sm-sharing-card { background: #111a2e; border-color: #1e293b; }
+    html[data-res-theme="dark"] .sm-sharing-title { color: #f1f5f9; }
+    html[data-res-theme="dark"] .sm-sharing-desc { color: #94a3b8; }
+    html[data-res-theme="dark"] .upgrade-to-asso-banner { background: #2a1f08; border-color: #78350f; }
+    html[data-res-theme="dark"] .upgrade-to-asso-banner-title { color: #fcd34d; }
+    html[data-res-theme="dark"] .upgrade-to-asso-banner-desc { color: #fde68a; }
+    @media (max-width: 640px) {
+      .res-toolbar { margin: -0.25rem -0.5rem 1rem; }
+    }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen">
@@ -97,7 +183,7 @@
     <div class="resources-wrap">
 
       <!-- Community -->
-      <div class="res-section">
+      <div class="res-section" data-cat="community">
         <div class="res-section-title"><i class="fas fa-users" style="color:#7c3aed;"></i>Community · 社群</div>
         <div class="res-grid">
           <a class="res-card" href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener">
@@ -129,7 +215,7 @@
       </div>
 
       <!-- Career Archetype Game -->
-      <div class="res-section">
+      <div class="res-section" data-promo>
         <a href="game.html" style="display:flex;align-items:center;gap:1.1rem;text-decoration:none;color:inherit;
            background:linear-gradient(135deg,#0f172a,#1e1b4b);border-radius:16px;padding:1.35rem 1.5rem;
            box-shadow:0 8px 24px rgba(30,27,75,0.25);">
@@ -145,7 +231,7 @@
       </div>
 
       <!-- France Work & Visa -->
-      <div class="res-section">
+      <div class="res-section" data-cat="work">
         <div class="res-section-title"><i class="fas fa-passport" style="color:#0e7490;"></i>Work in France · 在法工作</div>
         <div class="res-grid">
           <a class="res-card" href="https://www.service-public.fr/particuliers/vosdroits/N19807" target="_blank" rel="noopener">
@@ -166,7 +252,7 @@
       </div>
 
       <!-- Tech & Learning -->
-      <div class="res-section">
+      <div class="res-section" data-cat="tech">
         <div class="res-section-title"><i class="fas fa-code" style="color:#059669;"></i>Tech &amp; Apprentissage</div>
         <div class="res-grid">
           <a class="res-card" href="https://github.com/ttf-tech/ttf-tech.github.io" target="_blank" rel="noopener">
@@ -194,7 +280,7 @@
       </div>
 
       <!-- Taiwan × France Official -->
-      <div class="res-section">
+      <div class="res-section" data-cat="official">
         <div class="res-section-title"><i class="fas fa-globe" style="color:#dc2626;"></i>Taiwan × France Official · 台法官方機構</div>
         <div class="res-grid">
           <a class="res-card" href="https://www.ocac.gov.tw" target="_blank" rel="noopener">
@@ -229,7 +315,7 @@
       </div>
 
       <!-- Alliance Partners -->
-      <div class="res-section">
+      <div class="res-section" data-cat="partners">
         <div class="res-section-title"><i class="fas fa-handshake" style="color:#b45309;"></i>Alliance Partners · 合作夥伴</div>
         <div class="res-grid">
           <a class="res-card" href="https://noet-ia.com/" target="_blank" rel="noopener">
@@ -302,7 +388,7 @@
       </div>
 
       <!-- Startup Ecosystem -->
-      <div class="res-section">
+      <div class="res-section" data-cat="tech">
         <div class="res-section-title"><i class="fas fa-rocket" style="color:#7c3aed;"></i>Startup Ecosystem · 新創生態圈</div>
         <div class="res-grid">
           <a class="res-card" href="https://stationf.co" target="_blank" rel="noopener">
@@ -327,7 +413,7 @@
         <div class="res-group-title">🛠️ Useful Tools &amp; Apps · 法國生活與工作必備工具箱</div>
         <div class="res-group-desc">Curated apps for daily life &amp; work in France — 精選法國生活與工作實用工具</div>
 
-        <div class="res-section">
+        <div class="res-section" data-cat="tech">
           <div class="res-section-title"><i class="fas fa-robot" style="color:#4f46e5;"></i>AI &amp; Productivity · AI 與生產力</div>
           <div class="res-grid">
             <a class="res-card" href="https://www.pdfelement.com" target="_blank" rel="noopener">
@@ -382,7 +468,7 @@
           </div>
         </div>
 
-        <div class="res-section">
+        <div class="res-section" data-cat="work">
           <div class="res-section-title"><i class="fas fa-briefcase" style="color:#b45309;"></i>Career &amp; Work · 求職與職場</div>
           <div class="res-grid">
             <a class="res-card" href="https://www.linkedin.com" target="_blank" rel="noopener">
@@ -409,7 +495,7 @@
           </div>
         </div>
 
-        <div class="res-section">
+        <div class="res-section" data-cat="life">
           <div class="res-section-title"><i class="fas fa-house-chimney" style="color:#0d9488;"></i>Housing &amp; Moving · 租屋與搬家</div>
           <div class="res-grid">
             <a class="res-card" href="https://www.leboncoin.fr" target="_blank" rel="noopener">
@@ -473,7 +559,7 @@
           </div>
         </div>
 
-        <div class="res-section">
+        <div class="res-section" data-cat="life">
           <div class="res-section-title"><i class="fas fa-recycle" style="color:#db2777;"></i>Second-hand &amp; Shopping · 二手與購物</div>
           <div class="res-grid">
             <a class="res-card" href="https://www.vinted.fr" target="_blank" rel="noopener">
@@ -514,7 +600,7 @@
           </div>
         </div>
 
-        <div class="res-section">
+        <div class="res-section" data-cat="life">
           <div class="res-section-title"><i class="fas fa-train" style="color:#2563eb;"></i>Transport &amp; Travel · 交通與旅行</div>
           <div class="res-grid">
             <a class="res-card" href="https://www.sncf-connect.com" target="_blank" rel="noopener">
@@ -548,7 +634,7 @@
           </div>
         </div>
 
-        <div class="res-section">
+        <div class="res-section" data-cat="life">
           <div class="res-section-title"><i class="fas fa-sack-dollar" style="color:#16a34a;"></i>Money &amp; Saving · 金融與省錢</div>
           <div class="res-grid">
             <a class="res-card" href="https://wise.com" target="_blank" rel="noopener">
@@ -609,7 +695,7 @@
           </div>
         </div>
 
-        <div class="res-section">
+        <div class="res-section" data-cat="work">
           <div class="res-section-title"><i class="fas fa-stamp" style="color:#ea580c;"></i>France Admin · 法國行政</div>
           <div class="res-grid">
             <a class="res-card" href="https://www.service-public.fr" target="_blank" rel="noopener">
@@ -643,7 +729,7 @@
           </div>
         </div>
 
-        <div class="res-section">
+        <div class="res-section" data-cat="life">
           <div class="res-section-title"><i class="fas fa-house-medical" style="color:#0891b2;"></i>Daily Life · 日常生活</div>
           <div class="res-grid">
             <a class="res-card" href="https://saracroche.org/fr/" target="_blank" rel="noopener">
@@ -686,7 +772,7 @@
       </div>
 
       <!-- Slides & Replays (community contributed) -->
-      <div class="res-section">
+      <div class="res-section" data-cat="community">
         <div class="res-section-title"><i class="fas fa-file-powerpoint" style="color:#dc2626;"></i>Slides &amp; Replays · 簡報與回放</div>
 
         <div class="restricted-asso-content" style="display:none;">
@@ -722,6 +808,7 @@
 
   <script src="assets/js/firebase-read.js"></script>
   <script src="assets/js/member-gate.js?v=2"></script>
+  <script src="assets/js/resources-tools.js" defer></script>
   <script>
   'use strict';
 

@@ -165,6 +165,99 @@
     @media (max-width: 640px) {
       .res-toolbar { margin: -0.25rem -0.5rem 1rem; }
     }
+
+    /* ── Freelance radar block ── */
+    .fr-radar { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1.1rem; }
+    .fr-radar-head { display: flex; gap: 0.75rem; align-items: flex-start; }
+    .fr-radar-title { font-size: 0.92rem; font-weight: 800; color: #0f172a; }
+    .fr-radar-desc { font-size: 0.74rem; color: #64748b; line-height: 1.5; margin-top: 0.2rem; }
+    .fr-radar-search { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.9rem; position: relative; }
+    .fr-radar-search > i { position: absolute; left: 0.8rem; color: #94a3b8; font-size: 0.8rem; pointer-events: none; }
+    .fr-radar-search input {
+      flex: 1; min-width: 0; min-height: 40px; padding: 0.5rem 0.75rem 0.5rem 2.1rem; border: 1px solid #cbd5e1;
+      border-radius: 10px; font-size: 0.85rem; color: #0f172a; background: #fff; outline: none;
+    }
+    .fr-radar-search input:focus { border-color: #ca8a04; box-shadow: 0 0 0 3px rgba(234,179,8,0.2); }
+    .fr-radar-search button {
+      min-height: 40px; padding: 0 0.95rem; border: 1px solid #0f172a; border-radius: 10px; background: #facc15;
+      color: #0f172a; font-size: 0.75rem; font-weight: 800; cursor: pointer; white-space: nowrap;
+    }
+    .fr-radar-search button:hover { background: #eab308; }
+    .fr-radar-search button i { font-size: 0.65rem; margin-left: 0.2rem; }
+    .fr-radar-tags { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.55rem; }
+    .fr-radar-tags a {
+      font-size: 0.7rem; font-weight: 700; color: #475569; text-decoration: none; padding: 0.25rem 0.65rem;
+      border: 1px solid #e2e8f0; border-radius: 99px; background: #f8fafc;
+    }
+    .fr-radar-tags a:hover { border-color: #ca8a04; color: #a16207; }
+
+    .fr-radar-snap { margin-top: 1rem; background: #fafaf7; border: 1px solid #ece9e0; border-radius: 12px; padding: 0.9rem; }
+    .fr-radar-snap-label {
+      display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.3rem; font-size: 0.66rem; font-weight: 700;
+      color: #78716c; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.7rem;
+    }
+    .fr-kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.45rem; }
+    .fr-kpi { background: #fff; border: 1px solid #e7e5e4; border-radius: 10px; padding: 0.6rem 0.7rem; min-width: 0; }
+    .fr-kpi b { display: block; font-size: 1.25rem; font-weight: 800; color: #0f172a; line-height: 1.1; }
+    .fr-kpi span { display: block; font-size: 0.64rem; color: #78716c; margin-top: 0.25rem; line-height: 1.3; }
+    .fr-kpi-hi { background: #fef9c3; border-color: #fde047; }
+
+    .fr-panels { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.45rem; margin-top: 0.45rem; }
+    .fr-panel { background: #fff; border: 1px solid #e7e5e4; border-radius: 10px; padding: 0.75rem; min-width: 0; display: flex; flex-direction: column; }
+    .fr-panel-title { font-size: 0.74rem; font-weight: 800; color: #0f172a; margin-bottom: 0.6rem; }
+    .fr-panel-note { font-size: 0.64rem; color: #78716c; line-height: 1.45; margin-top: auto; padding-top: 0.6rem; }
+    .fr-hist { display: flex; align-items: flex-end; gap: 3px; height: 72px; border-bottom: 1px solid #d6d3d1; }
+    .fr-hist div { flex: 1; height: var(--h); background: #44403c; border-radius: 2px 2px 0 0; }
+    .fr-hist div.hi { background: #facc15; }
+    .fr-hist-axis { display: flex; justify-content: space-between; font-size: 0.6rem; color: #a8a29e; margin-top: 0.25rem; }
+    .fr-region { margin-bottom: 0.5rem; }
+    .fr-region-row { display: flex; gap: 0.4rem; align-items: baseline; font-size: 0.72rem; color: #1c1917; }
+    .fr-region-row span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .fr-region-row em { font-style: normal; font-size: 0.66rem; color: #78716c; }
+    .fr-region-row b { min-width: 1.8rem; text-align: right; }
+    .fr-region i { display: block; height: 4px; margin-top: 0.2rem; border-radius: 99px; background: linear-gradient(to right, #44403c var(--w), #e7e5e4 var(--w)); }
+    .fr-skills { display: flex; flex-direction: column; gap: 0.35rem; }
+    .fr-skills span {
+      display: flex; justify-content: space-between; font-size: 0.74rem; color: #1c1917; padding: 0.35rem 0.55rem;
+      background: #f5f5f4; border-radius: 7px;
+    }
+    .fr-radar-cta {
+      display: flex; align-items: center; justify-content: center; gap: 0.45rem; margin-top: 0.8rem; padding: 0.65rem;
+      border-radius: 10px; background: #0f172a; color: #fff; font-size: 0.78rem; font-weight: 700; text-decoration: none;
+    }
+    .fr-radar-cta:hover { background: #1e293b; }
+    .fr-radar-cta i { color: #facc15; }
+    @media (max-width: 760px) {
+      .fr-kpis { grid-template-columns: repeat(2, 1fr); }
+      .fr-kpi-hi { grid-column: span 2; order: -1; }
+      .fr-panels { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 640px) {
+      .fr-radar { padding: 0.9rem; }
+      .fr-radar-search { flex-wrap: wrap; }
+      .fr-radar-search button { width: 100%; }
+      .fr-radar-search > i { top: 20px; }
+    }
+
+    html[data-res-theme="dark"] .fr-radar { background: #111a2e; border-color: #1e293b; }
+    html[data-res-theme="dark"] .fr-radar-title, html[data-res-theme="dark"] .fr-panel-title,
+    html[data-res-theme="dark"] .fr-kpi b { color: #f1f5f9; }
+    html[data-res-theme="dark"] .fr-radar-desc { color: #94a3b8; }
+    html[data-res-theme="dark"] .fr-radar-search input { background: #0b1220; border-color: #334155; color: #e2e8f0; }
+    html[data-res-theme="dark"] .fr-radar-tags a { background: #0b1220; border-color: #334155; color: #cbd5e1; }
+    html[data-res-theme="dark"] .fr-radar-snap { background: #0b1220; border-color: #1e293b; }
+    html[data-res-theme="dark"] .fr-kpi, html[data-res-theme="dark"] .fr-panel { background: #111a2e; border-color: #1e293b; }
+    html[data-res-theme="dark"] .fr-kpi-hi { background: #2a2408; border-color: #854d0e; }
+    html[data-res-theme="dark"] .fr-kpi span, html[data-res-theme="dark"] .fr-panel-note,
+    html[data-res-theme="dark"] .fr-radar-snap-label, html[data-res-theme="dark"] .fr-region-row em { color: #94a3b8; }
+    html[data-res-theme="dark"] .fr-region-row, html[data-res-theme="dark"] .fr-skills span { color: #e2e8f0; }
+    html[data-res-theme="dark"] .fr-skills span { background: #1e293b; }
+    html[data-res-theme="dark"] .fr-hist { border-bottom-color: #334155; }
+    html[data-res-theme="dark"] .fr-hist div { background: #94a3b8; }
+    html[data-res-theme="dark"] .fr-hist div.hi { background: #facc15; }
+    html[data-res-theme="dark"] .fr-region i { background: linear-gradient(to right, #94a3b8 var(--w), #1e293b var(--w)); }
+    html[data-res-theme="dark"] .fr-radar-cta { background: #facc15; color: #0f172a; }
+    html[data-res-theme="dark"] .fr-radar-cta i { color: #0f172a; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen">
@@ -247,6 +340,90 @@
               <div class="res-card-title">France Travail (Pôle Emploi)</div>
               <div class="res-card-desc">Job search &amp; unemployment registration — 求職與失業登記</div>
             </div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Freelance radar (data snapshot from radar.azmk.fr) -->
+      <div class="res-section" data-cat="work">
+        <div class="res-section-title"><i class="fas fa-satellite-dish" style="color:#ca8a04;"></i>Freelance en France · 法國接案市場</div>
+        <div class="fr-radar">
+          <div class="fr-radar-head">
+            <div class="res-icon" style="background:#fef3c7;color:#a16207;"><i class="fas fa-chart-column"></i></div>
+            <div style="flex:1;min-width:0;">
+              <div class="fr-radar-title">Radar des missions freelance · 自由接案需求雷達</div>
+              <div class="fr-radar-desc">
+                Combien de missions, quel TJM, où et avec quelles compétences — tapez un métier pour voir le marché en direct.
+                · 有多少案子、日薪（TJM）多少、在哪裡、要求哪些技能 — 輸入職稱即可查看即時市場行情。
+              </div>
+            </div>
+          </div>
+
+          <form class="fr-radar-search" action="https://radar.azmk.fr/" method="get" target="_blank" rel="noopener">
+            <i class="fas fa-magnifying-glass"></i>
+            <input type="text" name="q" placeholder="Métier : Architecte, DevOps, Data… · 職稱" aria-label="Métier à analyser · 要查詢的職稱" required>
+            <button type="submit">Analyser · 分析 <i class="fas fa-arrow-up-right-from-square"></i></button>
+          </form>
+          <div class="fr-radar-tags">
+            <a href="https://radar.azmk.fr/?q=Architecte" target="_blank" rel="noopener">Architecte</a>
+            <a href="https://radar.azmk.fr/?q=DevOps" target="_blank" rel="noopener">DevOps</a>
+            <a href="https://radar.azmk.fr/?q=Data%20Engineer" target="_blank" rel="noopener">Data Engineer</a>
+            <a href="https://radar.azmk.fr/?q=D%C3%A9veloppeur%20Java" target="_blank" rel="noopener">Développeur Java</a>
+            <a href="https://radar.azmk.fr/?q=Cybers%C3%A9curit%C3%A9" target="_blank" rel="noopener">Cybersécurité</a>
+            <a href="https://radar.azmk.fr/?q=Chef%20de%20projet" target="_blank" rel="noopener">Chef de projet</a>
+          </div>
+
+          <div class="fr-radar-snap">
+            <div class="fr-radar-snap-label">
+              <span><i class="fas fa-camera"></i> Exemple : « Architecte » · 範例：架構師</span>
+              <span>Relevé du 02/11/2026 · 2026/11/02 快照</span>
+            </div>
+
+            <div class="fr-kpis">
+              <div class="fr-kpi"><b>489</b><span>missions · 案件總數</span></div>
+              <div class="fr-kpi fr-kpi-hi"><b>550 €</b><span>TJM médian · 日薪中位數</span></div>
+              <div class="fr-kpi"><b>72 %</b><span>avec remote · 可遠端</span></div>
+              <div class="fr-kpi"><b>51</b><span>publiées 7 j · 近 7 天新增</span></div>
+              <div class="fr-kpi"><b>11</b><span>régions · 地區</span></div>
+            </div>
+
+            <div class="fr-panels">
+              <div class="fr-panel">
+                <div class="fr-panel-title">TJM proposés · 日薪分布</div>
+                <div class="fr-hist" role="img" aria-label="Distribution des TJM de 300 à 800 €, pic à 550 € · 日薪分布 300–800 €，高峰在 550 €">
+                  <div style="--h:6%"></div><div style="--h:10%"></div><div style="--h:19%"></div><div style="--h:48%"></div>
+                  <div style="--h:81%"></div><div class="hi" style="--h:100%"></div><div style="--h:58%"></div><div style="--h:29%"></div>
+                  <div style="--h:16%"></div><div style="--h:6%"></div><div style="--h:6%"></div>
+                </div>
+                <div class="fr-hist-axis"><span>300 €</span><span>550 €</span><span>800 €</span></div>
+                <div class="fr-panel-note">Min 325 € · max 835 € — fourchette d'annonce, point de départ de négo · 公告區間，可作為議價起點</div>
+              </div>
+
+              <div class="fr-panel">
+                <div class="fr-panel-title">Où sont les missions · 案件地點</div>
+                <div class="fr-region"><div class="fr-region-row"><span>Île-de-France</span><em>570 €</em><b>105</b></div><i style="--w:100%"></i></div>
+                <div class="fr-region"><div class="fr-region-row"><span>Auvergne-Rhône-Alpes</span><em>552 €</em><b>14</b></div><i style="--w:13%"></i></div>
+                <div class="fr-region"><div class="fr-region-row"><span>Nouvelle-Aquitaine</span><em>555 €</em><b>12</b></div><i style="--w:11%"></i></div>
+                <div class="fr-region"><div class="fr-region-row"><span>Hauts-de-France</span><em>525 €</em><b>9</b></div><i style="--w:9%"></i></div>
+                <div class="fr-panel-note">TJM médian · missions — Paris concentre ~2/3 des offres · 巴黎地區約佔三分之二</div>
+              </div>
+
+              <div class="fr-panel">
+                <div class="fr-panel-title">Compétences demandées · 熱門技能</div>
+                <div class="fr-skills">
+                  <span>Architecture <b>40</b></span>
+                  <span>Kubernetes <b>18</b></span>
+                  <span>Azure <b>13</b></span>
+                </div>
+                <div class="fr-panel-note">
+                  <b>TJM</b> = Taux Journalier Moyen, le prix d'une journée facturée HT · 每日報價（未稅），法國接案計價單位
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <a class="fr-radar-cta" href="https://radar.azmk.fr/?q=Architecte" target="_blank" rel="noopener">
+            Voir le radar complet sur radar.azmk.fr · 前往完整雷達 <i class="fas fa-arrow-right"></i>
           </a>
         </div>
       </div>

@@ -106,9 +106,26 @@
 }
 
 /* ── Partner logos ──────────────────────────────────────────── */
-.ttf-partner-grid {
+/* Endless auto-scrolling strip (pauses on hover/focus/touch; drag or swipe to browse). */
+.ttf-partner-viewport {
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none;
+  cursor: grab;
+  padding: 4px 0 6px;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+          mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+}
+.ttf-partner-viewport::-webkit-scrollbar { display: none; }
+.ttf-partner-viewport.is-dragging { cursor: grabbing; user-select: none; }
+.ttf-partner-viewport.is-dragging .ttf-partner-link { pointer-events: none; }
+.ttf-partner-viewport:focus-visible { outline: 2px solid var(--brand-navy); outline-offset: 2px; border-radius: 12px; }
+.ttf-partner-track {
   list-style: none; margin: 0; padding: 0;
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem;
+  display: flex; gap: 0.75rem; width: max-content;
+}
+.ttf-partner-track > li { flex: 0 0 170px; }
+@media (max-width: 640px) {
+  .ttf-partner-track > li { flex-basis: 150px; }
 }
 .ttf-partner-link {
   display: flex; flex-direction: column; height: 100%;

@@ -28,8 +28,8 @@
   ];
 
   const PARTNERS = [
-    { name: 'noet-ia', url: 'https://noet-ia.com/', logo: 'noet-logo-2.png' },
-    { name: 'AAFT AURA', url: 'https://www.aaft-aura.org/', logo: 'aaft-logo.jpeg', square: true },
+    { name: 'noet-ia', url: 'https://noet-ia.com/', logo: 'noet-ai.jpeg', square: true },
+    { name: 'AAFT AURA', url: 'https://www.aaft-aura.org/', logo: 'aaft-logo-light.png', square: true },
     { name: 'Hellébore Gestion Privée', url: 'https://helleboregestionprivee.fr/', logo: 'hellebore-logo.svg' },
     { name: 'Jump', url: 'https://www.join-jump.com/', logo: 'jump-logo.svg' },
     { name: 'Proxiel', url: 'https://www.proxiel.com/', logo: 'proxiel-logo.png' },
@@ -103,7 +103,7 @@
 
   /* ── Partners ─────────────────────────────────────────────── */
   function renderPartners(list) {
-    list.classList.add('ttf-partner-grid');
+    list.classList.add('ttf-partner-track');
     list.innerHTML = PARTNERS.map(p => `
       <li>
         <a class="ttf-partner-link" href="${p.url}" target="_blank" rel="noopener noreferrer" aria-label="${esc(p.name)} — site officiel · 官方網站">
@@ -113,6 +113,105 @@
           <span class="ttf-partner-footer"><span>${esc(p.name)}</span><span aria-hidden="true">↗</span></span>
         </a>
       </li>`).join('');
+
+    // Wrap in a horizontally scrollable viewport and turn it into an endless marquee.
+    const viewport = document.createElement('div');
+    viewport.className = 'ttf-partner-viewport';
+    viewport.tabIndex = 0;
+    viewport.setAttribute('aria-label', list.getAttribute('aria-label') || 'Partenaires · 合作夥伴');
+    list.removeAttribute('aria-label');
+    list.parentNode.insertBefore(viewport, list);
+    viewport.appendChild(list);
+    animatePartners(viewport, list);
+  }
+
+  function animatePartners(viewport, track) {
+    const originals = Array.from(track.children);
+    if (originals.length < 2) return;
+    const count = originals.length;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const SPEED = 32; // px per second
+
+    // Two extra copies so the user can scroll either way and we can wrap invisibly.
+    for (let n = 0; n < 2; n++) {
+      originals.forEach(li => {
+        const clone = li.cloneNode(true);
+        clone.setAttribute('aria-hidden', 'true');
+        clone.querySelectorAll('a').forEach(a => a.setAttribute('tabindex', '-1'));
+        track.appendChild(clone);
+      });
+    }
+    track.querySelectorAll('a, img').forEach(el => el.setAttribute('draggable', 'false'));
+
+    let cycle = 0;
+    const measure = () => {
+      const pos = cycle ? ((viewport.scrollLeft - cycle) % cycle + cycle) % cycle : 0;
+      cycle = track.children[count].offsetLeft - track.children[0].offsetLeft;
+      if (cycle) viewport.scrollLeft = cycle + pos;
+    };
+    const normalize = () => {
+      if (!cycle) return;
+      if (viewport.scrollLeft <= 0) viewport.scrollLeft += cycle;
+      else if (viewport.scrollLeft >= cycle * 2) viewport.scrollLeft -= cycle;
+    };
+
+    const paused = new Set();
+    let remainder = 0, last = 0, touchTimer = 0;
+    const tick = now => {
+      const dt = last ? Math.min(now - last, 64) : 0;
+      last = now;
+      if (!paused.size && !reducedMotion.matches && !document.hidden && cycle) {
+        remainder += (SPEED * dt) / 1000;
+        const step = Math.floor(remainder);
+        if (step) { remainder -= step; viewport.scrollLeft += step; normalize(); }
+      }
+      requestAnimationFrame(tick);
+    };
+
+    viewport.addEventListener('scroll', normalize, { passive: true });
+    viewport.addEventListener('mouseenter', () => { if (finePointer.matches) paused.add('hover'); });
+    viewport.addEventListener('mouseleave', () => paused.delete('hover'));
+    viewport.addEventListener('focusin', () => paused.add('focus'));
+    viewport.addEventListener('focusout', () => paused.delete('focus'));
+    viewport.addEventListener('touchstart', () => { clearTimeout(touchTimer); paused.add('touch'); }, { passive: true });
+    viewport.addEventListener('touchend', () => {
+      clearTimeout(touchTimer);
+      touchTimer = setTimeout(() => paused.delete('touch'), 2500);
+    }, { passive: true });
+
+    // Mouse drag (touch uses native scrolling).
+    let drag = null, suppressClickUntil = 0;
+    viewport.addEventListener('pointerdown', e => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      drag = { x: e.clientX, left: viewport.scrollLeft, moved: false };
+    });
+    window.addEventListener('pointermove', e => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x;
+      if (!drag.moved && Math.abs(dx) > 4) { drag.moved = true; viewport.classList.add('is-dragging'); }
+      if (drag.moved) { viewport.scrollLeft = drag.left - dx; normalize(); drag.left = viewport.scrollLeft; drag.x = e.clientX; }
+    });
+    window.addEventListener('pointerup', () => {
+      if (drag && drag.moved) suppressClickUntil = Date.now() + 250;
+      drag = null;
+      viewport.classList.remove('is-dragging');
+    });
+    viewport.addEventListener('click', e => {
+      if (Date.now() < suppressClickUntil) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
+
+    // Arrow keys when the strip has focus.
+    viewport.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      viewport.scrollBy({ left: e.key === 'ArrowRight' ? 180 : -180, behavior: 'smooth' });
+    });
+
+    measure();
+    window.addEventListener('resize', measure);
+    track.querySelectorAll('img').forEach(img => { if (!img.complete) img.addEventListener('load', measure, { once: true }); });
+    requestAnimationFrame(tick);
   }
 
   /* ── Contact form (Formspree) ─────────────────────────────── */

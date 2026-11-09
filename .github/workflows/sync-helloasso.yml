@@ -3,7 +3,7 @@ name: Sync HelloAsso members
 on:
   workflow_dispatch: {}
   schedule:
-    - cron: '13 12 * * *'
+    - cron: '13 12 * * 1'   # weekly, Monday 12:13 Paris
       timezone: 'Europe/Paris'
 
 jobs:

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <title>ubune.network favicon</title>
+  <rect width="32" height="32" rx="7" fill="#FF5A1F"/>
+  <path d="M9.1 7.4C5.8 10.1 4.4 14 4.8 17.7c.6 6.3 5.4 10.2 11.7 10.2 6.3 0 10.8-3.9 11.4-10.2.3-3.6-.9-6.9-3.3-9.3" fill="none" stroke="#FFFDF7" stroke-width="3.9" stroke-linecap="round"/>
+  <path d="M9.4 7.4 16 14l8.1-5.4M16 14v9.6" fill="none" stroke="#FFFDF7" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="16" cy="14" r="3" fill="#FFFDF7"/>
+  <circle cx="16" cy="14" r="1.35" fill="#D8FF48"/>
+</svg>

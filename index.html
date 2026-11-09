@@ -54,6 +54,7 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <link rel="stylesheet" href="assets/css/stastic_member.css">
   <link rel="stylesheet" href="assets/css/layout.css?v=4">
+  <link rel="stylesheet" href="assets/css/brand.css?v=1">
 
   <style>
     /* Sidebar styles: assets/css/layout.css */
@@ -556,6 +557,8 @@
     <!-- ── HERO ────────────────────────────────────────────────── -->
     <div class="site-dashboard-hero" style="background: linear-gradient(160deg, #eef4fb 0%, #ffffff 60%); border-bottom: 1px solid #e2e8f0;">
       <div class="site-dashboard-hero-inner max-w-screen-xl mx-auto px-5 pt-8 pb-6">
+       <div class="brand-hero-grid">
+        <div>
 
         <div class="text-center" style="margin-bottom:1.5rem;">
           <img class="site-dashboard-hero-logo" src="logo.png" alt="Taiwan Tech France" style="height:120px;width:auto;margin:0 auto 0.5rem;display:block;filter:drop-shadow(0 2px 8px rgba(15,23,42,0.12));">
@@ -566,6 +569,9 @@
             Pour les ingénieurs et professionnels tech taïwanais en France —
             partager des opportunités, rencontrer des pairs, évoluer ensemble.
           </div>
+          <a href="association.html" class="brand-hero-link">
+            Découvrir l'association · 認識協會 <i class="fas fa-arrow-right" aria-hidden="true"></i>
+          </a>
         </div>
 
         <div class="sm-kpi-grid" style="margin-bottom:1.4rem;">
@@ -603,6 +609,13 @@
             <i class="fas fa-qrcode"></i> QR · 分享
           </button>
         </div>
+
+        <p class="brand-proof text-center">Association loi 1901 à but non lucratif · 法國依法設立｜非營利協會</p>
+
+        </div>
+        <!-- Community photos (from former branding site) -->
+        <div data-ttf-carousel></div>
+       </div>
 
       </div>
     </div>
@@ -947,6 +960,15 @@
         </div>
       </div>
       <!-- /Coffee Chat strip -->
+
+      <!-- Partner logos (from former branding site) -->
+      <div class="brand-partner-strip" style="padding-left:0;padding-right:0;">
+        <div class="brand-partner-strip-head">
+          <div class="brand-partner-strip-title"><i class="fas fa-handshake"></i>Ils nous accompagnent · 合作夥伴</div>
+          <a class="brand-partner-strip-more" href="association.html#partenaires">Partenariats · 合作方式 →</a>
+        </div>
+        <ul data-ttf-partners></ul>
+      </div>
 
       <!-- Separator: community → orgs -->
       <div class="form-sep">
@@ -1638,6 +1660,7 @@
   </script>
   <div id="site-footer"></div>
   <script src="assets/js/footer.js"></script>
+  <script src="assets/js/brand.js?v=1"></script>
 
   <script>
     const idxForm = document.getElementById('idx-partner-form');

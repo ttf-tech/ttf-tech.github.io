@@ -25,7 +25,7 @@
 
   const PARTNERS = [
     { name: 'noet-ia', url: 'https://noet-ia.com/', logo: 'noet-logo-2.png' },
-    { name: 'AAFT AURA', url: 'https://www.aaft-aura.org/', logo: 'aaft-logo-light.png', square: true },
+    { name: 'AAFT AURA', url: 'https://www.aaft-aura.org/', logo: 'aaft-logo.jpeg', square: true },
     { name: 'Hellébore Gestion Privée', url: 'https://helleboregestionprivee.fr/', logo: 'hellebore-logo.svg' },
     { name: 'Jump', url: 'https://www.join-jump.com/', logo: 'jump-logo.svg' },
     { name: 'Proxiel', url: 'https://www.proxiel.com/', logo: 'proxiel-logo.png' },

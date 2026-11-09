@@ -54,7 +54,7 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
   <link rel="stylesheet" href="assets/css/stastic_member.css">
   <link rel="stylesheet" href="assets/css/layout.css?v=4">
-  <link rel="stylesheet" href="assets/css/brand.css?v=2">
+  <link rel="stylesheet" href="assets/css/brand.css?v=3">
 
   <style>
     /* Sidebar styles: assets/css/layout.css */
@@ -556,25 +556,24 @@
 
     <!-- ── HERO ────────────────────────────────────────────────── -->
     <div class="site-dashboard-hero" style="background: linear-gradient(160deg, #eef4fb 0%, #ffffff 60%); border-bottom: 1px solid #e2e8f0;">
-      <div class="site-dashboard-hero-inner max-w-screen-xl mx-auto px-5 pt-8 pb-6">
+      <div class="site-dashboard-hero-inner max-w-screen-xl mx-auto px-5 pt-8 pb-8">
        <div class="brand-hero-grid">
-        <div>
+        <div class="brand-hero-copy">
 
-        <div class="text-center" style="margin-bottom:1.5rem;">
-          <img class="site-dashboard-hero-logo" src="logo.png" alt="Taiwan Tech France" style="height:120px;width:auto;margin:0 auto 0.5rem;display:block;filter:drop-shadow(0 2px 8px rgba(15,23,42,0.12));">
-          <h1 style="font-size:0.95rem;font-weight:600;color:rgba(7,57,129,0.65);margin-top:0.35rem;">
-            Taiwan Tech France · 在法臺灣科技社群 · Communauté tech taïwanaise en France
-          </h1>
-          <div style="font-size:0.78rem;color:rgba(7,57,129,0.5);max-width:440px;margin:0.5rem auto 0;line-height:1.5;">
-            Pour les ingénieurs et professionnels tech taïwanais en France —
-            partager des opportunités, rencontrer des pairs, évoluer ensemble.
+        <div class="brand-hero-head">
+          <img class="site-dashboard-hero-logo brand-hero-logo" src="logo.png" alt="Taiwan Tech France">
+          <div>
+            <h1 class="brand-hero-title">Taiwan Tech France</h1>
+            <div class="brand-hero-sub">在法臺灣科技社群 · Communauté tech taïwanaise en France</div>
           </div>
-          <a href="association.html" class="brand-hero-link">
-            Découvrir l'association · 認識協會 <i class="fas fa-arrow-right" aria-hidden="true"></i>
-          </a>
         </div>
+        <p class="brand-hero-tagline">
+          Pour les ingénieurs et professionnels tech taïwanais en France —
+          partager des opportunités, rencontrer des pairs, évoluer ensemble.
+          <span>連結旅法臺灣科技人才，分享機會、彼此交流、一起成長。</span>
+        </p>
 
-        <div class="sm-kpi-grid" style="margin-bottom:1.4rem;">
+        <div class="sm-kpi-grid brand-hero-kpis">
           <div class="sm-kpi-tile">
             <span class="sm-kpi-value accent" id="kpi-members">—</span>
             <span class="sm-kpi-label">Membres · 成員</span>
@@ -589,28 +588,19 @@
           </div>
         </div>
 
-        <div class="site-dashboard-hero-actions flex flex-wrap gap-3 justify-center">
+        <!-- Max 2 CTAs; section browsing (offres, agenda…) lives in the left sidebar. -->
+        <div class="site-dashboard-hero-actions brand-hero-actions">
           <a href="https://chat.whatsapp.com/KHbrXiHLP9D5GdN6rgqlxy" target="_blank" rel="noopener"
              class="sm-hero-cta-primary">
             <i class="fab fa-whatsapp"></i> Join WhatsApp · 加入群組
           </a>
-          <span class="restricted-asso-content" style="display:none;">
-            <a href="jobs.html" class="sm-hero-cta-secondary">
-              <i class="fas fa-briefcase"></i> Voir les offres · 職缺
-            </a>
-          </span>
-          <a href="adhesion.html" class="upgrade-to-asso-banner inline-btn">
-            <i class="fas fa-lock"></i> 加入正式會員查看職缺 · 需入會查看
+          <a href="association.html" class="sm-hero-cta-secondary">
+            Découvrir l'association · 認識協會 <i class="fas fa-arrow-right" aria-hidden="true"></i>
           </a>
-          <a href="events.html" class="sm-hero-cta-secondary">
-            <i class="fas fa-calendar-alt"></i> Voir les activités · 活動
-          </a>
-          <button type="button" id="qr-open-btn" class="sm-hero-cta-secondary">
-            <i class="fas fa-qrcode"></i> QR · 分享
-          </button>
         </div>
-
-        <p class="brand-proof text-center">Association loi 1901 à but non lucratif · 法國依法設立｜非營利協會</p>
+        <button type="button" id="qr-open-btn" class="brand-hero-qr">
+          <i class="fas fa-qrcode" aria-hidden="true"></i> Partager via QR code · 分享 QR
+        </button>
 
         </div>
         <!-- Community photos (from former branding site) -->
@@ -1660,7 +1650,7 @@
   </script>
   <div id="site-footer"></div>
   <script src="assets/js/footer.js"></script>
-  <script src="assets/js/brand.js?v=4"></script>
+  <script src="assets/js/brand.js?v=5"></script>
 
   <script>
     const idxForm = document.getElementById('idx-partner-form');

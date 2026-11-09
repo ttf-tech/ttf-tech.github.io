@@ -142,6 +142,12 @@
     if (button) button.style.display = canUseProfile ? 'inline-flex' : 'none';
     if (!canUseProfile) closeModal();
 
+    // Deep link from other pages (e.g. adhesion.html directory "Mon profil").
+    if (canUseProfile && membershipResolved && location.hash === '#member-profile-open') {
+      history.replaceState(null, '', location.pathname + location.search);
+      setTimeout(openModal, 0);
+    }
+
     const missing = activeAssoRecord && currentMember ? missingFields(currentMember) : [];
     document.dispatchEvent(new CustomEvent('ttf:member-profile-state', {
       detail: {
@@ -212,6 +218,7 @@
     setValue('mp-linkedin', profile.linkedin);
     setValue('mp-intro', profile.intro);
     setChecked('mp-accepts-rules', profile.acceptsRules);
+    setChecked('mp-directory-visible', profile.directoryVisible !== false);
     document.querySelectorAll('input[name="mp-notification-consent"]').forEach(input => {
       input.checked = hasNotificationPreference(profile) &&
         input.value === (profile.notificationConsent === true ? 'yes' : 'no');
@@ -263,6 +270,7 @@
       intro: byId('mp-intro')?.value.trim() || '',
       goals: [...document.querySelectorAll('input[name="mp-goal"]:checked')].map(input => input.value),
       acceptsRules,
+      directoryVisible: !!byId('mp-directory-visible')?.checked,
       notificationConsent,
       notificationPreferenceAt: notificationChoice
         ? (currentMember?.notificationPreferenceAt || 'pending')
@@ -285,6 +293,20 @@
         ? (existing.notificationPreferenceAt || existing.notificationConsentAt || now)
         : now
     };
+  }
+
+  // Refresh this member's card in the members-only directory (or remove it
+  // when they opted out). Best effort: admin.html reconciles anything missed.
+  async function syncOwnDirectoryEntry(official, profile) {
+    if (typeof TTFMemberDirectory === 'undefined' || !official?.id) return;
+    try {
+      const entry = TTFMemberDirectory.withTimestamp(
+        TTFMemberDirectory.buildEntry(official, profile, { isAdmin: isAdminAccount() })
+      );
+      await firebase.database().ref(`memberDirectory/${official.id}`).set(entry);
+    } catch (error) {
+      console.warn('[member-profile] directory entry not updated', error);
+    }
   }
 
   async function saveProfile(event) {
@@ -354,6 +376,7 @@
           name: ownAssoV2.name,
           _storageSource: 'v2'
         };
+        await syncOwnDirectoryEntry(ownAssoV2, ownMemberProfile);
       }
 
       renderModalCompleteness(currentMember);

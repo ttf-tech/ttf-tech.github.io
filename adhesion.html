@@ -27,6 +27,12 @@
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="assets/js/admin-config.js"></script>
+  <script src="assets/js/admin-access.js"></script>
+  <script src="assets/js/asso-member-access.js?v=2"></script>
   <link rel="stylesheet" href="assets/css/stastic_member.css">
   <link rel="stylesheet" href="assets/css/layout.css?v=2">
 
@@ -410,6 +416,98 @@
       }
     }
 
+    /* ── Members directory (Adhésion only) ── */
+    .dir-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #f1f5f9; }
+    .dir-head .section-title { margin: 0; padding: 0; border: none; }
+    .dir-lock-pill {
+      display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.62rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.6rem; border-radius: 99px;
+      background: rgba(124,58,237,0.1); color: #6d28d9; border: 1px solid rgba(124,58,237,0.25);
+    }
+    .dir-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.1rem; }
+    .dir-session {
+      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
+      background: linear-gradient(135deg, #faf5ff 0%, #f5f3ff 100%); border: 1px solid #ddd6fe;
+      border-radius: 12px; padding: 0.65rem 0.85rem; margin-bottom: 0.9rem; font-size: 0.74rem; color: #4c1d95;
+    }
+    .dir-session strong { font-weight: 800; }
+    .dir-session-email { color: #6d28d9; word-break: break-all; }
+    .dir-session-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .dir-link-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem; min-height: 32px; padding: 0.3rem 0.75rem;
+      border-radius: 99px; font-size: 0.7rem; font-weight: 700; text-decoration: none; cursor: pointer;
+      background: #fff; color: #6d28d9; border: 1px solid #c4b5fd; transition: background 0.15s;
+    }
+    .dir-link-btn:hover { background: #ede9fe; }
+    .dir-link-btn:focus-visible, .dir-input:focus-visible, .dir-chip:focus-visible, .dir-more:focus-visible, .dir-card a:focus-visible {
+      outline: 2px solid #7c3aed; outline-offset: 2px;
+    }
+    .dir-toolbar { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+    .dir-search { position: relative; flex: 1 1 240px; }
+    .dir-search i { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.78rem; }
+    .dir-input {
+      width: 100%; min-height: 40px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff;
+      padding: 0.5rem 0.8rem; font-size: 0.8rem; color: #0f172a;
+    }
+    .dir-search .dir-input { padding-left: 2.1rem; }
+    select.dir-input { flex: 0 1 200px; width: auto; }
+    .dir-chips { display: flex; gap: 0.35rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .dir-chip {
+      min-height: 30px; padding: 0.2rem 0.7rem; border-radius: 99px; border: 1px solid #e2e8f0;
+      background: #f8fafc; color: #475569; font-size: 0.68rem; font-weight: 700; cursor: pointer;
+    }
+    .dir-chip[aria-pressed="true"] { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+    .dir-count { font-size: 0.72rem; color: #64748b; margin-bottom: 0.65rem; }
+    .dir-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.7rem; }
+    .dir-card {
+      position: relative; display: flex; flex-direction: column; gap: 0.55rem; min-width: 0;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 0.95rem;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    }
+    .dir-card:hover { border-color: #c4b5fd; box-shadow: 0 6px 18px rgba(76,29,149,0.08); transform: translateY(-1px); }
+    .dir-card.is-me { border-color: #a78bfa; background: linear-gradient(180deg, #faf5ff 0%, #fff 55%); }
+    .dir-card-top { display: flex; gap: 0.7rem; align-items: flex-start; min-width: 0; }
+    .dir-avatar {
+      flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center;
+      font-size: 0.8rem; font-weight: 800; color: #fff; background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    }
+    .dir-id { min-width: 0; flex: 1; }
+    .dir-name { font-size: 0.86rem; font-weight: 800; color: #0f172a; line-height: 1.25; overflow-wrap: anywhere; }
+    .dir-meta { font-size: 0.7rem; color: #64748b; margin-top: 0.15rem; display: flex; align-items: center; gap: 0.3rem; overflow-wrap: anywhere; }
+    .dir-meta i { color: #a78bfa; font-size: 0.62rem; width: 0.8rem; text-align: center; }
+    .dir-goals { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+    .dir-goal { font-size: 0.6rem; font-weight: 700; padding: 0.14rem 0.5rem; border-radius: 99px; background: #eef2ff; color: #4338ca; }
+    .dir-card-foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding-top: 0.5rem; border-top: 1px solid #f1f5f9; }
+    .dir-badge { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.6rem; font-weight: 800; padding: 0.18rem 0.55rem; border-radius: 99px; background: #dcfce7; color: #166534; }
+    .dir-badge.board { background: #ede9fe; color: #5b21b6; }
+    .dir-me-tag { position: absolute; top: 0.6rem; right: 0.6rem; font-size: 0.56rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #6d28d9; background: #ede9fe; border-radius: 99px; padding: 0.12rem 0.45rem; }
+    .dir-since { font-size: 0.62rem; color: #94a3b8; white-space: nowrap; }
+    .dir-li { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; color: #0a66c2; background: #eff6ff; text-decoration: none; }
+    .dir-li:hover { background: #dbeafe; }
+    .dir-more-wrap { display: flex; justify-content: center; margin-top: 0.9rem; }
+    .dir-more { min-height: 38px; padding: 0.4rem 1.1rem; border-radius: 99px; border: 1px solid #c4b5fd; background: #fff; color: #6d28d9; font-size: 0.74rem; font-weight: 700; cursor: pointer; }
+    .dir-empty { grid-column: 1 / -1; text-align: center; padding: 2rem 1rem; color: #64748b; font-size: 0.78rem; }
+    .dir-empty i { display: block; font-size: 1.4rem; color: #c4b5fd; margin-bottom: 0.5rem; }
+    .dir-privacy { margin-top: 0.9rem; font-size: 0.66rem; color: #94a3b8; line-height: 1.55; display: flex; gap: 0.4rem; }
+    .dir-privacy i { color: #a78bfa; margin-top: 0.15rem; }
+    .dir-skel { height: 150px; border-radius: 14px; background: linear-gradient(90deg, #f1f5f9 25%, #f8fafc 50%, #f1f5f9 75%); background-size: 200% 100%; animation: dirShimmer 1.3s infinite linear; }
+    @keyframes dirShimmer { to { background-position: -200% 0; } }
+    @media (prefers-reduced-motion: reduce) { .dir-skel { animation: none; } .dir-card, .dir-card:hover { transition: none; transform: none; } }
+    /* Locked teaser for visitors / non-members */
+    .dir-teaser { position: relative; border-radius: 16px; overflow: hidden; }
+    .dir-teaser-ghost { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.7rem; padding: 1rem; filter: blur(5px); opacity: 0.55; pointer-events: none; user-select: none; }
+    .dir-teaser-ghost .dir-card { min-height: 128px; }
+    .dir-ghost-line { height: 9px; border-radius: 99px; background: #e2e8f0; }
+    .dir-teaser-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 1rem; background: linear-gradient(180deg, rgba(243,244,246,0.35), rgba(243,244,246,0.85)); }
+    .dir-teaser-overlay .upgrade-to-asso-banner { max-width: 640px; width: 100%; box-shadow: 0 10px 30px rgba(120,53,15,0.12); }
+    @media (max-width: 580px) {
+      .dir-panel { padding: 0.85rem; }
+      select.dir-input { flex: 1 1 100%; }
+      .dir-grid { grid-template-columns: 1fr; }
+      .dir-teaser-ghost { grid-template-columns: 1fr 1fr; }
+      .dir-teaser-overlay { position: relative; background: none; padding: 0; margin-top: -9rem; }
+    }
+
   </style>
 </head>
 <body class="bg-gray-100 text-gray-900 min-h-screen">
@@ -434,6 +532,92 @@
         </p>
       </div>
     </div>
+
+    <!-- ── MEMBERS DIRECTORY (Adhésion only) ─────────────────────── -->
+    <section class="adh-section" id="annuaire" style="margin-top:1.75rem;" aria-labelledby="dir-title">
+      <div class="dir-head">
+        <h2 class="section-title" id="dir-title">
+          <i class="fas fa-address-book" style="color:#7c3aed;" aria-hidden="true"></i>
+          Annuaire des membres · 會員名錄
+        </h2>
+        <span class="dir-lock-pill"><i class="fas fa-lock" aria-hidden="true"></i> Membres Adhésion · 正式會員</span>
+      </div>
+
+      <!-- Signed-in Adhésion member (or admin) -->
+      <div class="restricted-asso-content" style="display:none;">
+        <div class="dir-panel">
+          <div class="dir-session">
+            <span><i class="fas fa-circle-check" style="color:#16a34a;" aria-hidden="true"></i>
+              <strong>Accès vérifié · 已驗證</strong> — <span class="dir-session-email" data-member-gate-email></span></span>
+            <span class="dir-session-actions">
+              <a class="dir-link-btn" href="index.html#member-profile-open"><i class="fas fa-user-pen" aria-hidden="true"></i> Mon profil · 我的資料</a>
+              <button type="button" class="dir-link-btn" onclick="ttfMemberSignOut()"><i class="fas fa-right-from-bracket" aria-hidden="true"></i> Déconnexion · 登出</button>
+            </span>
+          </div>
+
+          <div class="dir-toolbar">
+            <label class="dir-search">
+              <span class="sr-only">Rechercher un membre · 搜尋會員</span>
+              <i class="fas fa-search" aria-hidden="true"></i>
+              <input id="dir-search" class="dir-input" type="search" autocomplete="off"
+                     placeholder="Nom, métier, expertise… · 姓名、職業、專長…">
+            </label>
+            <label class="sr-only" for="dir-city">Ville · 城市</label>
+            <select id="dir-city" class="dir-input">
+              <option value="">Toutes les villes · 所有城市</option>
+            </select>
+          </div>
+          <div class="dir-chips" id="dir-goals" role="group" aria-label="Filtrer par objectif · 依參與目的篩選"></div>
+
+          <div class="dir-count" id="dir-count" aria-live="polite"></div>
+          <div class="dir-grid" id="dir-grid" aria-busy="true">
+            <div class="dir-skel"></div><div class="dir-skel"></div><div class="dir-skel"></div>
+          </div>
+          <div class="dir-more-wrap" id="dir-more-wrap" hidden>
+            <button type="button" class="dir-more" id="dir-more">Voir plus · 顯示更多</button>
+          </div>
+
+          <p class="dir-privacy">
+            <i class="fas fa-shield-halved" aria-hidden="true"></i>
+            <span>Visible uniquement par les membres Adhésion connectés. Les emails et téléphones ne sont jamais affichés.
+            Vous pouvez masquer votre fiche depuis « Mon profil ». ·
+            僅限已登入的正式會員查看，不會顯示 email 與電話。可於「我的資料」中選擇不顯示於名錄。</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Visitors & non-members: locked teaser -->
+      <div class="dir-teaser" id="dir-teaser">
+        <div class="dir-teaser-ghost" aria-hidden="true">
+          <div class="dir-card"><div class="dir-card-top"><div class="dir-avatar">··</div><div class="dir-id" style="display:grid;gap:0.4rem;"><div class="dir-ghost-line" style="width:80%"></div><div class="dir-ghost-line" style="width:50%"></div></div></div><div class="dir-goals"><span class="dir-goal">Networking</span><span class="dir-goal">Knowledge</span></div></div>
+          <div class="dir-card"><div class="dir-card-top"><div class="dir-avatar">··</div><div class="dir-id" style="display:grid;gap:0.4rem;"><div class="dir-ghost-line" style="width:70%"></div><div class="dir-ghost-line" style="width:40%"></div></div></div><div class="dir-goals"><span class="dir-goal">Job Opps</span></div></div>
+          <div class="dir-card"><div class="dir-card-top"><div class="dir-avatar">··</div><div class="dir-id" style="display:grid;gap:0.4rem;"><div class="dir-ghost-line" style="width:85%"></div><div class="dir-ghost-line" style="width:55%"></div></div></div><div class="dir-goals"><span class="dir-goal">Local Chapters</span></div></div>
+          <div class="dir-card"><div class="dir-card-top"><div class="dir-avatar">··</div><div class="dir-id" style="display:grid;gap:0.4rem;"><div class="dir-ghost-line" style="width:65%"></div><div class="dir-ghost-line" style="width:45%"></div></div></div><div class="dir-goals"><span class="dir-goal">Collaboration</span></div></div>
+        </div>
+        <div class="dir-teaser-overlay">
+          <div class="upgrade-to-asso-banner">
+            <div class="upgrade-to-asso-banner-text">
+              <div class="upgrade-to-asso-banner-title">
+                <i class="fas fa-lock" aria-hidden="true"></i> Réservé aux membres Adhésion · 僅限 Adhésion 會員
+              </div>
+              <div class="upgrade-to-asso-banner-desc">
+                L'annuaire des membres officiels est réservé aux membres connectés (cotisation HelloAsso) : retrouvez les membres par ville, métier et centres d'intérêt.<br>
+                會員名錄僅限已繳費的正式會員登入查看，可依城市、職業與興趣找到其他會員。
+              </div>
+            </div>
+            <div class="upgrade-to-asso-banner-actions">
+              <button type="button" class="upgrade-to-asso-signin-btn signed-out-only" onclick="ttfMemberSignIn()">
+                <i class="fab fa-google" aria-hidden="true"></i> Se connecter · 登入驗證
+              </button>
+              <span class="signed-in-only" style="font-size:0.72rem;color:#92400e;">Connecté(e) mais pas encore Adhésion —</span>
+              <a href="#adherer" class="upgrade-to-asso-join-btn">
+                <i class="fas fa-id-card" aria-hidden="true"></i> Adhérer · 成為會員
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- ── TWO TYPES ─────────────────────────────────────────────── -->
     <section class="adh-section" style="margin-top:1.75rem;">
@@ -472,6 +656,7 @@
             <div class="perk-row"><i class="fas fa-check"></i> Tout ce qui précède, plus :</div>
             <div class="perk-row"><i class="fas fa-check"></i> Ressources membres (slides, replays)</div>
             <div class="perk-row"><i class="fas fa-check"></i> Coffee Chat · Droit de vote AG</div>
+            <div class="perk-row"><i class="fas fa-check"></i> Annuaire des membres officiels</div>
             <div class="perk-row"><i class="fas fa-check"></i> Inscription OCAC + Bureau français</div>
             <div class="perk-row"><i class="fas fa-check"></i> Brainstorming finances &amp; subventions</div>
           </div>
@@ -863,7 +1048,7 @@
           </div>
           <div class="notice-item">
             <i class="fas fa-circle"></i>
-            <span>Les membres Adhésion ont accès aux comptes de l'association tels que présentés lors de l'Assemblée Générale Annuelle. Aucun accès aux données personnelles d'autres membres n'est accordé. · 正式會員可於年度大會查閱協會帳目，但無法存取其他會員的個人資料。</span>
+            <span>Les membres Adhésion ont accès aux comptes de l'association tels que présentés lors de l'Assemblée Générale Annuelle. Les membres connectés voient un annuaire limité (nom, ville, métier, LinkedIn) ; emails et téléphones restent privés, et chacun peut masquer sa fiche. · 正式會員可於年度大會查閱協會帳目；登入後可查看精簡會員名錄（姓名、城市、職業、LinkedIn），email 與電話不公開，每位會員都可選擇不顯示。</span>
           </div>
           <div class="notice-item">
             <i class="fas fa-circle"></i>
@@ -874,7 +1059,7 @@
     </section>
 
     <!-- ── CTA ───────────────────────────────────────────────────── -->
-    <div class="cta-wrap" style="margin-bottom:3rem;">
+    <div class="cta-wrap" id="adherer" style="margin-bottom:3rem;scroll-margin-top:1rem;">
       <div class="cta-card">
         <div class="cta-text">
           <div style="
@@ -908,5 +1093,185 @@
 
   <div id="site-footer"></div>
   <script src="assets/js/footer.js"></script>
+  <script src="assets/js/firebase-read.js"></script>
+  <script src="assets/js/member-gate.js?v=2"></script>
+  <script src="assets/js/member-directory.js?v=1"></script>
+  <script>
+  (function () {
+    'use strict';
+    const PAGE_SIZE = 12;
+    const GOALS = [
+      { id: 'networking', fr: 'Networking',     zh: '人脈' },
+      { id: 'jobs',       fr: 'Job Opps',       zh: '職缺' },
+      { id: 'knowledge',  fr: 'Knowledge',      zh: '技術交流' },
+      { id: 'longterm',   fr: 'Long terme',     zh: '長期發展' },
+      { id: 'local',      fr: 'Local Chapters', zh: '在地小聚' },
+      { id: 'info',       fr: 'Vie pratique',   zh: '生活資訊' },
+      { id: 'collab',     fr: 'Collaboration',  zh: '台法合作' },
+      { id: 'fiscal',     fr: 'Fiscalité',      zh: '稅務' }
+    ];
+    const GOAL_LABEL = Object.fromEntries(GOALS.map(g => [g.id, g.fr]));
+    const $ = id => document.getElementById(id);
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fold = v => String(v || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+    let ref = null, handler = null, members = [], ownId = '', shown = PAGE_SIZE, activeGoal = '', loadError = false, loaded = false;
+
+    function initials(name) {
+      return String(name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').toUpperCase().slice(0, 2) || '?';
+    }
+    function since(iso) {
+      const d = new Date(iso);
+      return isNaN(d) ? '' : d.toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' });
+    }
+
+    function renderGoalChips() {
+      const box = $('dir-goals');
+      if (!box || box.dataset.built) return;
+      box.innerHTML = [{ id: '', fr: 'Tous', zh: '全部' }, ...GOALS].map(g =>
+        `<button type="button" class="dir-chip" data-goal="${g.id}" aria-pressed="${g.id === activeGoal}">${esc(g.fr)} · ${esc(g.zh)}</button>`
+      ).join('');
+      box.addEventListener('click', e => {
+        const btn = e.target.closest('.dir-chip');
+        if (!btn) return;
+        activeGoal = btn.dataset.goal;
+        box.querySelectorAll('.dir-chip').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+        shown = PAGE_SIZE;
+        render();
+      });
+      box.dataset.built = '1';
+    }
+
+    function renderCities() {
+      const sel = $('dir-city');
+      if (!sel) return;
+      const current = sel.value;
+      const cities = [...new Set(members.map(m => m.city).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr'));
+      sel.innerHTML = '<option value="">Toutes les villes · 所有城市</option>' +
+        cities.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+      sel.value = cities.includes(current) ? current : '';
+    }
+
+    function card(m) {
+      const me = m.id === ownId;
+      const goals = (m.goals || []).slice(0, 3).map(g => `<span class="dir-goal">${esc(GOAL_LABEL[g] || g)}</span>`).join('') +
+        ((m.goals || []).length > 3 ? `<span class="dir-goal">+${m.goals.length - 3}</span>` : '');
+      const linkedin = /^https:\/\//i.test(m.linkedin || '')
+        ? `<a class="dir-li" href="${esc(m.linkedin)}" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn — ${esc(m.name)}"><i class="fab fa-linkedin-in" aria-hidden="true"></i></a>`
+        : '';
+      return `
+        <article class="dir-card${me ? ' is-me' : ''}">
+          ${me ? '<span class="dir-me-tag">Vous · 你</span>' : ''}
+          <div class="dir-card-top">
+            <div class="dir-avatar" aria-hidden="true">${esc(initials(m.name))}</div>
+            <div class="dir-id">
+              <div class="dir-name">${esc(m.name)}</div>
+              ${m.nickname ? `<div class="dir-meta"><i class="fas fa-user-tag" aria-hidden="true"></i>${esc(m.nickname)}</div>` : ''}
+              ${m.job ? `<div class="dir-meta"><i class="fas fa-briefcase" aria-hidden="true"></i>${esc(m.job)}</div>` : ''}
+              ${m.city ? `<div class="dir-meta"><i class="fas fa-location-dot" aria-hidden="true"></i>${esc(m.city)}</div>` : ''}
+              ${m.expertise ? `<div class="dir-meta"><i class="fas fa-lightbulb" aria-hidden="true"></i>${esc(m.expertise)}</div>` : ''}
+            </div>
+          </div>
+          ${goals ? `<div class="dir-goals">${goals}</div>` : ''}
+          <div class="dir-card-foot">
+            ${m.isAdmin
+              ? '<span class="dir-badge board"><i class="fas fa-user-shield" aria-hidden="true"></i> Bureau · 執委</span>'
+              : '<span class="dir-badge"><i class="fas fa-circle-check" aria-hidden="true"></i> Membre officiel</span>'}
+            <span style="display:flex;align-items:center;gap:0.45rem;">
+              ${m.joinedAt ? `<span class="dir-since">depuis ${esc(since(m.joinedAt))}</span>` : ''}
+              ${linkedin}
+            </span>
+          </div>
+        </article>`;
+    }
+
+    function render() {
+      const grid = $('dir-grid'), count = $('dir-count'), moreWrap = $('dir-more-wrap');
+      if (!grid) return;
+      if (!loaded) return;
+      grid.setAttribute('aria-busy', 'false');
+      if (loadError) {
+        grid.innerHTML = '<div class="dir-empty"><i class="fas fa-plug-circle-exclamation" aria-hidden="true"></i>Annuaire momentanément indisponible. Réessayez plus tard. · 名錄暫時無法載入，請稍後再試。</div>';
+        count.textContent = '';
+        moreWrap.hidden = true;
+        return;
+      }
+      const q = fold($('dir-search')?.value.trim());
+      const city = $('dir-city')?.value || '';
+      const list = members.filter(m =>
+        (!city || m.city === city) &&
+        (!activeGoal || (m.goals || []).includes(activeGoal)) &&
+        (!q || fold([m.name, m.nickname, m.job, m.expertise, m.city].join(' ')).includes(q))
+      );
+      const total = members.length;
+      count.textContent = list.length === total
+        ? `${total} membre${total > 1 ? 's' : ''} officiel${total > 1 ? 's' : ''} · ${total} 位正式會員`
+        : `${list.length} / ${total} membres · 符合 ${list.length} 位`;
+      if (!list.length) {
+        grid.innerHTML = total
+          ? '<div class="dir-empty"><i class="fas fa-magnifying-glass" aria-hidden="true"></i>Aucun membre ne correspond. Essayez un autre filtre. · 沒有符合的會員，請調整篩選條件。</div>'
+          : '<div class="dir-empty"><i class="fas fa-users" aria-hidden="true"></i>L\u2019annuaire est en cours de constitution. · 會員名錄建立中。</div>';
+        moreWrap.hidden = true;
+        return;
+      }
+      grid.innerHTML = list.slice(0, shown).map(card).join('');
+      moreWrap.hidden = list.length <= shown;
+      const more = $('dir-more');
+      if (more) more.textContent = `Voir plus (${list.length - shown}) · 顯示更多`;
+    }
+
+    function stop() {
+      if (ref && handler) ref.off('value', handler);
+      ref = null; handler = null; members = []; loaded = false; loadError = false;
+      const grid = $('dir-grid');
+      if (grid) { grid.setAttribute('aria-busy', 'true'); grid.innerHTML = '<div class="dir-skel"></div><div class="dir-skel"></div><div class="dir-skel"></div>'; }
+    }
+
+    // Own card first, then alphabetical.
+    function sortMembers() {
+      members.sort((a, b) => (a.id === ownId ? -1 : b.id === ownId ? 1 : a.name.localeCompare(b.name, 'fr')));
+    }
+
+    async function start(user) {
+      if (ref) return;
+      renderGoalChips();
+      ref = firebase.database().ref('memberDirectory');
+      handler = snap => {
+        const raw = snap.val() || {};
+        members = Object.entries(raw).map(([id, m]) => ({ ...(m || {}), id })).filter(m => m.name);
+        sortMembers();
+        loaded = true; loadError = false;
+        renderCities();
+        render();
+      };
+      ref.on('value', handler, error => {
+        console.warn('[annuaire] read failed', error);
+        loaded = true; loadError = true; ref = null; handler = null;
+        render();
+      });
+      if (user && typeof ttfResolveAssoMembership === 'function') {
+        const membership = await ttfResolveAssoMembership(user);
+        if (membership?.memberId && membership.memberId !== ownId) {
+          ownId = membership.memberId;
+          sortMembers();
+          render();
+        }
+      }
+    }
+
+    document.addEventListener('ttf:member-gate-change', e => {
+      const { hasAccess, isRestoring, user } = e.detail || {};
+      const teaser = $('dir-teaser');
+      if (teaser) teaser.style.display = hasAccess ? 'none' : '';
+      if (isRestoring) return;
+      if (hasAccess) start(user);
+      else { stop(); ownId = ''; }
+    });
+
+    $('dir-search')?.addEventListener('input', () => { shown = PAGE_SIZE; render(); });
+    $('dir-city')?.addEventListener('change', () => { shown = PAGE_SIZE; render(); });
+    $('dir-more')?.addEventListener('click', () => { shown += PAGE_SIZE; render(); });
+  })();
+  </script>
 </body>
 </html>

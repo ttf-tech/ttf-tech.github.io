@@ -49,6 +49,10 @@ let _assoMembersV2 = [];
 let _assoMembersV2Loaded = false;
 let _assoV2Hydrated = false;
 let _helloAssoSyncSummary = null;
+let _memberProfilesLoaded = false;
+let _adminAccessLoaded = false;
+let _adminProfilesLoaded = false;
+let _directoryReconcileTimer = null;
 const _adminCollectionRefs = {};
 const _adminCollectionHandlers = {};
 if (_FB_READY) {
@@ -274,7 +278,7 @@ const ASSO_CITIES = ['Paris', 'Lyon', 'Toulouse', 'Bordeaux', 'Grenoble',
 const MEMBER_PROFILE_FIELDS = [
   'nickname', 'gender', 'city', 'job', 'intro', 'linkedin', 'phone', 'goals',
   'acceptsRules', 'acceptsRulesAt', 'notificationConsent', 'notificationConsentAt',
-  'notificationPreferenceAt'
+  'notificationPreferenceAt', 'directoryVisible'
 ];
 const HELLOASSO_PROFILE_OVERLAP = ['city', 'phone', 'linkedin'];
 const ASSO_ADMIN_AUDIT_FIELDS = [
@@ -1168,6 +1172,58 @@ function _isAssoMembershipActive(joinedAt) {
   return ageDays >= 0 && ageDays <= 365;
 }
 
+// ── Members-only directory (memberDirectory/*, see member-directory.js) ──
+function _directoryAdminEmails() {
+  const bootstrap = (typeof ADMIN_EMAILS !== 'undefined' && Array.isArray(ADMIN_EMAILS)) ? ADMIN_EMAILS : [];
+  const roles = (state.adminAccess || []).filter(r => r.active === true && r.email).map(r => r.email);
+  return [...new Set([...roles, ...bootstrap].map(e => (e || '').trim().toLowerCase()).filter(Boolean))];
+}
+
+function _directoryEntryFor(official, profile) {
+  if (typeof TTFMemberDirectory === 'undefined') return undefined;
+  const email = (official?.email || '').trim().toLowerCase();
+  const adminProfile = (state.adminProfiles || []).find(p => (p.email || '').trim().toLowerCase() === email);
+  const entry = TTFMemberDirectory.buildEntry(official, { ...(profile || {}), ...(adminProfile || {}) }, {
+    isAdmin: _directoryAdminEmails().includes(email)
+  });
+  return TTFMemberDirectory.withTimestamp(entry);
+}
+
+// Brings memberDirectory in line with assoMembers + profiles. Writes only the
+// entries that actually changed, so opening admin.html is cheap and idempotent.
+function _scheduleDirectoryReconcile() {
+  if (!_assoMembersV2Loaded || !_memberProfilesLoaded || !_adminAccessLoaded || !_adminProfilesLoaded) return;
+  if (typeof TTFMemberDirectory === 'undefined') return;
+  clearTimeout(_directoryReconcileTimer);
+  const authVersion = _adminDataAuthVersion;
+  _directoryReconcileTimer = setTimeout(async () => {
+    try {
+      const desired = TTFMemberDirectory.buildMap({
+        officials: _assoMembersV2,
+        memberProfiles: state.memberProfiles,
+        adminProfiles: state.adminProfiles,
+        adminEmails: _directoryAdminEmails()
+      });
+      const snapshot = await firebase.database().ref('memberDirectory').once('value');
+      if (authVersion !== _adminDataAuthVersion) return;
+      const current = snapshot.val() || {};
+      const updates = {};
+      Object.entries(desired).forEach(([id, entry]) => {
+        if (TTFMemberDirectory.differs(current[id], entry)) updates[`memberDirectory/${id}`] = entry;
+      });
+      Object.keys(current).forEach(id => {
+        if (!desired[id]) updates[`memberDirectory/${id}`] = null;
+      });
+      if (Object.keys(updates).length) {
+        await firebase.database().ref().update(updates);
+        console.info(`[memberDirectory] reconciled ${Object.keys(updates).length} entr${Object.keys(updates).length > 1 ? 'ies' : 'y'}`);
+      }
+    } catch (error) {
+      console.warn('[memberDirectory] reconcile failed', error);
+    }
+  }, 1200);
+}
+
 async function _writeAssoMemberV2(member, previousEmail, previousMember) {
   if (!_assoV2Ready || !member?.id || typeof ttfHashAssoEmail !== 'function') return;
   const email = (member.email || '').trim().toLowerCase();
@@ -1180,6 +1236,8 @@ async function _writeAssoMemberV2(member, previousEmail, previousMember) {
     [`assoMembers/${member.id}`]: official,
     [`memberProfiles/${member.id}`]: profile
   };
+  const directoryEntry = _directoryEntryFor(official, profile);
+  if (directoryEntry !== undefined) updates[`memberDirectory/${member.id}`] = directoryEntry;
   const actor = firebase.auth().currentUser;
   const auditedAt = new Date().toISOString();
   const before = previousMember || null;
@@ -1228,7 +1286,8 @@ async function _deleteAssoMemberV2(member) {
   const updates = {
     [`assoMembers/${member.id}`]: null,
     [`memberProfiles/${member.id}`]: null,
-    [`assoMemberFieldAudit/${member.id}`]: null
+    [`assoMemberFieldAudit/${member.id}`]: null,
+    [`memberDirectory/${member.id}`]: null
   };
   const emailHash = await ttfHashAssoEmail(member.email || '');
   if (emailHash) updates[`assoMemberLookup/${emailHash}`] = null;
@@ -3177,6 +3236,10 @@ function initAdminProfiles() {
     _assoMembersV2Loaded = false;
     _assoV2Hydrated = false;
     _helloAssoSyncSummary = null;
+    _memberProfilesLoaded = false;
+    _adminAccessLoaded = false;
+    _adminProfilesLoaded = false;
+    clearTimeout(_directoryReconcileTimer);
     renderKPIs();
     _surveyV4Ready = true;
     _surveysV4 = [];
@@ -3202,6 +3265,8 @@ function initAdminProfiles() {
       state.adminProfiles = Array.isArray(raw)
         ? raw.filter(Boolean)
         : Object.entries(raw).map(([uid, profile]) => ({ uid, id: profile?.id || uid, ...(profile || {}) }));
+      _adminProfilesLoaded = true;
+      _scheduleDirectoryReconcile();
       if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
     };
     _adminProfilesRef.on('value', _adminProfilesHandler, error => {
@@ -3213,6 +3278,8 @@ function initAdminProfiles() {
       state.adminAccess = Array.isArray(raw)
         ? raw.filter(Boolean)
         : Object.entries(raw).map(([uid, record]) => ({ uid, ...(record || {}) }));
+      _adminAccessLoaded = true;
+      _scheduleDirectoryReconcile();
       if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
     };
     _adminAccessRef.on('value', _adminAccessHandler, error => {
@@ -3224,6 +3291,8 @@ function initAdminProfiles() {
       state.memberProfiles = Array.isArray(raw)
         ? raw.filter(Boolean)
         : Object.entries(raw).map(([memberId, profile]) => ({ memberId, ...(profile || {}) }));
+      _memberProfilesLoaded = true;
+      _scheduleDirectoryReconcile();
       if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
     };
     _memberProfilesRef.on('value', _memberProfilesHandler, error => {
@@ -3273,6 +3342,7 @@ function initAdminProfiles() {
         : Object.entries(raw).map(([id, member]) => ({ id, ...(member || {}) }));
       _assoV2Hydrated = true;
       state.assoMembers = _assoMembersV2;
+      _scheduleDirectoryReconcile();
       if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();
       renderKPIs();
     };

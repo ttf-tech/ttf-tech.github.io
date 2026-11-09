@@ -154,7 +154,28 @@
         "notificationPreferenceAt": { ".validate": "newData.isString() && newData.val().length <= 50" },
         "createdAt": { ".validate": "newData.isString() && newData.val().length <= 50" },
         "profileUpdatedAt": { ".validate": "newData.isString() && newData.val().length <= 50" },
+        "directoryVisible": { ".validate": "newData.isBoolean()" },
         "goals": { "$goalIndex": { ".validate": "newData.isString() && newData.val().length <= 100" } },
+        "$other": { ".validate": false }
+      }
+    },
+    "memberDirectory": {
+      ".read": "auth != null && auth.token.email != null && ((root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com') || (root.child('access/members').child(auth.uid).child('active').val() == true && root.child('access/members').child(auth.uid).child('email').val() == auth.token.email.toLowerCase() && root.child('assoMembers').child(root.child('access/members').child(auth.uid).child('memberId').val()).child('email').val() == auth.token.email.toLowerCase() && root.child('assoMembers').child(root.child('access/members').child(auth.uid).child('memberId').val()).child('status').val() == 'active'))",
+      ".write": "auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')",
+      "$memberId": {
+        ".write": "auth != null && auth.token.email != null && root.child('assoMembers').child($memberId).child('email').val() == auth.token.email.toLowerCase() && root.child('assoMembers').child($memberId).child('status').val() == 'active'",
+        ".validate": "newData.hasChildren(['id', 'name', 'updatedAt']) && newData.child('id').val() == $memberId",
+        "id": { ".validate": "newData.isString() && newData.val() == $memberId" },
+        "name": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200 && newData.val() == newData.parent().parent().parent().child('assoMembers').child($memberId).child('name').val()" },
+        "nickname": { ".validate": "newData.isString() && newData.val().length <= 100" },
+        "city": { ".validate": "newData.isString() && newData.val().length <= 200" },
+        "job": { ".validate": "newData.isString() && newData.val().length <= 300" },
+        "expertise": { ".validate": "newData.isString() && newData.val().length <= 300" },
+        "linkedin": { ".validate": "newData.isString() && newData.val().length <= 500 && newData.val().beginsWith('https://')" },
+        "goals": { "$goalIndex": { ".validate": "newData.isString() && newData.val().length <= 30" } },
+        "joinedAt": { ".validate": "newData.isString() && newData.val().length <= 50 && newData.val() == newData.parent().parent().parent().child('assoMembers').child($memberId).child('joinedAt').val()" },
+        "isAdmin": { ".validate": "newData.isBoolean() && (newData.val() == false || (auth != null && auth.token.email != null && (root.child('access/admins').child(auth.uid).child('active').val() == true || auth.token.email == 'tess.hsu@gmail.com' || auth.token.email == 'hsucheng.huang@gmail.com' || auth.token.email == 'wallace.lin@midascaretech.com' || auth.token.email == 'wanchi.tsai@cai-sen.com')))" },
+        "updatedAt": { ".validate": "newData.isString() && newData.val().length <= 50" },
         "$other": { ".validate": false }
       }
     },

@@ -5,22 +5,26 @@
  *   <nav class="assoc-subnav">      → highlights the section currently in view
  */
 (function () {
+  // Newest first — add new photos at the top of this list.
   const PHOTOS = [
-    { src: 'assets/img/community/ttf-paris-meetup.webp', w: 1100, h: 768, fit: true,
-      caption: 'Premier meetup à Paris · 首次巴黎小聚',
-      alt: 'Membres de Taiwan Tech France posant dans une rue de Paris avec la banderole du premier meetup' },
-    { src: 'assets/img/community/ttf-paris-meetup-2.jpeg', w: 1200, h: 1600,
-      caption: 'Meetup Paris V2 · 巴黎小聚 V2',
-      alt: 'Membres de Taiwan Tech France réunis autour d’une longue table lors du deuxième meetup parisien' },
-    { src: 'assets/img/community/ttf-reception.webp', w: 1100, h: 825, fit: true,
-      caption: 'Réception officielle · 官方酒會交流',
-      alt: 'Salle de réception officielle décorée de drapeaux français et taïwanais' },
-    { src: 'assets/img/community/ttf-calissons.webp', w: 1000, h: 1333,
-      caption: 'Saveurs de Provence · 普羅旺斯風味',
-      alt: 'Pièce montée de calissons provençaux à côté des drapeaux français et taïwanais' },
+    { src: 'assets/img/community/ose-industrie-workshop-2.jpeg', w: 1024, h: 575, fit: true,
+      caption: 'Ose l’Industrie : visite chez Tournaire · 工廠參訪',
+      alt: 'Ose l’Industrie : participantes devant le site Tournaire, en gilets jaunes lors de la visite des ateliers, puis présentation en salle' },
     { src: 'assets/img/community/ose-industrie-workshop.jpeg', w: 1024, h: 1024, fit: true,
       caption: 'Atelier Ose l’Industrie · 女性職涯工作坊',
       alt: 'Atelier carrière Ose l’Industrie : intervenante, mur de post-it et participantes prenant des notes' },
+    { src: 'assets/img/community/ttf-calissons.webp', w: 1000, h: 1333,
+      caption: 'Saveurs de Provence · 普羅旺斯風味',
+      alt: 'Pièce montée de calissons provençaux à côté des drapeaux français et taïwanais' },
+    { src: 'assets/img/community/ttf-reception.webp', w: 1100, h: 825, fit: true,
+      caption: 'Réception officielle · 官方酒會交流',
+      alt: 'Salle de réception officielle décorée de drapeaux français et taïwanais' },
+    { src: 'assets/img/community/ttf-paris-meetup-2.jpeg', w: 1200, h: 1600,
+      caption: 'Meetup Paris V2 · 巴黎小聚 V2',
+      alt: 'Membres de Taiwan Tech France réunis autour d’une longue table lors du deuxième meetup parisien' },
+    { src: 'assets/img/community/ttf-paris-meetup.webp', w: 1100, h: 768, fit: true,
+      caption: 'Premier meetup à Paris · 首次巴黎小聚',
+      alt: 'Membres de Taiwan Tech France posant dans une rue de Paris avec la banderole du premier meetup' },
   ];
 
   const PARTNERS = [

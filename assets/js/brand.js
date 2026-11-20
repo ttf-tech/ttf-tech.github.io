@@ -7,6 +7,9 @@
 (function () {
   // Newest first — add new photos at the top of this list.
   const PHOTOS = [
+    { src: 'assets/img/community/flying-eye-aero-defense.jpeg', w: 1080, h: 644, fit: true,
+      caption: 'Flying Eye — aéro & défense · 深入法國航空航太與國防科技領域',
+      alt: 'Présentation Flying Eye sur les drones pour l’aérospatial et la défense : site web DJI Dock 4, intervenant devant l’écran, graphique de croissance et salle de participants' },
     { src: 'assets/img/community/ose-industrie-workshop-2.jpeg', w: 1024, h: 575, fit: true,
       caption: 'Visite Tournaire · 工廠參訪',
       alt: 'Ose l’Industrie : participantes devant le site Tournaire, en gilets jaunes lors de la visite des ateliers, puis présentation en salle' },

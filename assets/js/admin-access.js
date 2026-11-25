@@ -1,11 +1,17 @@
 /* ── Central admin role resolver ────────────────────────────────
- * Primary source: /access/admins/{firebaseUid}
- * Temporary bootstrap: ADMIN_EMAILS lets an existing administrator create
- * their own UID record the first time they sign in after the new Rules ship.
+ * Single source of truth: /access/adminEmails/{emailKey}
+ *   { email, active, name?, updatedAt? }
+ * emailKey = lower-cased email with every '.' replaced by ',' (RTDB keys
+ * cannot contain '.'). database.rules.json derives the same key from the
+ * signed-in token, so the UI gate and the Rules can never disagree.
+ *
+ * Granting / revoking an administrator is a data change on that node
+ * (Firebase Console → Data). No code change, no Rules redeploy.
  */
 (function (global) {
   'use strict';
 
+  const ADMIN_EMAILS_PATH = 'access/adminEmails';
   const resolvedAccess = new Map();
   const pendingAccess = new Map();
 
@@ -13,66 +19,33 @@
     return (value || '').trim().toLowerCase();
   }
 
-  function isBootstrapAdminEmail(email) {
-    const normalized = normalizeEmail(email);
-    const configured = (typeof ADMIN_EMAILS !== 'undefined' && Array.isArray(ADMIN_EMAILS))
-      ? ADMIN_EMAILS
-      : [];
-    return !!normalized && configured.some(item => normalizeEmail(item) === normalized);
+  function adminEmailKey(email) {
+    return normalizeEmail(email).replace(/\./g, ',');
   }
 
   function cachedAdminAccess(user) {
-    if (!user || !user.uid) return false;
-    if (resolvedAccess.has(user.uid)) return resolvedAccess.get(user.uid) === true;
-    return isBootstrapAdminEmail(user.email);
+    return !!(user && user.uid) && resolvedAccess.get(user.uid) === true;
   }
 
   async function resolveAdminAccess(user) {
     if (!user || !user.uid || typeof firebase === 'undefined' || !firebase.database) return false;
+    // Mirrors the Rules: an unverified or missing email is never an admin.
+    if (!user.email || user.emailVerified === false) return false;
     if (resolvedAccess.has(user.uid)) return resolvedAccess.get(user.uid) === true;
     if (pendingAccess.has(user.uid)) return pendingAccess.get(user.uid);
 
     const request = (async () => {
-      const bootstrapAllowed = isBootstrapAdminEmail(user.email);
-      const roleRef = firebase.database().ref(`access/admins/${user.uid}`);
-
       try {
-        const snapshot = await roleRef.once('value');
-        const existing = snapshot.val();
-
-        if (existing) {
-          const allowed = existing.active === true &&
-            normalizeEmail(existing.email) === normalizeEmail(user.email);
-          resolvedAccess.set(user.uid, allowed);
-          return allowed;
-        }
-
-        if (!bootstrapAllowed) {
-          resolvedAccess.set(user.uid, false);
-          return false;
-        }
-
-        const now = new Date().toISOString();
-        const result = await roleRef.transaction(current => current || {
-          uid: user.uid,
-          email: normalizeEmail(user.email),
-          active: true,
-          createdAt: now,
-          updatedAt: now,
-          source: 'bootstrap-email'
-        });
-        const record = result.snapshot && result.snapshot.val();
+        const snapshot = await firebase.database()
+          .ref(`${ADMIN_EMAILS_PATH}/${adminEmailKey(user.email)}`)
+          .once('value');
+        const record = snapshot.val();
         const allowed = !!record && record.active === true &&
           normalizeEmail(record.email) === normalizeEmail(user.email);
         resolvedAccess.set(user.uid, allowed);
         return allowed;
       } catch (error) {
-        // During deployment the old Rules do not know /access/admins yet.
-        // Keep the existing whitelist working until the new Rules are published.
-        if (bootstrapAllowed) {
-          console.warn('[admin-access] UID role unavailable; using temporary email bootstrap', error);
-          return true;
-        }
+        // Not cached: a transient failure must not stick until reload.
         console.warn('[admin-access] role check failed', error);
         return false;
       } finally {
@@ -94,8 +67,9 @@
     pendingAccess.clear();
   }
 
+  global.TTF_ADMIN_EMAILS_PATH = ADMIN_EMAILS_PATH;
   global.ttfNormalizeAdminEmail = normalizeEmail;
-  global.ttfIsBootstrapAdminEmail = isBootstrapAdminEmail;
+  global.ttfAdminEmailKey = adminEmailKey;
   global.ttfHasAdminAccess = cachedAdminAccess;
   global.ttfResolveAdminAccess = resolveAdminAccess;
   global.ttfClearAdminAccess = clearAdminAccess;

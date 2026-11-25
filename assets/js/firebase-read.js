@@ -114,7 +114,7 @@ function _makeFirebaseReadData(source) {
       ? _firebaseReadLive.surveyVotes
       : {},
     userSurveys: surveys.filter(survey => !String(survey.id || '').startsWith('seed_')),
-    // Membership is resolved through the authenticated lookup in admin-config.js.
+    // Membership is resolved through the authenticated lookup in asso-member-access.js.
     // The public shared reader deliberately never exposes the full member table.
     assoMembers: [],
     source

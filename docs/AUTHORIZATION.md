@@ -34,7 +34,9 @@ Google Sign-In identifies a user. It does not by itself grant administrator or A
 
 ### Administrator
 
-- Is authorized through `access/admins/{uid}`. The configured admin email list is only a temporary bootstrap mechanism.
+- Is authorized through `access/adminEmails/{emailKey}` with `active: true`, matched against the signed-in, verified Google email.
+- `emailKey` is the lower-cased email with every `.` replaced by `,` (Realtime Database keys cannot contain `.`). `database.rules.json` and `assets/js/admin-access.js` derive it the same way.
+- This node is the only admin list. No email address appears in Rules or client code.
 - Administrator access is independent from Asso membership.
 - Can access `admin.html` and update their own `adminProfiles/{uid}` record.
 - Administrator-only profiles displayed in the Asso Membres tab are read-only there.
@@ -43,7 +45,7 @@ Google Sign-In identifies a user. It does not by itself grant administrator or A
 
 | Path | Purpose |
 | --- | --- |
-| `access/admins/{uid}` | Administrator role binding |
+| `access/adminEmails/{emailKey}` | Administrator list (`email`, `active`, optional `name`, `updatedAt`) |
 | `access/members/{uid}` | Signed-in UID to active Asso member binding |
 | `assoMemberLookup/{emailHash}` | Normalized email hash to member lookup |
 | `assoMembers/{memberId}` | Official membership and HelloAsso-controlled data |
@@ -95,6 +97,16 @@ After permission-related changes, verify these cases independently:
 6. Administrator who is also an Asso member.
 
 Confirm both UI behavior and direct Firebase read/write enforcement. Run JavaScript syntax checks and parse `database.rules.json` before committing.
+
+## Managing administrators
+
+Grant or revoke admin access by editing data, never code:
+
+1. Firebase Console → Realtime Database → Data → `access/adminEmails`.
+2. Add a child keyed by the email with `.` replaced by `,` (e.g. `jane,doe@gmail,com`) containing `{"email": "jane.doe@gmail.com", "active": true}`.
+3. To revoke, set `active` to `false` or delete the child. It takes effect on the user's next page load.
+
+Rules do not need to be redeployed and nothing needs to be pushed.
 
 ## Deployment
 

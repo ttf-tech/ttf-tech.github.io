@@ -2,9 +2,8 @@
  * Gates public-page content behind Google Sign-In + membership check.
  *
  * A visitor counts as an "Adhésion member" if either:
- *   1. Their Firebase UID is active in `access/admins`. ADMIN_EMAILS remains
- *      only as a temporary bootstrap for administrators who have not created
- *      their UID role record yet.
+ *   1. Their verified email is active in `access/adminEmails` (see
+ *      admin-access.js).
  *   2. Their email matches an entry in the `assoMembers` list (Firebase RTDB,
  *      same data the admin dashboard's "Asso Membres" tab manages) with a
  *      `joinedAt` less than MEMBER_GATE_VALID_DAYS old.
@@ -13,7 +12,7 @@
  *   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
  *   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
  *   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
- *   <script src="assets/js/admin-config.js"></script>   (optional, for the admin bypass)
+ *   <script src="assets/js/admin-access.js"></script>   (optional, for the admin bypass)
  *   <script src="assets/js/firebase-read.js"></script>
  *   <script src="assets/js/member-gate.js"></script>
  *

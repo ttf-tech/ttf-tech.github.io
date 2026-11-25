@@ -59,7 +59,7 @@ if (_FB_READY) {
   try {
     if (!firebase.apps.length) firebase.initializeApp(_FB_CONFIG);
     _adminProfilesRef = firebase.database().ref('adminProfiles');
-    _adminAccessRef = firebase.database().ref('access/admins');
+    _adminAccessRef = firebase.database().ref(window.TTF_ADMIN_EMAILS_PATH || 'access/adminEmails');
     _assoMembersV2Ref = firebase.database().ref('assoMembers');
     _memberProfilesRef = firebase.database().ref('memberProfiles');
     _assoFieldAuditRef = firebase.database().ref('assoMemberFieldAudit');
@@ -884,13 +884,7 @@ function renderAssoMembers() {
   const query   = (document.getElementById('asso-search')?.value   || '').toLowerCase();
   const cityFlt = (document.getElementById('asso-city-filter')?.value || '');
 
-  const bootstrapAdminEmails = (typeof ADMIN_EMAILS !== 'undefined' && Array.isArray(ADMIN_EMAILS))
-    ? ADMIN_EMAILS.map(email => email.trim().toLowerCase())
-    : [];
-  const roleAdminEmails = (state.adminAccess || [])
-    .filter(record => record.active === true && record.email)
-    .map(record => record.email.trim().toLowerCase());
-  const adminEmails = [...new Set([...roleAdminEmails, ...bootstrapAdminEmails])];
+  const adminEmails = _directoryAdminEmails();
   const adminEmailSet = new Set(adminEmails);
   const adminProfileMap = new Map(
     (state.adminProfiles || []).map(profile => [(profile.email || '').trim().toLowerCase(), profile])
@@ -1173,10 +1167,11 @@ function _isAssoMembershipActive(joinedAt) {
 }
 
 // ── Members-only directory (memberDirectory/*, see member-directory.js) ──
+// Active administrators, from access/adminEmails (the single source of truth).
 function _directoryAdminEmails() {
-  const bootstrap = (typeof ADMIN_EMAILS !== 'undefined' && Array.isArray(ADMIN_EMAILS)) ? ADMIN_EMAILS : [];
-  const roles = (state.adminAccess || []).filter(r => r.active === true && r.email).map(r => r.email);
-  return [...new Set([...roles, ...bootstrap].map(e => (e || '').trim().toLowerCase()).filter(Boolean))];
+  return [...new Set((state.adminAccess || [])
+    .filter(record => record.active === true && record.email)
+    .map(record => record.email.trim().toLowerCase()))];
 }
 
 function _directoryEntryFor(official, profile) {
@@ -3275,9 +3270,7 @@ function initAdminProfiles() {
 
     _adminAccessHandler = snapshot => {
       const raw = snapshot.val() || {};
-      state.adminAccess = Array.isArray(raw)
-        ? raw.filter(Boolean)
-        : Object.entries(raw).map(([uid, record]) => ({ uid, ...(record || {}) }));
+      state.adminAccess = Object.entries(raw).map(([key, record]) => ({ key, ...(record || {}) }));
       _adminAccessLoaded = true;
       _scheduleDirectoryReconcile();
       if (document.querySelector('.tab-pane.active')?.dataset?.tab === 'asso') renderAssoMembers();

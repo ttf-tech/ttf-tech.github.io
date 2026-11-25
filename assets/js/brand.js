@@ -7,6 +7,9 @@
 (function () {
   // Newest first — add new photos at the top of this list.
   const PHOTOS = [
+    { src: 'assets/img/community/CMA-industrial.jpeg', w: 800, h: 600, fit: true,
+      caption: 'Industrie & logistique — Alpes-Maritimes · 深入濱海阿爾卑斯產業與物流',
+      alt: 'Journée immersion industrie et logistique dans les Alpes-Maritimes avec TTF, la CMA et France Travail : forum, démonstrations numériques, échanges et entretiens' },
     { src: 'assets/img/community/flying-eye-aero-defense.jpeg', w: 1080, h: 644, fit: true,
       caption: 'Flying Eye — aéro & défense · 深入法國航空航太與國防科技領域',
       alt: 'Présentation Flying Eye sur les drones pour l’aérospatial et la défense : site web DJI Dock 4, intervenant devant l’écran, graphique de croissance et salle de participants' },
